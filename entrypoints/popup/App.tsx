@@ -8,20 +8,20 @@ import {
   Spin,
   Switch,
   Tag,
-  theme as antdTheme,
   Tooltip,
-} from "antd";
+} from "@douyinfe/semi-ui";
+import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
 import {
-  FilterOutlined,
-  LockOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
-  UnlockOutlined,
-} from "@ant-design/icons";
-import zhCN from "antd/locale/zh_CN";
-import enUS from "antd/locale/en_US";
+  IconFilter,
+  IconLock,
+  IconPause,
+  IconPlay,
+  IconPlus,
+  IconSetting,
+  IconUnlock,
+} from "@douyinfe/semi-icons";
+import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
+import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
 import { initI18n } from "@/src/i18n";
@@ -43,13 +43,51 @@ import type {
 } from "@/src/core/types";
 import "./App.css";
 
+const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
+  "amber",
+  "blue",
+  "cyan",
+  "green",
+  "grey",
+  "indigo",
+  "light-blue",
+  "light-green",
+  "lime",
+  "orange",
+  "pink",
+  "purple",
+  "red",
+  "teal",
+  "violet",
+  "yellow",
+  "white",
+]);
+
+function mapTagColor(input?: string): TagColor {
+  if (!input) return "grey";
+  switch (input) {
+    case "warning":
+      return "amber";
+    case "success":
+      return "green";
+    case "processing":
+      return "blue";
+    case "error":
+      return "red";
+    case "default":
+      return "grey";
+  }
+  return TAG_COLORS.has(input as TagColor) ? (input as TagColor) : "grey";
+}
+
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
 }
 
 function App() {
   const { t, i18n } = useTranslation();
-  const { isDark } = useThemeMode();
+  // 触发主题副作用（同步 body theme-mode 等）
+  useThemeMode();
   const hydrated = useProfileStore((s) => s.hydrated);
   const hydrate = useProfileStore((s) => s.hydrate);
   const profiles = useProfileStore((s) => s.profiles);
@@ -127,8 +165,8 @@ function App() {
     })();
   }, [hydrate]);
 
-  const antdLocale = useMemo(
-    () => (i18n.language === "zh-CN" ? zhCN : enUS),
+  const semiLocale = useMemo(
+    () => (i18n.language === "zh-CN" ? zh_CN : en_US),
     [i18n.language]
   );
 
@@ -164,14 +202,7 @@ function App() {
 
   const handleAddHeader = (target: "request" | "response") => {
     if (!active) return;
-    const id = addRule(active.id, "header");
-    const just = useProfileStore
-      .getState()
-      .profiles.find((p) => p.id === active.id)
-      ?.rules.find((r) => r.id === id);
-    if (just && just.target !== target) {
-      updateRule(active.id, { ...just, target });
-    }
+    addRule(active.id, "header", target);
   };
 
   const handleUpdate = (rule: HeaderRule) => {
@@ -183,10 +214,11 @@ function App() {
   const lockedHere =
     isLocked && currentTabId != null && meta.lockedTabId === currentTabId;
 
-  const filterMenuItems = [
-    {
-      key: "tab",
-      label: (
+  const filterMenu = (
+    <Dropdown.Menu>
+      <Dropdown.Item
+        onClick={() => active && addTabFilter(active.id, currentTabUrlPattern)}
+      >
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
             {t("filters.tab")}
@@ -195,12 +227,10 @@ function App() {
             {t("filters.tabDesc")}
           </div>
         </div>
-      ),
-      onClick: () => active && addTabFilter(active.id, currentTabUrlPattern),
-    },
-    {
-      key: "domain",
-      label: (
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => active && addDomainFilter(active.id, currentTabDomain)}
+      >
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
             {t("filters.domain")}
@@ -209,12 +239,10 @@ function App() {
             {t("filters.domainDesc")}
           </div>
         </div>
-      ),
-      onClick: () => active && addDomainFilter(active.id, currentTabDomain),
-    },
-    {
-      key: "url",
-      label: (
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => active && addUrlFilter(active.id, currentTabRegex)}
+      >
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
             {t("filters.url")}
@@ -223,12 +251,10 @@ function App() {
             {t("filters.urlDesc")}
           </div>
         </div>
-      ),
-      onClick: () => active && addUrlFilter(active.id, currentTabRegex),
-    },
-    {
-      key: "excludeUrl",
-      label: (
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => active && addExcludeUrlFilter(active.id, currentTabUrl)}
+      >
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
             {t("filters.excludeUrl")}
@@ -237,12 +263,15 @@ function App() {
             {t("filters.excludeUrlDesc")}
           </div>
         </div>
-      ),
-      onClick: () => active && addExcludeUrlFilter(active.id, currentTabUrl),
-    },
-    {
-      key: "method",
-      label: (
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => {
+          if (!active) return;
+          if ((active.methodFilters ?? []).length === 0) {
+            addMethodFilter(active.id, "GET");
+          }
+        }}
+      >
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
             {t("filters.method")}
@@ -251,56 +280,38 @@ function App() {
             {t("filters.methodDesc")}
           </div>
         </div>
-      ),
-      onClick: () => {
-        if (!active) return;
-        // 已有任何项就直接打开面板（不重复加），否则默认插入 GET 让多选下拉显示
-        if ((active.methodFilters ?? []).length === 0) {
-          addMethodFilter(active.id, "GET");
-        }
-      },
-    },
-  ];
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  );
 
-  const modMenuItems = [
-    {
-      key: "request",
-      label: t("popup.addRequestHeader"),
-      onClick: () => handleAddHeader("request"),
-    },
-    {
-      key: "response",
-      label: t("popup.addResponseHeader"),
-      onClick: () => handleAddHeader("response"),
-    },
-    { type: "divider" as const },
-    {
-      key: "cookie-req",
-      label: t("popup.addCookieRequest"),
-      onClick: () => active && addRule(active.id, "cookie-request-append"),
-    },
-    {
-      key: "cookie-res",
-      label: t("popup.addCookieResponse"),
-      onClick: () => active && addRule(active.id, "cookie-response-append"),
-    },
-    { type: "divider" as const },
-    {
-      key: "redirect",
-      label: t("popup.addRedirect"),
-      onClick: () => active && addRule(active.id, "redirect"),
-    },
-  ];
+  const modMenu = (
+    <Dropdown.Menu>
+      <Dropdown.Item onClick={() => handleAddHeader("request")}>
+        {t("popup.addRequestHeader")}
+      </Dropdown.Item>
+      <Dropdown.Item onClick={() => handleAddHeader("response")}>
+        {t("popup.addResponseHeader")}
+      </Dropdown.Item>
+      <Dropdown.Divider />
+      <Dropdown.Item
+        onClick={() => active && addRule(active.id, "cookie-request-append")}
+      >
+        {t("popup.addCookieRequest")}
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => active && addRule(active.id, "cookie-response-append")}
+      >
+        {t("popup.addCookieResponse")}
+      </Dropdown.Item>
+      <Dropdown.Divider />
+      <Dropdown.Item onClick={() => active && addRule(active.id, "redirect")}>
+        {t("popup.addRedirect")}
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  );
 
   return (
-    <ConfigProvider
-      locale={antdLocale}
-      theme={{
-        algorithm: isDark
-          ? antdTheme.darkAlgorithm
-          : antdTheme.defaultAlgorithm,
-      }}
-    >
+    <ConfigProvider locale={semiLocale}>
       <div
         style={{
           width: 520,
@@ -320,58 +331,59 @@ function App() {
             gap: 6,
           }}
         >
-          <Tag color={active?.color ?? "default"} style={{ marginRight: 0 }}>
+          <Tag color={mapTagColor(active?.color)} style={{ marginRight: 0 }}>
             {active?.rules.length ?? 0}
           </Tag>
           <Select
             size="small"
             style={{ width: 200 }}
             value={meta.activeProfileId ?? undefined}
-            onChange={setActive}
+            onChange={(v) => setActive(v as string)}
             placeholder={t("popup.activeProfile")}
-            options={profiles.map((p) => ({ value: p.id, label: p.name }))}
-            popupRender={(menu) => (
+            optionList={profiles.map((p) => ({ value: p.id, label: p.name }))}
+            outerBottomSlot={
               <>
-                {menu}
-                <Divider style={{ margin: "4px 0" }} />
+                <Divider margin="4px" />
                 <Button
-                  type="text"
+                  theme="borderless"
+                  type="tertiary"
                   size="small"
-                  icon={<PlusOutlined />}
+                  icon={<IconPlus />}
                   block
                   onClick={() => {
-                    const id = addProfile(t("options.newProfile"));
+                    const id = addProfile();
                     setActive(id);
                   }}
                 >
                   {t("options.newProfile")}
                 </Button>
               </>
-            )}
+            }
           />
           <div style={{ flex: 1 }} />
           <Tooltip
-            title={
+            position="bottom"
+            content={
               meta.globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")
             }
           >
             <Button
-              type="text"
+              theme="borderless"
+              type="tertiary"
               size="small"
               icon={
                 meta.globalPaused ? (
-                  <PlayCircleOutlined
-                    style={{ color: "var(--he-color-warning)" }}
-                  />
+                  <IconPlay style={{ color: "var(--he-color-warning)" }} />
                 ) : (
-                  <PauseCircleOutlined />
+                  <IconPause />
                 )
               }
               onClick={() => togglePause()}
             />
           </Tooltip>
           <Tooltip
-            title={
+            position="bottom"
+            content={
               lockedHere
                 ? t("popup.unlockTab")
                 : isLocked
@@ -380,15 +392,14 @@ function App() {
             }
           >
             <Button
-              type="text"
+              theme="borderless"
+              type="tertiary"
               size="small"
               icon={
                 lockedHere ? (
-                  <UnlockOutlined
-                    style={{ color: "var(--he-color-primary)" }}
-                  />
+                  <IconUnlock style={{ color: "var(--he-color-primary)" }} />
                 ) : (
-                  <LockOutlined
+                  <IconLock
                     style={
                       isLocked
                         ? { color: "var(--he-color-primary)" }
@@ -408,11 +419,12 @@ function App() {
           </Tooltip>
           <LanguageSwitcher variant="icon" />
           <ThemeSwitcher variant="icon" />
-          <Tooltip title={t("popup.openOptions")} placement="bottomLeft">
+          <Tooltip content={t("popup.openOptions")} position="bottomRight">
             <Button
-              type="text"
+              theme="borderless"
+              type="tertiary"
               size="small"
-              icon={<SettingOutlined />}
+              icon={<IconSetting />}
               onClick={() => void openOptionsPage()}
             />
           </Tooltip>
@@ -441,7 +453,9 @@ function App() {
           </div>
         )}
 
-        <Divider style={{ margin: "12px 0 4px" }} />
+        <div style={{ margin: "12px 0 4px" }}>
+          <Divider />
+        </div>
 
         {!active ? (
           <div
@@ -475,7 +489,9 @@ function App() {
             />
             {responseRules.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <HeaderRuleList
                   kind="header"
                   target="response"
@@ -489,7 +505,9 @@ function App() {
             )}
             {cookieRequestRules.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <HeaderRuleList
                   kind="cookie-request-append"
                   rules={cookieRequestRules}
@@ -502,7 +520,9 @@ function App() {
             )}
             {cookieResponseRules.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <HeaderRuleList
                   kind="cookie-response-append"
                   rules={cookieResponseRules}
@@ -515,7 +535,9 @@ function App() {
             )}
             {redirectRules.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <HeaderRuleList
                   kind="redirect"
                   rules={redirectRules}
@@ -528,7 +550,9 @@ function App() {
             )}
             {tabFilters.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <TabFilterList
                   filters={tabFilters}
                   onAdd={() => addTabFilter(active.id, currentTabUrlPattern)}
@@ -540,7 +564,9 @@ function App() {
             )}
             {domainFilters.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <FilterRowList<DomainFilter>
                   filters={domainFilters}
                   valueField="domain"
@@ -554,7 +580,9 @@ function App() {
             )}
             {urlFilters.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <FilterRowList<UrlFilter>
                   filters={urlFilters}
                   valueField="regex"
@@ -568,7 +596,9 @@ function App() {
             )}
             {excludeUrlFilters.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <FilterRowList<ExcludeUrlFilter>
                   filters={excludeUrlFilters}
                   valueField="url"
@@ -582,7 +612,9 @@ function App() {
             )}
             {methodFilters.length > 0 && (
               <>
-                <Divider style={{ margin: "8px 0" }} />
+                <div style={{ margin: "8px 0" }}>
+                  <Divider />
+                </div>
                 <MethodFilterPicker
                   filters={methodFilters}
                   onChange={(methods) => setMethodFilters(active.id, methods)}
@@ -593,7 +625,9 @@ function App() {
         )}
 
         {/* Footer: 主要动作（Mod / 模板 / 过滤） */}
-        <Divider style={{ margin: "8px 0 6px" }} />
+        <div style={{ margin: "8px 0 6px" }}>
+          <Divider />
+        </div>
         <div
           style={{
             display: "flex",
@@ -601,18 +635,19 @@ function App() {
             gap: 6,
           }}
         >
-          <Dropdown trigger={["click"]} menu={{ items: modMenuItems }}>
-            <Button type="primary" size="small" icon={<PlusOutlined />}>
+          <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
+            <Button
+              theme="solid"
+              type="primary"
+              size="small"
+              icon={<IconPlus />}
+            >
               {t("popup.mod")}
             </Button>
           </Dropdown>
           <TemplateMenu profileId={active?.id ?? null} />
-          <Dropdown
-            trigger={["click"]}
-            disabled={!active}
-            menu={{ items: filterMenuItems }}
-          >
-            <Button size="small" icon={<FilterOutlined />}>
+          <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
+            <Button size="small" icon={<IconFilter />} disabled={!active}>
               {t("filters.title")}
             </Button>
           </Dropdown>

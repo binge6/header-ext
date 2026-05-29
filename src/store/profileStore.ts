@@ -23,13 +23,17 @@ interface ProfileStore extends AppState {
   hydrate: () => Promise<void>;
 
   // profile
-  addProfile: (name: string) => string;
+  addProfile: (name?: string) => string;
   renameProfile: (profileId: string, name: string) => void;
   deleteProfile: (profileId: string) => void;
   setActiveProfile: (profileId: string) => void;
 
   // rule
-  addRule: (profileId: string, kind?: RuleKind) => string;
+  addRule: (
+    profileId: string,
+    kind?: RuleKind,
+    target?: "request" | "response"
+  ) => string;
   updateRule: (profileId: string, rule: HeaderRule) => void;
   deleteRule: (profileId: string, ruleId: string) => void;
   toggleRule: (profileId: string, ruleId: string) => void;
@@ -82,14 +86,20 @@ interface ProfileStore extends AppState {
 
 let isApplyingRemote = false;
 
-function emptyRule(kind: RuleKind = "header"): HeaderRule {
+function emptyRule(
+  kind: RuleKind = "header",
+  target?: "request" | "response"
+): HeaderRule {
   const isCookieReq = kind === "cookie-request-append";
   const isCookieRes = kind === "cookie-response-append";
+  const finalTarget: "request" | "response" = isCookieRes
+    ? "response"
+    : target ?? "request";
   return {
     id: nanoid(),
     enabled: true,
     kind,
-    target: isCookieRes ? "response" : "request",
+    target: finalTarget,
     action: isCookieReq || isCookieRes ? "append" : "set",
     name: "",
     value: "",
@@ -108,6 +118,30 @@ function emptyProfile(name: string): Profile {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+// 在已有 profile 列表中，给 base 名称生成一个唯一名称
+// excludeId：重命名时排除自身
+function uniqueProfileName(
+  base: string,
+  profiles: Profile[],
+  excludeId?: string
+): string {
+  const used = new Set(
+    profiles.filter((p) => p.id !== excludeId).map((p) => p.name)
+  );
+  if (!used.has(base)) return base;
+  let i = 2;
+  while (used.has(`${base} (${i})`)) i += 1;
+  return `${base} (${i})`;
+}
+
+// 为新建 profile 生成默认名称：Profile {n}，n 从已有数量+1 开始递增直到不冲突
+function nextDefaultProfileName(profiles: Profile[]): string {
+  const used = new Set(profiles.map((p) => p.name));
+  let i = profiles.length + 1;
+  while (used.has(`Profile ${i}`)) i += 1;
+  return `Profile ${i}`;
 }
 
 function emptyTabFilter(urlFilter = ""): TabFilter {
@@ -156,10 +190,14 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   },
 
   addProfile: (name) => {
-    const profile = emptyProfile(name || "Untitled");
+    const profiles = get().profiles;
+    const base =
+      name && name.trim() ? name.trim() : nextDefaultProfileName(profiles);
+    const finalName = uniqueProfileName(base, profiles);
+    const profile = emptyProfile(finalName);
     const next = {
       ...get(),
-      profiles: [...get().profiles, profile],
+      profiles: [...profiles, profile],
     };
     set({ profiles: next.profiles });
     void persist({ profiles: next.profiles, meta: get().meta });
@@ -167,17 +205,24 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   },
 
   renameProfile: (profileId, name) => {
+    const trimmed = name.trim() || "Untitled";
+    const finalName = uniqueProfileName(trimmed, get().profiles, profileId);
     const profiles = get().profiles.map((p) =>
-      p.id === profileId ? { ...p, name, updatedAt: Date.now() } : p
+      p.id === profileId ? { ...p, name: finalName, updatedAt: Date.now() } : p
     );
     set({ profiles });
     void persist({ profiles, meta: get().meta });
   },
 
   deleteProfile: (profileId) => {
-    const profiles = get().profiles.filter((p) => p.id !== profileId);
+    let profiles = get().profiles.filter((p) => p.id !== profileId);
     let meta = get().meta;
-    if (meta.activeProfileId === profileId) {
+    // 所有 profile 被删除后，自动生成一个默认空 profile
+    if (profiles.length === 0) {
+      const fallback = emptyProfile("Profile 1");
+      profiles = [fallback];
+      meta = { ...meta, activeProfileId: fallback.id };
+    } else if (meta.activeProfileId === profileId) {
       meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
     }
     set({ profiles, meta });
@@ -190,8 +235,8 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     void persist({ profiles: get().profiles, meta });
   },
 
-  addRule: (profileId, kind = "header") => {
-    const rule = emptyRule(kind);
+  addRule: (profileId, kind = "header", target) => {
+    const rule = emptyRule(kind, target);
     const profiles = get().profiles.map((p) =>
       p.id === profileId
         ? { ...p, rules: [...p.rules, rule], updatedAt: Date.now() }

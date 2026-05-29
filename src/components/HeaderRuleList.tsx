@@ -8,11 +8,9 @@ import {
   Input,
   Popover,
   Select,
-  Space,
   Switch,
-  Tooltip,
-} from "antd";
-import { CloseOutlined, FilterOutlined, PlusOutlined } from "@ant-design/icons";
+} from "@douyinfe/semi-ui";
+import { IconClose, IconFilter, IconPlus } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import type {
   HeaderAction,
@@ -103,8 +101,22 @@ export function HeaderRuleList({
   const renderFilterPopover = (rule: HeaderRule) => {
     const cond = rule.condition;
     return (
-      <div style={{ width: 320 }}>
-        <Space orientation="vertical" size={8} style={{ width: "100%" }}>
+      <div
+        style={{
+          width: 260,
+          maxHeight: 320,
+          overflowY: "auto",
+          padding: "8px 4px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            width: "100%",
+          }}
+        >
           <div>
             <div
               style={{
@@ -123,10 +135,10 @@ export function HeaderRuleList({
                   : t("rule.filterPlaceholder")
               }
               value={cond.urlFilter ?? ""}
-              onChange={(e) =>
+              onChange={(v) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, urlFilter: e.target.value },
+                  condition: { ...cond, urlFilter: v },
                 })
               }
             />
@@ -136,7 +148,7 @@ export function HeaderRuleList({
               onChange={(e) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, useRegex: e.target.checked },
+                  condition: { ...cond, useRegex: !!e.target.checked },
                 })
               }
             >
@@ -156,17 +168,18 @@ export function HeaderRuleList({
             </div>
             <Select
               size="small"
-              mode="tags"
+              multiple
+              allowCreate
+              filter
               style={{ width: "100%" }}
               placeholder={t("rule.excludeDomainsPlaceholder")}
               value={cond.excludedDomains ?? []}
-              onChange={(v: string[]) =>
+              onChange={(v) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, excludedDomains: v },
+                  condition: { ...cond, excludedDomains: v as string[] },
                 })
               }
-              tokenSeparators={[",", " "]}
             />
           </div>
 
@@ -182,19 +195,22 @@ export function HeaderRuleList({
             </div>
             <Select
               size="small"
-              mode="multiple"
-              allowClear
+              multiple
+              showClear
               style={{ width: "100%" }}
               placeholder={t("rule.resourceTypesPlaceholder")}
               value={cond.resourceTypes ?? []}
-              onChange={(v: ResourceType[]) =>
+              onChange={(v) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, resourceTypes: v },
+                  condition: { ...cond, resourceTypes: v as ResourceType[] },
                 })
               }
-              options={RESOURCE_TYPES.map((rt) => ({ value: rt, label: rt }))}
-              maxTagCount="responsive"
+              optionList={RESOURCE_TYPES.map((rt) => ({
+                value: rt,
+                label: rt,
+              }))}
+              maxTagCount={3}
             />
           </div>
 
@@ -210,25 +226,25 @@ export function HeaderRuleList({
             </div>
             <Select
               size="small"
-              mode="multiple"
-              allowClear
+              multiple
+              showClear
               style={{ width: "100%" }}
               placeholder={t("rule.requestMethodsPlaceholder")}
               value={cond.requestMethods ?? []}
-              onChange={(v: string[]) =>
+              onChange={(v) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, requestMethods: v },
+                  condition: { ...cond, requestMethods: v as string[] },
                 })
               }
-              options={REQUEST_METHODS.map((m) => ({
+              optionList={REQUEST_METHODS.map((m) => ({
                 value: m,
                 label: m.toUpperCase(),
               }))}
-              maxTagCount="responsive"
+              maxTagCount={3}
             />
           </div>
-        </Space>
+        </div>
       </div>
     );
   };
@@ -247,9 +263,10 @@ export function HeaderRuleList({
           {t(groupTitleKey)}
         </span>
         <Button
-          type="text"
+          theme="borderless"
+          type="tertiary"
           size="small"
-          icon={<PlusOutlined />}
+          icon={<IconPlus />}
           onClick={onAdd}
         >
           {t(addLabelKey)}
@@ -275,7 +292,7 @@ export function HeaderRuleList({
                       n.toLowerCase().includes(rule.name.toLowerCase())
                   )
                   .slice(0, 20)
-                  .map((n) => ({ value: n }));
+                  .map((n) => ({ value: n, label: n }));
             // 当前 name 对应的历史值
             const valueOptions = isCookie
               ? []
@@ -286,7 +303,7 @@ export function HeaderRuleList({
                       v.toLowerCase().includes(rule.value.toLowerCase())
                   )
                   .slice(0, 20)
-                  .map((v) => ({ value: v }));
+                  .map((v) => ({ value: v, label: v }));
             return (
               <div
                 key={rule.id}
@@ -308,10 +325,10 @@ export function HeaderRuleList({
                     size="small"
                     style={{ width: 76 }}
                     value={rule.action}
-                    onChange={(v: HeaderAction) =>
-                      onUpdate({ ...rule, action: v })
+                    onChange={(v) =>
+                      onUpdate({ ...rule, action: v as HeaderAction })
                     }
-                    options={ACTION_OPTIONS.map((a) => ({
+                    optionList={ACTION_OPTIONS.map((a) => ({
                       value: a,
                       label: t(`rule.actionOption.${a}`),
                     }))}
@@ -328,10 +345,10 @@ export function HeaderRuleList({
                     }
                     style={{ flex: 1, minWidth: 0 }}
                     value={cond.urlFilter ?? ""}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       onUpdate({
                         ...rule,
-                        condition: { ...cond, urlFilter: e.target.value },
+                        condition: { ...cond, urlFilter: v },
                       })
                     }
                   />
@@ -341,18 +358,18 @@ export function HeaderRuleList({
                     placeholder={t("rule.cookieNamePlaceholder")}
                     style={{ flex: 1, minWidth: 0 }}
                     value={rule.name}
-                    onChange={(e) =>
-                      onUpdate({ ...rule, name: e.target.value })
-                    }
+                    onChange={(v) => onUpdate({ ...rule, name: v })}
                   />
                 ) : (
                   <AutoComplete
                     size="small"
                     style={{ flex: 1, minWidth: 0 }}
                     value={rule.name}
-                    options={nameOptions}
+                    data={nameOptions}
                     placeholder={t("rule.namePlaceholder")}
-                    onChange={(v: string) => onUpdate({ ...rule, name: v })}
+                    onChange={(v) =>
+                      onUpdate({ ...rule, name: String(v ?? "") })
+                    }
                   />
                 )}
                 {isRedirect ? (
@@ -365,9 +382,7 @@ export function HeaderRuleList({
                     }
                     style={{ flex: 1, minWidth: 0 }}
                     value={rule.value}
-                    onChange={(e) =>
-                      onUpdate({ ...rule, value: e.target.value })
-                    }
+                    onChange={(v) => onUpdate({ ...rule, value: v })}
                   />
                 ) : isCookie ? (
                   <Input
@@ -375,51 +390,49 @@ export function HeaderRuleList({
                     placeholder={t("rule.cookieValuePlaceholder")}
                     style={{ flex: 1, minWidth: 0 }}
                     value={rule.value}
-                    onChange={(e) =>
-                      onUpdate({ ...rule, value: e.target.value })
-                    }
+                    onChange={(v) => onUpdate({ ...rule, value: v })}
                   />
                 ) : (
                   <AutoComplete
                     size="small"
                     style={{ flex: 1, minWidth: 0 }}
                     value={rule.value}
-                    options={valueOptions}
+                    data={valueOptions}
                     placeholder={t("rule.valuePlaceholder")}
                     disabled={rule.action === "remove"}
-                    onChange={(v: string) => onUpdate({ ...rule, value: v })}
+                    onChange={(v) =>
+                      onUpdate({ ...rule, value: String(v ?? "") })
+                    }
                   />
                 )}
                 <Popover
                   trigger="click"
-                  placement="bottomRight"
+                  position="left"
+                  autoAdjustOverflow
                   content={renderFilterPopover(rule)}
                 >
-                  <Tooltip title={t("rule.filter")} placement="topRight">
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={
-                        <FilterOutlined
-                          style={{
-                            color: filterActive
-                              ? "var(--he-color-primary)"
-                              : undefined,
-                          }}
-                        />
-                      }
-                    />
-                  </Tooltip>
-                </Popover>
-                <Tooltip title={t("rule.deleteRule")} placement="topRight">
                   <Button
-                    type="text"
+                    theme="borderless"
+                    type="tertiary"
                     size="small"
-                    danger
-                    icon={<CloseOutlined />}
-                    onClick={() => onDelete(rule.id)}
+                    icon={
+                      <IconFilter
+                        style={{
+                          color: filterActive
+                            ? "var(--he-color-primary)"
+                            : undefined,
+                        }}
+                      />
+                    }
                   />
-                </Tooltip>
+                </Popover>
+                <Button
+                  theme="borderless"
+                  type="danger"
+                  size="small"
+                  icon={<IconClose />}
+                  onClick={() => onDelete(rule.id)}
+                />
               </div>
             );
           })}

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Button, Divider, Select, Space, Typography } from "antd";
+import { Button, Divider, Select, Space, Typography } from "@douyinfe/semi-ui";
 import type { MethodFilter } from "../core/types";
 
 interface Props {
@@ -20,7 +20,7 @@ const HTTP_METHODS = [
 ];
 
 // 请求方法过滤：以多选下拉形式呈现，避免逐项添加。
-// popupRender 底部增加 "全选 / 清空" 快捷操作。
+// outerBottomSlot 底部增加 "全选 / 清空" 快捷操作。
 export function MethodFilterPicker({ filters, onChange }: Props) {
   const { t } = useTranslation();
   // 仅保留启用的方法值；停用项视为未选
@@ -40,25 +40,25 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
       </Typography.Text>
       <Select
         size="small"
-        mode="multiple"
-        allowClear
+        multiple
+        showClear
         style={{ width: "100%" }}
         value={value}
         placeholder={t("methodFilters.placeholder")}
-        options={HTTP_METHODS.map((m) => ({ value: m, label: m }))}
-        onChange={(next: string[]) => onChange(next.map((m) => m.toUpperCase()))}
-        maxTagCount="responsive"
-        popupRender={(menu) => (
+        optionList={HTTP_METHODS.map((m) => ({ value: m, label: m }))}
+        onChange={(next) =>
+          onChange((next as string[]).map((m) => m.toUpperCase()))
+        }
+        maxTagCount={3}
+        outerBottomSlot={
           <>
-            {menu}
-            <Divider style={{ margin: "4px 0" }} />
+            <Divider margin="4px" />
             <Space style={{ padding: "4px 8px" }}>
               <Button
                 size="small"
-                type="link"
-                onClick={() =>
-                  onChange(allSelected ? [] : [...HTTP_METHODS])
-                }
+                theme="borderless"
+                type="primary"
+                onClick={() => onChange(allSelected ? [] : [...HTTP_METHODS])}
               >
                 {allSelected
                   ? t("methodFilters.clearAll")
@@ -66,7 +66,7 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
               </Button>
             </Space>
           </>
-        )}
+        }
       />
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>
         {value.length === 0

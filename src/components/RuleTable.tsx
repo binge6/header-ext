@@ -1,4 +1,4 @@
-import { Empty, Space } from "antd";
+import { Empty } from "@douyinfe/semi-ui";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
 import { HeaderRuleList } from "./HeaderRuleList";
@@ -53,7 +53,7 @@ export function RuleTable() {
   const profile = profiles.find((p) => p.id === activeId);
 
   if (!profile) {
-    return <Empty description={t("options.noProfiles")} />;
+    return <Empty title={t("options.noProfiles")} />;
   }
 
   const requestRules = profile.rules.filter(
@@ -71,14 +71,7 @@ export function RuleTable() {
   const redirectRules = profile.rules.filter((r) => ruleKind(r) === "redirect");
 
   const handleAddHeader = (target: "request" | "response") => {
-    const id = addRule(profile.id, "header");
-    const just = useProfileStore
-      .getState()
-      .profiles.find((p) => p.id === profile.id)
-      ?.rules.find((r) => r.id === id);
-    if (just && just.target !== target) {
-      updateRule(profile.id, { ...just, target });
-    }
+    addRule(profile.id, "header", target);
   };
 
   const handleUpdate = (rule: HeaderRule) => {
@@ -99,7 +92,14 @@ export function RuleTable() {
   );
 
   return (
-    <Space orientation="vertical" style={{ width: "100%" }} size="middle">
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
       <h3 style={{ margin: 0 }}>{profile.name}</h3>
 
       {card(
@@ -221,6 +221,6 @@ export function RuleTable() {
           }}
         />
       )}
-    </Space>
+    </div>
   );
 }

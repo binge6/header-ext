@@ -2,8 +2,8 @@
 // 用于：请求域名 / 排除域名 / URL 正则等同构结构。
 // items 内部字段名通过 valueField 指定，存取从 i18n key 注入。
 
-import { Button, Input, Switch, Tooltip } from "antd";
-import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Input, Switch, Tooltip } from "@douyinfe/semi-ui";
+import { IconClose, IconPlus } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 
 export interface FilterRowItem {
@@ -48,9 +48,10 @@ export function FilterRowList<T extends FilterRowItem>({
           {t(`${i18nKey}.title`)}
         </span>
         <Button
-          type="text"
+          theme="borderless"
+          type="tertiary"
           size="small"
-          icon={<PlusOutlined />}
+          icon={<IconPlus />}
           onClick={onAdd}
         >
           {t(`${i18nKey}.addItem`)}
@@ -58,7 +59,13 @@ export function FilterRowList<T extends FilterRowItem>({
       </div>
 
       {filters.length === 0 ? (
-        <div style={{ color: "var(--he-text-tertiary)", fontSize: 12, padding: "4px 0" }}>
+        <div
+          style={{
+            color: "var(--he-text-tertiary)",
+            fontSize: 12,
+            padding: "4px 0",
+          }}
+        >
           {t(`${i18nKey}.empty`)}
         </div>
       ) : (
@@ -82,16 +89,14 @@ export function FilterRowList<T extends FilterRowItem>({
               placeholder={t(`${i18nKey}.placeholder`)}
               style={{ flex: 1, minWidth: 0 }}
               value={(f[valueField] as unknown as string) ?? ""}
-              onChange={(e) =>
-                onUpdate({ ...f, [valueField]: e.target.value } as T)
-              }
+              onChange={(v) => onUpdate({ ...f, [valueField]: v } as T)}
             />
-            <Tooltip title={t(`${i18nKey}.deleteItem`)} placement="topRight">
+            <Tooltip content={t(`${i18nKey}.deleteItem`)} position="topRight">
               <Button
-                type="text"
+                theme="borderless"
+                type="danger"
                 size="small"
-                danger
-                icon={<CloseOutlined />}
+                icon={<IconClose />}
                 onClick={() => onDelete(f.id)}
               />
             </Tooltip>

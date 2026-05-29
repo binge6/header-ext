@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
-import { ConfigProvider, Layout, Spin, theme as antdTheme } from "antd";
-import zhCN from "antd/locale/zh_CN";
-import enUS from "antd/locale/en_US";
+import { ConfigProvider, Layout, Spin } from "@douyinfe/semi-ui";
+import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
+import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
 import { initI18n } from "@/src/i18n";
@@ -17,7 +17,8 @@ const { Sider, Content, Header } = Layout;
 
 function App() {
   const { t, i18n } = useTranslation();
-  const { isDark } = useThemeMode();
+  // 触发主题副作用（同步 body theme-mode 等）
+  useThemeMode();
   const hydrated = useProfileStore((s) => s.hydrated);
   const hydrate = useProfileStore((s) => s.hydrate);
   const activeProfileId = useProfileStore((s) => s.meta.activeProfileId);
@@ -29,8 +30,8 @@ function App() {
     })();
   }, [hydrate]);
 
-  const antdLocale = useMemo(
-    () => (i18n.language === "zh-CN" ? zhCN : enUS),
+  const semiLocale = useMemo(
+    () => (i18n.language === "zh-CN" ? zh_CN : en_US),
     [i18n.language]
   );
 
@@ -43,14 +44,7 @@ function App() {
   }
 
   return (
-    <ConfigProvider
-      locale={antdLocale}
-      theme={{
-        algorithm: isDark
-          ? antdTheme.darkAlgorithm
-          : antdTheme.defaultAlgorithm,
-      }}
-    >
+    <ConfigProvider locale={semiLocale}>
       <Layout style={{ minHeight: "100vh", background: "var(--he-bg-page)" }}>
         <Header
           style={{
@@ -59,7 +53,7 @@ function App() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 32px",
+            padding: "10px 32px",
             position: "sticky",
             top: 0,
             zIndex: 10,
@@ -82,8 +76,8 @@ function App() {
           }}
         >
           <Sider
-            width={280}
             style={{
+              width: 280,
               background: "var(--he-bg-surface)",
               borderRight: "1px solid var(--he-border)",
               minHeight: "calc(100vh - 64px)",

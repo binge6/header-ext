@@ -15,8 +15,8 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@ant-design/icons": "^6.2.3",
-    "antd": "^6.4.3",
+    "@douyinfe/semi-icons": "^2.99.2",
+    "@douyinfe/semi-ui": "^2.99.2",
     "i18next": "^26.3.0",
     "nanoid": "^5.1.11",
     "react": "^19.2.4",

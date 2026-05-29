@@ -1,6 +1,7 @@
 import { useRef } from "react";
-import { Switch, Space, Tag, Button, message } from "antd";
-import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
+import { Switch, Space, Tag, Button, Toast } from "@douyinfe/semi-ui";
+import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
+import { IconDownload, IconUpload } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
 import {
@@ -9,6 +10,43 @@ import {
   parseImport,
   readFileAsText,
 } from "@/src/core/portable";
+
+const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
+  "amber",
+  "blue",
+  "cyan",
+  "green",
+  "grey",
+  "indigo",
+  "light-blue",
+  "light-green",
+  "lime",
+  "orange",
+  "pink",
+  "purple",
+  "red",
+  "teal",
+  "violet",
+  "yellow",
+  "white",
+]);
+
+function mapTagColor(input?: string): TagColor {
+  if (!input) return "grey";
+  switch (input) {
+    case "warning":
+      return "amber";
+    case "success":
+      return "green";
+    case "processing":
+      return "blue";
+    case "error":
+      return "red";
+    case "default":
+      return "grey";
+  }
+  return TAG_COLORS.has(input as TagColor) ? (input as TagColor) : "grey";
+}
 
 export function GlobalToolbar() {
   const { t } = useTranslation();
@@ -19,7 +57,6 @@ export function GlobalToolbar() {
   const replaceState = useProfileStore((s) => s.replaceState);
 
   const fileRef = useRef<HTMLInputElement>(null);
-  const [api, ctx] = message.useMessage();
 
   const handleExport = () => {
     const payload = buildExport(profiles, meta);
@@ -36,24 +73,19 @@ export function GlobalToolbar() {
       const text = await readFileAsText(file);
       const { profiles: nextProfiles, meta: nextMeta } = parseImport(text);
       replaceState({ profiles: nextProfiles, meta: nextMeta });
-      api.success(t("options.importSuccess"));
+      Toast.success(t("options.importSuccess"));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "unknown";
-      api.error(t("options.importFailed", { msg }));
+      Toast.error(t("options.importFailed", { msg }));
     }
   };
 
   return (
     <Space align="center">
-      {ctx}
-      <Button
-        size="small"
-        icon={<UploadOutlined />}
-        onClick={handleImportClick}
-      >
+      <Button size="small" icon={<IconUpload />} onClick={handleImportClick}>
         {t("options.import")}
       </Button>
-      <Button size="small" icon={<DownloadOutlined />} onClick={handleExport}>
+      <Button size="small" icon={<IconDownload />} onClick={handleExport}>
         {t("options.export")}
       </Button>
       <input
@@ -63,7 +95,11 @@ export function GlobalToolbar() {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      {paused && <Tag color="warning">{t("popup.globalPaused")}</Tag>}
+      {paused && (
+        <Tag color={mapTagColor("warning")} type="solid">
+          {t("popup.globalPaused")}
+        </Tag>
+      )}
       <span
         style={{
           display: "inline-flex",

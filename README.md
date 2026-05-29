@@ -15,7 +15,7 @@
 ## 技术栈
 
 - [WXT](https://wxt.dev/) + React 19 + TypeScript
-- Ant Design v6
+- Semi Design
 - Zustand 状态管理
 - `declarativeNetRequest` + Service Worker（无需 content script）
 

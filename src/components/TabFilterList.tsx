@@ -2,8 +2,8 @@
 // 多条 OR 关系；启用任一项 = 仅匹配 Tab 生效。
 // 没有任何启用项时规则作用于全部 Tab。
 
-import { Button, Input, Switch, Tooltip } from "antd";
-import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Input, Switch, Tooltip } from "@douyinfe/semi-ui";
+import { IconClose, IconPlus } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
 
@@ -38,9 +38,10 @@ export function TabFilterList({
           {t("tabFilters.title")}
         </span>
         <Button
-          type="text"
+          theme="borderless"
+          type="tertiary"
           size="small"
-          icon={<PlusOutlined />}
+          icon={<IconPlus />}
           onClick={onAdd}
         >
           {t("tabFilters.addItem")}
@@ -78,14 +79,14 @@ export function TabFilterList({
               placeholder={t("tabFilters.urlPlaceholder")}
               style={{ flex: 1, minWidth: 0 }}
               value={f.urlFilter}
-              onChange={(e) => onUpdate({ ...f, urlFilter: e.target.value })}
+              onChange={(v) => onUpdate({ ...f, urlFilter: v })}
             />
-            <Tooltip title={t("tabFilters.deleteItem")} placement="topRight">
+            <Tooltip content={t("tabFilters.deleteItem")} position="topRight">
               <Button
-                type="text"
+                theme="borderless"
+                type="danger"
                 size="small"
-                danger
-                icon={<CloseOutlined />}
+                icon={<IconClose />}
                 onClick={() => onDelete(f.id)}
               />
             </Tooltip>
