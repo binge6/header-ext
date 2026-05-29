@@ -1,0 +1,15 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--he-bg-page);
+  color: var(--he-text-primary);
+  transition: background-color 0.2s, color 0.2s;
+}

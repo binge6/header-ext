@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Header Ext",
+    "description": "扩展名称"
+  },
+  "extDesc": {
+    "message": "类似 ModHeader 的 HTTP 请求/响应头修改插件。",
+    "description": "扩展描述"
+  }
+}

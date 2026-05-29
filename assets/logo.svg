@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Header Ext logo
+       设计语义：
+       - 圆角方形 + 蓝紫渐变底，符合现代浏览器扩展视觉
+       - 中央 "H" 字母代表 Header
+       - "H" 的横杠由上下双箭头替换，象征 请求/响应 头部的双向修改
+       - 右上角小圆点：表示规则启用状态指示灯 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="0" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="1" stop-color="#E0E7FF" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底板 -->
+  <rect x="4" y="4" width="120" height="120" rx="26" ry="26" fill="url(#bg)"/>
+
+  <!-- "H" 左竖（请求侧） -->
+  <rect x="30" y="28" width="14" height="72" rx="4" fill="url(#stroke)"/>
+  <!-- "H" 右竖（响应侧） -->
+  <rect x="84" y="28" width="14" height="72" rx="4" fill="url(#stroke)"/>
+
+  <!-- 双向箭头中段（替换 H 的横杠） -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- 横杠主体 -->
+    <line x1="44" y1="64" x2="84" y2="64"/>
+    <!-- 左箭头（指向请求侧，向上小箭头） -->
+    <polyline points="56,52 50,58 56,64"/>
+    <!-- 右箭头（指向响应侧，向下小箭头） -->
+    <polyline points="72,76 78,70 72,64"/>
+  </g>
+
+  <!-- 状态指示灯 -->
+  <circle cx="100" cy="32" r="8" fill="#10B981" stroke="#FFFFFF" stroke-width="3"/>
+</svg>

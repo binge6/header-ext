@@ -1,0 +1,47 @@
+/* Header Ext 全局色板（CSS 变量）
+ * 通过 <html data-theme="light|dark"> 切换；与 useThemeMode hook 保持同步。
+ * 命名约定 --he-* 避免与 AntD --ant-* 冲突。
+ */
+
+:root,
+html[data-theme="light"] {
+  /* 品牌色（与 AntD 默认 colorPrimary 对齐） */
+  --he-color-primary: #1677ff;
+  --he-color-warning: #faad14;
+
+  /* 文字 */
+  --he-text-primary: rgba(0, 0, 0, 0.88);
+  --he-text-secondary: rgba(0, 0, 0, 0.65);
+  --he-text-tertiary: rgba(0, 0, 0, 0.45);
+
+  /* 背景 */
+  --he-bg-page: #fafafa;
+  --he-bg-surface: #ffffff;
+  --he-bg-popup: #ffffff;
+  --he-bg-selected: #e6f4ff;
+
+  /* 暂停状态横幅 */
+  --he-bg-pause: #fffbe6;
+  --he-border-pause: #ffe58f;
+
+  /* 边框 */
+  --he-border: #f0f0f0;
+}
+html[data-theme="dark"] {
+  --he-color-primary: #1677ff;
+  --he-color-warning: #faad14;
+
+  --he-text-primary: rgba(255, 255, 255, 0.85);
+  --he-text-secondary: rgba(255, 255, 255, 0.65);
+  --he-text-tertiary: rgba(255, 255, 255, 0.45);
+
+  --he-bg-page: #000000;
+  --he-bg-surface: #141414;
+  --he-bg-popup: #1f1f1f;
+  --he-bg-selected: #111d2c;
+
+  --he-bg-pause: #2b2611;
+  --he-border-pause: #594214;
+
+  --he-border: #303030;
+}

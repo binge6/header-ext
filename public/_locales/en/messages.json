@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Header Ext",
+    "description": "Extension name"
+  },
+  "extDesc": {
+    "message": "Modify HTTP request and response headers like ModHeader.",
+    "description": "Extension description"
+  }
+}

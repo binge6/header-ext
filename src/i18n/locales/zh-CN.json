@@ -1,0 +1,179 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "confirm": "确认",
+    "edit": "编辑",
+    "add": "新增",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "yes": "是",
+    "no": "否"
+  },
+  "app": {
+    "name": "Header Ext",
+    "tagline": "对标 ModHeader 的 HTTP 头修改插件"
+  },
+  "popup": {
+    "globalPaused": "全局已暂停",
+    "pauseAll": "暂停全部",
+    "resumeAll": "恢复",
+    "openOptions": "打开完整设置",
+    "activeProfile": "当前 Profile",
+    "noRules": "当前 Profile 没有规则",
+    "addRule": "新建规则",
+    "mod": "Mod",
+    "filter": "Filter",
+    "addRequestHeader": "新增请求头",
+    "addResponseHeader": "新增响应头",
+    "addCookieRequest": "新增 Cookie（请求追加）",
+    "addCookieResponse": "新增 Set-Cookie（响应追加）",
+    "addRedirect": "新增 Redirect / URL 重写",
+    "addTabFilter": "新增 Tab 过滤",
+    "lockTab": "锁定到当前 Tab",
+    "unlockTab": "取消 Tab 锁定",
+    "lockedTo": "已锁定到 Tab #{{id}}"
+  },
+  "options": {
+    "title": "Header Ext 设置",
+    "profiles": "Profile 列表",
+    "rules": "规则",
+    "globalPaused": "全局暂停",
+    "newProfile": "新建 Profile",
+    "renameProfile": "重命名 Profile",
+    "deleteProfile": "删除 Profile",
+    "deleteProfileConfirm": "确定删除该 Profile 及其所有规则？",
+    "noProfiles": "暂无 Profile，请先新建",
+    "import": "导入",
+    "export": "导出",
+    "importSuccess": "导入成功",
+    "importFailed": "导入失败：{{msg}}",
+    "exportFileName": "header-ext-config.json"
+  },
+  "rule": {
+    "target": "类型",
+    "action": "操作",
+    "name": "Header 名称",
+    "value": "Header 值",
+    "filter": "URL 过滤",
+    "enabled": "启用",
+    "addRule": "新建规则",
+    "addCookieRequestItem": "新增 Cookie",
+    "addCookieResponseItem": "新增 Set-Cookie",
+    "addRedirectItem": "新增 Redirect",
+    "deleteRule": "删除规则",
+    "deleteRuleConfirm": "确定删除该规则？",
+    "namePlaceholder": "如：X-Custom-Header",
+    "valuePlaceholder": "如：foo",
+    "cookieNamePlaceholder": "Cookie 名，如：session_id",
+    "cookieValuePlaceholder": "Cookie 值",
+    "redirectFromPlaceholder": "源 URL，如：*://*.example.com/old/*",
+    "redirectFromRegexPlaceholder": "源正则，如：^https?://example\\.com/old/(.*)",
+    "redirectToPlaceholder": "目标 URL，如：https://example.com/new/",
+    "redirectToRegexPlaceholder": "目标（支持反向引用），如：https://example.com/new/\\1",
+    "group": {
+      "cookieRequestAppend": "Cookie 请求追加",
+      "cookieResponseAppend": "Set-Cookie 响应追加",
+      "redirect": "Redirect / URL 重写"
+    },
+    "filterPlaceholder": "如：*://*.example.com/*（留空匹配所有）",
+    "regexPlaceholder": "正则模式，如：^https?://.*\\.example\\.com/",
+    "useRegex": "使用正则",
+    "excludeDomains": "排除域名",
+    "excludeDomainsPlaceholder": "如：foo.com，可输入多个",
+    "resourceTypes": "资源类型",
+    "resourceTypesPlaceholder": "默认全部",
+    "requestMethods": "请求方法",
+    "requestMethodsPlaceholder": "默认全部（GET / POST / ...）",
+    "targetOption": {
+      "request": "请求头",
+      "response": "响应头"
+    },
+    "actionOption": {
+      "set": "设置",
+      "append": "追加",
+      "remove": "移除"
+    }
+  },
+  "tabFilters": {
+    "title": "Tab 过滤",
+    "addItem": "新增 Tab 过滤",
+    "urlPlaceholder": "如：*://*.example.com/*（仅匹配的 Tab 生效）",
+    "empty": "未配置 Tab 过滤；规则将作用于所有 Tab",
+    "deleteItem": "删除 Tab 过滤"
+  },
+  "filters": {
+    "title": "过滤",
+    "tab": "Tab 过滤",
+    "tabDesc": "限定规则只在匹配 URL 的标签页生效",
+    "domain": "请求域名过滤",
+    "domainDesc": "限定规则只对匹配域名（含子域）的请求生效",
+    "url": "请求 URL 过滤",
+    "urlDesc": "限定规则只对匹配正则的请求 URL 生效",
+    "excludeUrl": "排除请求 URL",
+    "excludeUrlDesc": "命中 URL（按 hostname）的请求不应用规则",
+    "method": "请求方法过滤",
+    "methodDesc": "限定规则只对匹配方法（GET / POST / ...）的请求生效"
+  },
+  "domainFilters": {
+    "title": "请求域名过滤",
+    "addItem": "新增域名",
+    "placeholder": "如：example.com（自动匹配子域）",
+    "empty": "未配置域名过滤；规则将作用于所有域名",
+    "deleteItem": "删除域名"
+  },
+  "urlFilters": {
+    "title": "请求 URL 过滤",
+    "addItem": "新增 URL 正则",
+    "placeholder": "如：^https?://api\\.example\\.com/.*",
+    "empty": "未配置 URL 过滤；规则将作用于所有 URL",
+    "deleteItem": "删除 URL 正则"
+  },
+  "excludeUrlFilters": {
+    "title": "排除请求 URL",
+    "addItem": "新增排除 URL",
+    "placeholder": "如：https://example.com/path（按 hostname 排除）",
+    "empty": "未配置排除 URL",
+    "deleteItem": "删除排除 URL"
+  },
+  "methodFilters": {
+    "title": "请求方法过滤",
+    "addItem": "新增方法",
+    "placeholder": "选择请求方法（多选）",
+    "empty": "未选择方法；规则将作用于所有请求方法",
+    "hint": "已选方法将作用于所有规则；其他请求方法不受规则影响",
+    "selectAll": "全选所有方法",
+    "clearAll": "清空选择",
+    "deleteItem": "删除方法"
+  },
+  "templates": {
+    "title": "一键模板",
+    "apply": "应用模板",
+    "removeCsp": "移除 CSP",
+    "removeCspDesc": "删除 Content-Security-Policy 与 -Report-Only，便于内联脚本调试",
+    "openCors": "放开 CORS",
+    "openCorsDesc": "插入 Access-Control-Allow-* 系列响应头",
+    "removeXFrame": "移除 X-Frame-Options",
+    "removeXFrameDesc": "去掉 X-Frame-Options，方便嵌入 iframe 调试",
+    "customUA": "自定义 User-Agent",
+    "customUADesc": "覆盖请求 User-Agent 头",
+    "noCache": "禁用缓存",
+    "noCacheDesc": "强制 Cache-Control: no-cache, no-store"
+  },
+  "language": {
+    "label": "语言",
+    "zh-CN": "简体中文",
+    "en-US": "English"
+  },
+  "theme": {
+    "label": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "errors": {
+    "headerNameRequired": "Header 名称不能为空",
+    "valueRequired": "set/append 操作必须填写值"
+  }
+}

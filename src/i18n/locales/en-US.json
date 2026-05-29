@@ -1,0 +1,179 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "add": "Add",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "app": {
+    "name": "Header Ext",
+    "tagline": "An HTTP header modifier inspired by ModHeader"
+  },
+  "popup": {
+    "globalPaused": "Globally paused",
+    "pauseAll": "Pause all",
+    "resumeAll": "Resume",
+    "openOptions": "Open full settings",
+    "activeProfile": "Active profile",
+    "noRules": "This profile has no rules",
+    "addRule": "Add rule",
+    "mod": "Mod",
+    "filter": "Filter",
+    "addRequestHeader": "Add request header",
+    "addResponseHeader": "Add response header",
+    "addCookieRequest": "Add Cookie (request append)",
+    "addCookieResponse": "Add Set-Cookie (response append)",
+    "addRedirect": "Add Redirect / URL rewrite",
+    "addTabFilter": "Add tab filter",
+    "lockTab": "Lock to current tab",
+    "unlockTab": "Unlock tab",
+    "lockedTo": "Locked to Tab #{{id}}"
+  },
+  "options": {
+    "title": "Header Ext Settings",
+    "profiles": "Profiles",
+    "rules": "Rules",
+    "globalPaused": "Globally paused",
+    "newProfile": "New profile",
+    "renameProfile": "Rename profile",
+    "deleteProfile": "Delete profile",
+    "deleteProfileConfirm": "Delete this profile and all its rules?",
+    "noProfiles": "No profile yet, create one first",
+    "import": "Import",
+    "export": "Export",
+    "importSuccess": "Imported successfully",
+    "importFailed": "Import failed: {{msg}}",
+    "exportFileName": "header-ext-config.json"
+  },
+  "rule": {
+    "target": "Target",
+    "action": "Action",
+    "name": "Header name",
+    "value": "Header value",
+    "filter": "URL filter",
+    "enabled": "Enabled",
+    "addRule": "Add rule",
+    "addCookieRequestItem": "Add Cookie",
+    "addCookieResponseItem": "Add Set-Cookie",
+    "addRedirectItem": "Add Redirect",
+    "deleteRule": "Delete rule",
+    "deleteRuleConfirm": "Delete this rule?",
+    "namePlaceholder": "e.g. X-Custom-Header",
+    "valuePlaceholder": "e.g. foo",
+    "cookieNamePlaceholder": "Cookie name, e.g. session_id",
+    "cookieValuePlaceholder": "Cookie value",
+    "redirectFromPlaceholder": "Source URL, e.g. *://*.example.com/old/*",
+    "redirectFromRegexPlaceholder": "Source regex, e.g. ^https?://example\\.com/old/(.*)",
+    "redirectToPlaceholder": "Target URL, e.g. https://example.com/new/",
+    "redirectToRegexPlaceholder": "Target (supports back-ref), e.g. https://example.com/new/\\1",
+    "group": {
+      "cookieRequestAppend": "Cookie request append",
+      "cookieResponseAppend": "Set-Cookie response append",
+      "redirect": "Redirect / URL rewrite"
+    },
+    "filterPlaceholder": "e.g. *://*.example.com/* (empty = all)",
+    "regexPlaceholder": "Regex, e.g. ^https?://.*\\.example\\.com/",
+    "useRegex": "Use regex",
+    "excludeDomains": "Exclude domains",
+    "excludeDomainsPlaceholder": "e.g. foo.com (multiple allowed)",
+    "resourceTypes": "Resource types",
+    "resourceTypesPlaceholder": "All by default",
+    "requestMethods": "Request methods",
+    "requestMethodsPlaceholder": "All by default (GET / POST / ...)",
+    "targetOption": {
+      "request": "Request",
+      "response": "Response"
+    },
+    "actionOption": {
+      "set": "Set",
+      "append": "Append",
+      "remove": "Remove"
+    }
+  },
+  "tabFilters": {
+    "title": "Tab filters",
+    "addItem": "Add tab filter",
+    "urlPlaceholder": "e.g. *://*.example.com/* (only matched tabs)",
+    "empty": "No tab filter; rules apply to all tabs",
+    "deleteItem": "Delete tab filter"
+  },
+  "filters": {
+    "title": "Filters",
+    "tab": "Tab filter",
+    "tabDesc": "Restrict rules to tabs whose URL matches",
+    "domain": "Request domain filter",
+    "domainDesc": "Restrict rules to requests whose domain matches (subdomains included)",
+    "url": "Request URL filter",
+    "urlDesc": "Restrict rules to request URLs matching regex",
+    "excludeUrl": "Exclude request URL",
+    "excludeUrlDesc": "Skip rules when URL hostname matches",
+    "method": "Request method filter",
+    "methodDesc": "Restrict rules to requests matching method (GET / POST / ...)"
+  },
+  "domainFilters": {
+    "title": "Request domain filter",
+    "addItem": "Add domain",
+    "placeholder": "e.g. example.com (subdomains included)",
+    "empty": "No domain filter; rules apply to all domains",
+    "deleteItem": "Delete domain"
+  },
+  "urlFilters": {
+    "title": "Request URL filter",
+    "addItem": "Add URL regex",
+    "placeholder": "e.g. ^https?://api\\.example\\.com/.*",
+    "empty": "No URL filter; rules apply to all URLs",
+    "deleteItem": "Delete URL regex"
+  },
+  "excludeUrlFilters": {
+    "title": "Exclude request URL",
+    "addItem": "Add excluded URL",
+    "placeholder": "e.g. https://example.com/path (excluded by hostname)",
+    "empty": "No excluded URL",
+    "deleteItem": "Delete excluded URL"
+  },
+  "methodFilters": {
+    "title": "Request method filter",
+    "addItem": "Add method",
+    "placeholder": "Select request methods (multi-select)",
+    "empty": "No method selected; rules apply to all request methods",
+    "hint": "Selected methods apply to all rules; other methods are unaffected",
+    "selectAll": "Select all methods",
+    "clearAll": "Clear selection",
+    "deleteItem": "Delete method"
+  },
+  "templates": {
+    "title": "Quick templates",
+    "apply": "Apply template",
+    "removeCsp": "Remove CSP",
+    "removeCspDesc": "Strip Content-Security-Policy and -Report-Only headers",
+    "openCors": "Allow CORS",
+    "openCorsDesc": "Inject Access-Control-Allow-* response headers",
+    "removeXFrame": "Remove X-Frame-Options",
+    "removeXFrameDesc": "Strip X-Frame-Options to allow iframe embedding",
+    "customUA": "Custom User-Agent",
+    "customUADesc": "Override the request User-Agent header",
+    "noCache": "Disable cache",
+    "noCacheDesc": "Force Cache-Control: no-cache, no-store"
+  },
+  "language": {
+    "label": "Language",
+    "zh-CN": "Simplified Chinese",
+    "en-US": "English"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Follow system"
+  },
+  "errors": {
+    "headerNameRequired": "Header name is required",
+    "valueRequired": "Value is required for set/append"
+  }
+}
