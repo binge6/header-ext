@@ -17,6 +17,15 @@ export const dnr = {
   async getDynamicRules(): Promise<DnrRule[]> {
     return browser.declarativeNetRequest.getDynamicRules();
   },
+  async updateSessionRules(opts: {
+    removeRuleIds?: number[];
+    addRules?: DnrRule[];
+  }): Promise<void> {
+    await browser.declarativeNetRequest.updateSessionRules(opts);
+  },
+  async getSessionRules(): Promise<DnrRule[]> {
+    return browser.declarativeNetRequest.getSessionRules();
+  },
 };
 
 export const storageLocal = {
