@@ -33,6 +33,7 @@ import { TabFilterList } from "@/src/components/TabFilterList";
 import { FilterRowList } from "@/src/components/FilterRowList";
 import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
+import { ImportExportButtons } from "@/src/components/ImportExportButtons";
 import { openOptionsPage } from "@/src/core/browserApi";
 import type {
   HeaderRule,
@@ -647,6 +648,8 @@ function App() {
               {t("filters.title")}
             </Button>
           </Dropdown>
+          <div style={{ flex: 1 }} />
+          <ImportExportButtons iconOnly />
         </div>
       </div>
     </ConfigProvider>

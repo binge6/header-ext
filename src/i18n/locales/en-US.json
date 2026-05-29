@@ -47,8 +47,10 @@
     "noProfiles": "No profile yet, create one first",
     "import": "Import",
     "export": "Export",
-    "importSuccess": "Imported successfully",
+    "importSuccess": "Imported successfully, merged {{count}} profile(s)",
     "importFailed": "Import failed: {{msg}}",
+    "exportSelectHint": "Select profiles to export",
+    "exportSelectAll": "All",
     "exportFileName": "header-ext-config.json"
   },
   "rule": {

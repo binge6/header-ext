@@ -77,10 +77,8 @@ interface ProfileActions {
   setMeta: (patch: Partial<AppMeta>) => void;
   setLockedTabId: (tabId: number | null) => void;
 
-  replaceState: (next: {
-    profiles: Profile[];
-    meta?: Partial<AppMeta>;
-  }) => void;
+  // 合并导入：将外部 profiles 追加到现有列表（重新分配 id + 名称去重）
+  mergeProfiles: (incoming: Profile[]) => void;
 }
 
 interface ProfileStore extends AppState {
@@ -672,17 +670,33 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       void persist({ profiles, meta: get().meta });
     },
 
-    replaceState: (next) => {
-      const meta = { ...get().meta, ...(next.meta ?? {}) };
-      // 导入后默认激活第一个 profile
-      if (
-        !meta.activeProfileId ||
-        !next.profiles.find((p) => p.id === meta.activeProfileId)
-      ) {
-        meta.activeProfileId = next.profiles[0]?.id ?? null;
+    mergeProfiles: (incoming) => {
+      if (!incoming.length) return;
+      const profiles = get().profiles;
+      const now = Date.now();
+      // 维护一个动态扩展的命名池，确保新增项之间也不重名
+      const pool: Profile[] = [...profiles];
+      const merged: Profile[] = incoming.map((p) => {
+        const base = p.name?.trim() || "Imported";
+        const name = uniqueProfileName(base, pool);
+        const next: Profile = {
+          ...p,
+          id: nanoid(),
+          name,
+          createdAt: p.createdAt ?? now,
+          updatedAt: now,
+        };
+        pool.push(next);
+        return next;
+      });
+      const next = [...profiles, ...merged];
+      let meta = get().meta;
+      // 若当前未激活任何 profile，则激活合并后的第一个
+      if (!meta.activeProfileId && next.length > 0) {
+        meta = { ...meta, activeProfileId: next[0]?.id ?? null };
       }
-      set({ profiles: next.profiles, meta });
-      void persist({ profiles: next.profiles, meta });
+      set({ profiles: next, meta });
+      void persist({ profiles: next, meta });
     },
   },
 }));

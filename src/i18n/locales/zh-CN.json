@@ -47,8 +47,10 @@
     "noProfiles": "暂无 Profile，请先新建",
     "import": "导入",
     "export": "导出",
-    "importSuccess": "导入成功",
+    "importSuccess": "导入成功，已合并 {{count}} 个 Profile",
     "importFailed": "导入失败：{{msg}}",
+    "exportSelectHint": "选择要导出的 Profile",
+    "exportSelectAll": "全部",
     "exportFileName": "header-ext-config.json"
   },
   "rule": {
