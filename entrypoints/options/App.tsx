@@ -3,7 +3,7 @@ import { ConfigProvider, Layout, Spin } from "@douyinfe/semi-ui";
 import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { initI18n } from "@/src/i18n";
 import { LanguageSwitcher } from "@/src/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/src/components/ThemeSwitcher";
@@ -20,8 +20,8 @@ function App() {
   // 触发主题副作用（同步 body theme-mode 等）
   useThemeMode();
   const hydrated = useProfileStore((s) => s.hydrated);
-  const hydrate = useProfileStore((s) => s.hydrate);
   const activeProfileId = useProfileStore((s) => s.meta.activeProfileId);
+  const { hydrate } = useProfileActions();
 
   useEffect(() => {
     void (async () => {

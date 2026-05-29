@@ -3,7 +3,7 @@
 // - "system"（缺省）跟随媒体查询，并在系统切换时实时更新
 
 import { useEffect, useState } from "react";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -18,7 +18,7 @@ export function useThemeMode(): {
   setMode: (m: ThemeMode) => void;
 } {
   const mode = useProfileStore((s) => s.meta.theme ?? "system");
-  const setMeta = useProfileStore((s) => s.setMeta);
+  const { setMeta } = useProfileActions();
   const [systemDark, setSystemDark] = useState<boolean>(() => getSystemDark());
 
   useEffect(() => {

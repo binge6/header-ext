@@ -11,7 +11,7 @@ import {
 import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
 import { IconPlus, IconEdit, IconDelete } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 
 const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
   "amber",
@@ -54,10 +54,12 @@ export function ProfilePanel() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const activeId = useProfileStore((s) => s.meta.activeProfileId);
-  const addProfile = useProfileStore((s) => s.addProfile);
-  const renameProfile = useProfileStore((s) => s.renameProfile);
-  const deleteProfile = useProfileStore((s) => s.deleteProfile);
-  const setActive = useProfileStore((s) => s.setActiveProfile);
+  const {
+    addProfile,
+    renameProfile,
+    deleteProfile,
+    setActiveProfile: setActive,
+  } = useProfileActions();
 
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
     null

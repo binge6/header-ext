@@ -3,7 +3,7 @@
 import { Button, Dropdown } from "@douyinfe/semi-ui";
 import { IconBolt } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions } from "@/src/store/profileStore";
 import { TEMPLATE_KEYS, buildTemplate } from "@/src/core/templates";
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 
 export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
   const { t } = useTranslation();
-  const applyTemplate = useProfileStore((s) => s.applyTemplate);
+  const applyTemplate = useProfileActions().applyTemplate;
 
   return (
     <Dropdown

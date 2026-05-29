@@ -23,7 +23,7 @@ import {
 import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { initI18n } from "@/src/i18n";
 import { LanguageSwitcher } from "@/src/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/src/components/ThemeSwitcher";
@@ -89,41 +89,37 @@ function App() {
   // 触发主题副作用（同步 body theme-mode 等）
   useThemeMode();
   const hydrated = useProfileStore((s) => s.hydrated);
-  const hydrate = useProfileStore((s) => s.hydrate);
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
-  const setActive = useProfileStore((s) => s.setActiveProfile);
-  const togglePause = useProfileStore((s) => s.togglePause);
-  const addRule = useProfileStore((s) => s.addRule);
-  const updateRule = useProfileStore((s) => s.updateRule);
-  const deleteRule = useProfileStore((s) => s.deleteRule);
-  const toggleRule = useProfileStore((s) => s.toggleRule);
-  const addProfile = useProfileStore((s) => s.addProfile);
-  const setLockedTabId = useProfileStore((s) => s.setLockedTabId);
-  const addTabFilter = useProfileStore((s) => s.addTabFilter);
-  const updateTabFilter = useProfileStore((s) => s.updateTabFilter);
-  const deleteTabFilter = useProfileStore((s) => s.deleteTabFilter);
-  const toggleTabFilter = useProfileStore((s) => s.toggleTabFilter);
-  const addDomainFilter = useProfileStore((s) => s.addDomainFilter);
-  const updateDomainFilter = useProfileStore((s) => s.updateDomainFilter);
-  const deleteDomainFilter = useProfileStore((s) => s.deleteDomainFilter);
-  const toggleDomainFilter = useProfileStore((s) => s.toggleDomainFilter);
-  const addUrlFilter = useProfileStore((s) => s.addUrlFilter);
-  const updateUrlFilter = useProfileStore((s) => s.updateUrlFilter);
-  const deleteUrlFilter = useProfileStore((s) => s.deleteUrlFilter);
-  const toggleUrlFilter = useProfileStore((s) => s.toggleUrlFilter);
-  const addExcludeUrlFilter = useProfileStore((s) => s.addExcludeUrlFilter);
-  const updateExcludeUrlFilter = useProfileStore(
-    (s) => s.updateExcludeUrlFilter
-  );
-  const deleteExcludeUrlFilter = useProfileStore(
-    (s) => s.deleteExcludeUrlFilter
-  );
-  const toggleExcludeUrlFilter = useProfileStore(
-    (s) => s.toggleExcludeUrlFilter
-  );
-  const addMethodFilter = useProfileStore((s) => s.addMethodFilter);
-  const setMethodFilters = useProfileStore((s) => s.setMethodFilters);
+  const {
+    hydrate,
+    setActiveProfile: setActive,
+    togglePause,
+    addRule,
+    updateRule,
+    deleteRule,
+    toggleRule,
+    addProfile,
+    setLockedTabId,
+    addTabFilter,
+    updateTabFilter,
+    deleteTabFilter,
+    toggleTabFilter,
+    addDomainFilter,
+    updateDomainFilter,
+    deleteDomainFilter,
+    toggleDomainFilter,
+    addUrlFilter,
+    updateUrlFilter,
+    deleteUrlFilter,
+    toggleUrlFilter,
+    addExcludeUrlFilter,
+    updateExcludeUrlFilter,
+    deleteExcludeUrlFilter,
+    toggleExcludeUrlFilter,
+    addMethodFilter,
+    setMethodFilters,
+  } = useProfileActions();
 
   const [currentTabId, setCurrentTabId] = useState<number | null>(null);
   const [currentTabDomain, setCurrentTabDomain] = useState<string>("");

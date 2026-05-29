@@ -3,7 +3,7 @@ import { Switch, Space, Tag, Button, Toast } from "@douyinfe/semi-ui";
 import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
 import { IconDownload, IconUpload } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import {
   buildExport,
   downloadJson,
@@ -51,10 +51,9 @@ function mapTagColor(input?: string): TagColor {
 export function GlobalToolbar() {
   const { t } = useTranslation();
   const paused = useProfileStore((s) => s.meta.globalPaused);
-  const togglePause = useProfileStore((s) => s.togglePause);
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
-  const replaceState = useProfileStore((s) => s.replaceState);
+  const { togglePause, replaceState } = useProfileActions();
 
   const fileRef = useRef<HTMLInputElement>(null);
 

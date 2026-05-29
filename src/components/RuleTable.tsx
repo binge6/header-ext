@@ -1,6 +1,6 @@
 import { Empty } from "@douyinfe/semi-ui";
 import { useTranslation } from "react-i18next";
-import { useProfileStore } from "@/src/store/profileStore";
+import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { HeaderRuleList } from "./HeaderRuleList";
 import { TabFilterList } from "./TabFilterList";
 import { FilterRowList } from "./FilterRowList";
@@ -21,34 +21,30 @@ export function RuleTable() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const activeId = useProfileStore((s) => s.meta.activeProfileId);
-  const addRule = useProfileStore((s) => s.addRule);
-  const updateRule = useProfileStore((s) => s.updateRule);
-  const deleteRule = useProfileStore((s) => s.deleteRule);
-  const toggleRule = useProfileStore((s) => s.toggleRule);
-  const addTabFilter = useProfileStore((s) => s.addTabFilter);
-  const updateTabFilter = useProfileStore((s) => s.updateTabFilter);
-  const deleteTabFilter = useProfileStore((s) => s.deleteTabFilter);
-  const toggleTabFilter = useProfileStore((s) => s.toggleTabFilter);
-  const addDomainFilter = useProfileStore((s) => s.addDomainFilter);
-  const updateDomainFilter = useProfileStore((s) => s.updateDomainFilter);
-  const deleteDomainFilter = useProfileStore((s) => s.deleteDomainFilter);
-  const toggleDomainFilter = useProfileStore((s) => s.toggleDomainFilter);
-  const addUrlFilter = useProfileStore((s) => s.addUrlFilter);
-  const updateUrlFilter = useProfileStore((s) => s.updateUrlFilter);
-  const deleteUrlFilter = useProfileStore((s) => s.deleteUrlFilter);
-  const toggleUrlFilter = useProfileStore((s) => s.toggleUrlFilter);
-  const addExcludeUrlFilter = useProfileStore((s) => s.addExcludeUrlFilter);
-  const updateExcludeUrlFilter = useProfileStore(
-    (s) => s.updateExcludeUrlFilter
-  );
-  const deleteExcludeUrlFilter = useProfileStore(
-    (s) => s.deleteExcludeUrlFilter
-  );
-  const toggleExcludeUrlFilter = useProfileStore(
-    (s) => s.toggleExcludeUrlFilter
-  );
-  const addMethodFilter = useProfileStore((s) => s.addMethodFilter);
-  const setMethodFilters = useProfileStore((s) => s.setMethodFilters);
+  const {
+    addRule,
+    updateRule,
+    deleteRule,
+    toggleRule,
+    addTabFilter,
+    updateTabFilter,
+    deleteTabFilter,
+    toggleTabFilter,
+    addDomainFilter,
+    updateDomainFilter,
+    deleteDomainFilter,
+    toggleDomainFilter,
+    addUrlFilter,
+    updateUrlFilter,
+    deleteUrlFilter,
+    toggleUrlFilter,
+    addExcludeUrlFilter,
+    updateExcludeUrlFilter,
+    deleteExcludeUrlFilter,
+    toggleExcludeUrlFilter,
+    addMethodFilter,
+    setMethodFilters,
+  } = useProfileActions();
 
   const profile = profiles.find((p) => p.id === activeId);
 

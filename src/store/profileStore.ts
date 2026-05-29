@@ -18,8 +18,7 @@ import type {
   MethodFilter,
 } from "../core/types";
 
-interface ProfileStore extends AppState {
-  hydrated: boolean;
+interface ProfileActions {
   hydrate: () => Promise<void>;
 
   // profile
@@ -82,6 +81,11 @@ interface ProfileStore extends AppState {
     profiles: Profile[];
     meta?: Partial<AppMeta>;
   }) => void;
+}
+
+interface ProfileStore extends AppState {
+  hydrated: boolean;
+  actions: ProfileActions;
 }
 
 let isApplyingRemote = false;
@@ -175,506 +179,514 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   },
   hydrated: false,
 
-  hydrate: async () => {
-    const state = await loadState();
-    set({
-      profiles: state.profiles,
-      meta: state.meta,
-      hydrated: true,
-    });
-    subscribeState((next) => {
-      isApplyingRemote = true;
-      set({ profiles: next.profiles, meta: next.meta });
-      isApplyingRemote = false;
-    });
-  },
-
-  addProfile: (name) => {
-    const profiles = get().profiles;
-    const base =
-      name && name.trim() ? name.trim() : nextDefaultProfileName(profiles);
-    const finalName = uniqueProfileName(base, profiles);
-    const profile = emptyProfile(finalName);
-    const next = {
-      ...get(),
-      profiles: [...profiles, profile],
-    };
-    set({ profiles: next.profiles });
-    void persist({ profiles: next.profiles, meta: get().meta });
-    return profile.id;
-  },
-
-  renameProfile: (profileId, name) => {
-    const trimmed = name.trim() || "Untitled";
-    const finalName = uniqueProfileName(trimmed, get().profiles, profileId);
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId ? { ...p, name: finalName, updatedAt: Date.now() } : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteProfile: (profileId) => {
-    let profiles = get().profiles.filter((p) => p.id !== profileId);
-    let meta = get().meta;
-    // 所有 profile 被删除后，自动生成一个默认空 profile
-    if (profiles.length === 0) {
-      const fallback = emptyProfile("Profile 1");
-      profiles = [fallback];
-      meta = { ...meta, activeProfileId: fallback.id };
-    } else if (meta.activeProfileId === profileId) {
-      meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
-    }
-    set({ profiles, meta });
-    void persist({ profiles, meta });
-  },
-
-  setActiveProfile: (profileId) => {
-    const meta = { ...get().meta, activeProfileId: profileId };
-    set({ meta });
-    void persist({ profiles: get().profiles, meta });
-  },
-
-  addRule: (profileId, kind = "header", target) => {
-    const rule = emptyRule(kind, target);
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? { ...p, rules: [...p.rules, rule], updatedAt: Date.now() }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return rule.id;
-  },
-
-  updateRule: (profileId, rule) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            rules: p.rules.map((r) => (r.id === rule.id ? rule : r)),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteRule: (profileId, ruleId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            rules: p.rules.filter((r) => r.id !== ruleId),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleRule: (profileId, ruleId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            rules: p.rules.map((r) =>
-              r.id === ruleId ? { ...r, enabled: !r.enabled } : r
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  togglePause: () => {
-    const meta = { ...get().meta, globalPaused: !get().meta.globalPaused };
-    set({ meta });
-    void persist({ profiles: get().profiles, meta });
-  },
-
-  setMeta: (patch) => {
-    const meta = { ...get().meta, ...patch };
-    set({ meta });
-    void persist({ profiles: get().profiles, meta });
-  },
-
-  setLockedTabId: (tabId) => {
-    const meta = { ...get().meta, lockedTabId: tabId };
-    set({ meta });
-    void persist({ profiles: get().profiles, meta });
-  },
-
-  addTabFilter: (profileId, urlFilter = "") => {
-    const filter = emptyTabFilter(urlFilter);
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            tabFilters: [...(p.tabFilters ?? []), filter],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return filter.id;
-  },
-
-  updateTabFilter: (profileId, filter) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            tabFilters: (p.tabFilters ?? []).map((f) =>
-              f.id === filter.id ? filter : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteTabFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            tabFilters: (p.tabFilters ?? []).filter((f) => f.id !== filterId),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleTabFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            tabFilters: (p.tabFilters ?? []).map((f) =>
-              f.id === filterId ? { ...f, enabled: !f.enabled } : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  addDomainFilter: (profileId, domain = "") => {
-    const filter = emptyDomainFilter(domain);
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            domainFilters: [...(p.domainFilters ?? []), filter],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return filter.id;
-  },
-
-  updateDomainFilter: (profileId, filter) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            domainFilters: (p.domainFilters ?? []).map((f) =>
-              f.id === filter.id ? filter : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteDomainFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            domainFilters: (p.domainFilters ?? []).filter(
-              (f) => f.id !== filterId
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleDomainFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            domainFilters: (p.domainFilters ?? []).map((f) =>
-              f.id === filterId ? { ...f, enabled: !f.enabled } : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  addUrlFilter: (profileId, regex = "") => {
-    const filter: UrlFilter = { id: nanoid(), enabled: true, regex };
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            urlFilters: [...(p.urlFilters ?? []), filter],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return filter.id;
-  },
-
-  updateUrlFilter: (profileId, filter) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            urlFilters: (p.urlFilters ?? []).map((f) =>
-              f.id === filter.id ? filter : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteUrlFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            urlFilters: (p.urlFilters ?? []).filter((f) => f.id !== filterId),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleUrlFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            urlFilters: (p.urlFilters ?? []).map((f) =>
-              f.id === filterId ? { ...f, enabled: !f.enabled } : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  addExcludeUrlFilter: (profileId, url = "") => {
-    const filter: ExcludeUrlFilter = {
-      id: nanoid(),
-      enabled: true,
-      url,
-    };
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            excludeUrlFilters: [...(p.excludeUrlFilters ?? []), filter],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return filter.id;
-  },
-
-  updateExcludeUrlFilter: (profileId, filter) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
-              f.id === filter.id ? filter : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteExcludeUrlFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            excludeUrlFilters: (p.excludeUrlFilters ?? []).filter(
-              (f) => f.id !== filterId
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleExcludeUrlFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
-              f.id === filterId ? { ...f, enabled: !f.enabled } : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  addMethodFilter: (profileId, method = "") => {
-    const filter: MethodFilter = { id: nanoid(), enabled: true, method };
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            methodFilters: [...(p.methodFilters ?? []), filter],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-    return filter.id;
-  },
-
-  updateMethodFilter: (profileId, filter) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            methodFilters: (p.methodFilters ?? []).map((f) =>
-              f.id === filter.id ? filter : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  deleteMethodFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            methodFilters: (p.methodFilters ?? []).filter(
-              (f) => f.id !== filterId
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  toggleMethodFilter: (profileId, filterId) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            methodFilters: (p.methodFilters ?? []).map((f) =>
-              f.id === filterId ? { ...f, enabled: !f.enabled } : f
-            ),
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
-
-  setMethodFilters: (profileId, methods) => {
-    const cleaned = Array.from(
-      new Set(methods.map((m) => m.trim()).filter(Boolean))
-    );
-    const profiles = get().profiles.map((p) => {
-      if (p.id !== profileId) return p;
-      const prev = p.methodFilters ?? [];
-      const prevById = new Map(prev.map((f) => [f.method.toLowerCase(), f]));
-      // 复用已有项的 id / enabled，确保引用稳定
-      const next: MethodFilter[] = cleaned.map((method) => {
-        const found = prevById.get(method.toLowerCase());
-        return found
-          ? { ...found, method }
-          : { id: nanoid(), enabled: true, method };
+  actions: {
+    hydrate: async () => {
+      const state = await loadState();
+      set({
+        profiles: state.profiles,
+        meta: state.meta,
+        hydrated: true,
       });
-      return { ...p, methodFilters: next, updatedAt: Date.now() };
-    });
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
+      subscribeState((next) => {
+        isApplyingRemote = true;
+        set({ profiles: next.profiles, meta: next.meta });
+        isApplyingRemote = false;
+      });
+    },
 
-  applyTemplate: (profileId, templateRules) => {
-    if (!templateRules.length) return;
-    const profiles = get().profiles.map((p) =>
-      p.id === profileId
-        ? {
-            ...p,
-            rules: [...p.rules, ...templateRules],
-            updatedAt: Date.now(),
-          }
-        : p
-    );
-    set({ profiles });
-    void persist({ profiles, meta: get().meta });
-  },
+    addProfile: (name) => {
+      const profiles = get().profiles;
+      const base =
+        name && name.trim() ? name.trim() : nextDefaultProfileName(profiles);
+      const finalName = uniqueProfileName(base, profiles);
+      const profile = emptyProfile(finalName);
+      const next = {
+        ...get(),
+        profiles: [...profiles, profile],
+      };
+      set({ profiles: next.profiles });
+      void persist({ profiles: next.profiles, meta: get().meta });
+      return profile.id;
+    },
 
-  replaceState: (next) => {
-    const meta = { ...get().meta, ...(next.meta ?? {}) };
-    // 导入后默认激活第一个 profile
-    if (
-      !meta.activeProfileId ||
-      !next.profiles.find((p) => p.id === meta.activeProfileId)
-    ) {
-      meta.activeProfileId = next.profiles[0]?.id ?? null;
-    }
-    set({ profiles: next.profiles, meta });
-    void persist({ profiles: next.profiles, meta });
+    renameProfile: (profileId, name) => {
+      const trimmed = name.trim() || "Untitled";
+      const finalName = uniqueProfileName(trimmed, get().profiles, profileId);
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? { ...p, name: finalName, updatedAt: Date.now() }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteProfile: (profileId) => {
+      let profiles = get().profiles.filter((p) => p.id !== profileId);
+      let meta = get().meta;
+      // 所有 profile 被删除后，自动生成一个默认空 profile
+      if (profiles.length === 0) {
+        const fallback = emptyProfile("Profile 1");
+        profiles = [fallback];
+        meta = { ...meta, activeProfileId: fallback.id };
+      } else if (meta.activeProfileId === profileId) {
+        meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
+      }
+      set({ profiles, meta });
+      void persist({ profiles, meta });
+    },
+
+    setActiveProfile: (profileId) => {
+      const meta = { ...get().meta, activeProfileId: profileId };
+      set({ meta });
+      void persist({ profiles: get().profiles, meta });
+    },
+
+    addRule: (profileId, kind = "header", target) => {
+      const rule = emptyRule(kind, target);
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? { ...p, rules: [...p.rules, rule], updatedAt: Date.now() }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return rule.id;
+    },
+
+    updateRule: (profileId, rule) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              rules: p.rules.map((r) => (r.id === rule.id ? rule : r)),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteRule: (profileId, ruleId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              rules: p.rules.filter((r) => r.id !== ruleId),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleRule: (profileId, ruleId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              rules: p.rules.map((r) =>
+                r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    togglePause: () => {
+      const meta = { ...get().meta, globalPaused: !get().meta.globalPaused };
+      set({ meta });
+      void persist({ profiles: get().profiles, meta });
+    },
+
+    setMeta: (patch) => {
+      const meta = { ...get().meta, ...patch };
+      set({ meta });
+      void persist({ profiles: get().profiles, meta });
+    },
+
+    setLockedTabId: (tabId) => {
+      const meta = { ...get().meta, lockedTabId: tabId };
+      set({ meta });
+      void persist({ profiles: get().profiles, meta });
+    },
+
+    addTabFilter: (profileId, urlFilter = "") => {
+      const filter = emptyTabFilter(urlFilter);
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              tabFilters: [...(p.tabFilters ?? []), filter],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return filter.id;
+    },
+
+    updateTabFilter: (profileId, filter) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              tabFilters: (p.tabFilters ?? []).map((f) =>
+                f.id === filter.id ? filter : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteTabFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              tabFilters: (p.tabFilters ?? []).filter((f) => f.id !== filterId),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleTabFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              tabFilters: (p.tabFilters ?? []).map((f) =>
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    addDomainFilter: (profileId, domain = "") => {
+      const filter = emptyDomainFilter(domain);
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              domainFilters: [...(p.domainFilters ?? []), filter],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return filter.id;
+    },
+
+    updateDomainFilter: (profileId, filter) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              domainFilters: (p.domainFilters ?? []).map((f) =>
+                f.id === filter.id ? filter : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteDomainFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              domainFilters: (p.domainFilters ?? []).filter(
+                (f) => f.id !== filterId
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleDomainFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              domainFilters: (p.domainFilters ?? []).map((f) =>
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    addUrlFilter: (profileId, regex = "") => {
+      const filter: UrlFilter = { id: nanoid(), enabled: true, regex };
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              urlFilters: [...(p.urlFilters ?? []), filter],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return filter.id;
+    },
+
+    updateUrlFilter: (profileId, filter) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              urlFilters: (p.urlFilters ?? []).map((f) =>
+                f.id === filter.id ? filter : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteUrlFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              urlFilters: (p.urlFilters ?? []).filter((f) => f.id !== filterId),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleUrlFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              urlFilters: (p.urlFilters ?? []).map((f) =>
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    addExcludeUrlFilter: (profileId, url = "") => {
+      const filter: ExcludeUrlFilter = {
+        id: nanoid(),
+        enabled: true,
+        url,
+      };
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              excludeUrlFilters: [...(p.excludeUrlFilters ?? []), filter],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return filter.id;
+    },
+
+    updateExcludeUrlFilter: (profileId, filter) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
+                f.id === filter.id ? filter : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteExcludeUrlFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              excludeUrlFilters: (p.excludeUrlFilters ?? []).filter(
+                (f) => f.id !== filterId
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleExcludeUrlFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    addMethodFilter: (profileId, method = "") => {
+      const filter: MethodFilter = { id: nanoid(), enabled: true, method };
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              methodFilters: [...(p.methodFilters ?? []), filter],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return filter.id;
+    },
+
+    updateMethodFilter: (profileId, filter) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              methodFilters: (p.methodFilters ?? []).map((f) =>
+                f.id === filter.id ? filter : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteMethodFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              methodFilters: (p.methodFilters ?? []).filter(
+                (f) => f.id !== filterId
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleMethodFilter: (profileId, filterId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              methodFilters: (p.methodFilters ?? []).map((f) =>
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    setMethodFilters: (profileId, methods) => {
+      const cleaned = Array.from(
+        new Set(methods.map((m) => m.trim()).filter(Boolean))
+      );
+      const profiles = get().profiles.map((p) => {
+        if (p.id !== profileId) return p;
+        const prev = p.methodFilters ?? [];
+        const prevById = new Map(prev.map((f) => [f.method.toLowerCase(), f]));
+        // 复用已有项的 id / enabled，确保引用稳定
+        const next: MethodFilter[] = cleaned.map((method) => {
+          const found = prevById.get(method.toLowerCase());
+          return found
+            ? { ...found, method }
+            : { id: nanoid(), enabled: true, method };
+        });
+        return { ...p, methodFilters: next, updatedAt: Date.now() };
+      });
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    applyTemplate: (profileId, templateRules) => {
+      if (!templateRules.length) return;
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              rules: [...p.rules, ...templateRules],
+              updatedAt: Date.now(),
+            }
+          : p
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    replaceState: (next) => {
+      const meta = { ...get().meta, ...(next.meta ?? {}) };
+      // 导入后默认激活第一个 profile
+      if (
+        !meta.activeProfileId ||
+        !next.profiles.find((p) => p.id === meta.activeProfileId)
+      ) {
+        meta.activeProfileId = next.profiles[0]?.id ?? null;
+      }
+      set({ profiles: next.profiles, meta });
+      void persist({ profiles: next.profiles, meta });
+    },
   },
 }));
+
+// 便捷 hook：一次性拿到所有 actions（actions 对象引用稳定，不会触发额外渲染）
+export const useProfileActions = (): ProfileActions =>
+  useProfileStore((s) => s.actions);
