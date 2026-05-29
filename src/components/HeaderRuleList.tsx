@@ -1,4 +1,4 @@
-// ModHeader 风格的紧凑规则列表，每行内联编辑
+// 紧凑规则列表，每行内联编辑
 // 同时承担 header 模式 与 cookie-* 模式（kind 决定样式与字段）
 
 import {

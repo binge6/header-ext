@@ -1,6 +1,6 @@
 # Header Ext
 
-类似 ModHeader 的浏览器扩展，用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL，支持 Chrome 与 Firefox（MV3）。
+一款用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL 的浏览器扩展，支持 Chrome 与 Firefox（MV3）。
 
 ## 功能特性
 

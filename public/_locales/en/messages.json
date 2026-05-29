@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDesc": {
-    "message": "Modify HTTP request and response headers like ModHeader.",
+    "message": "A browser extension to modify HTTP request/response headers, append cookies, and redirect URLs by rules.",
     "description": "Extension description"
   }
 }

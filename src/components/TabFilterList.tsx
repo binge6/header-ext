@@ -1,4 +1,4 @@
-// ModHeader 风格的 Tab 过滤列表（Profile 级 URL 白名单）
+// Tab 过滤列表（Profile 级 URL 白名单）
 // 多条 OR 关系；启用任一项 = 仅匹配 Tab 生效。
 // 没有任何启用项时规则作用于全部 Tab。
 

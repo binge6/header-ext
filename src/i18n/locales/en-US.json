@@ -13,7 +13,7 @@
   },
   "app": {
     "name": "Header Ext",
-    "tagline": "An HTTP header modifier inspired by ModHeader"
+    "tagline": "HTTP request/response header modifier and redirector"
   },
   "popup": {
     "globalPaused": "Globally paused",

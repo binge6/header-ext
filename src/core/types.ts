@@ -3,7 +3,7 @@
 export type HeaderAction = "set" | "append" | "remove";
 export type Target = "request" | "response";
 
-// 规则类型：header = 普通头部修改；cookie-* = ModHeader 风格 Cookie 便捷模式
+// 规则类型：header = 普通头部修改；cookie-* = Cookie 便捷模式
 // redirect = URL 重定向 / 重写（DNR redirect action）
 // cookie 模式下：name = cookie 名，value = cookie 值；编译器自动合成 Cookie / Set-Cookie 头
 export type RuleKind =
@@ -45,7 +45,7 @@ export interface RuleCondition {
 export interface HeaderRule {
   id: string; // 业务 nanoid
   enabled: boolean;
-  // ModHeader 风格的规则类型；为兼容 P0 老数据，缺省视为 "header"
+  // 规则类型；为兼容 P0 老数据，缺省视为 "header"
   kind?: RuleKind;
   target: Target;
   action: HeaderAction;
@@ -101,7 +101,7 @@ export interface Profile {
   name: string;
   color: string;
   rules: HeaderRule[];
-  // ModHeader 风格的 Profile 级 Tab 白名单
+  // Profile 级 Tab 白名单
   tabFilters?: TabFilter[];
   // Profile 级请求域名白名单
   domainFilters?: DomainFilter[];

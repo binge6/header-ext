@@ -13,7 +13,7 @@
   },
   "app": {
     "name": "Header Ext",
-    "tagline": "对标 ModHeader 的 HTTP 头修改插件"
+    "tagline": "HTTP 请求/响应头修改与重定向插件"
   },
   "popup": {
     "globalPaused": "全局已暂停",

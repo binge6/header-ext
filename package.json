@@ -1,6 +1,6 @@
 {
   "name": "header-ext",
-  "description": "类似 ModHeader 的 HTTP 头修改插件",
+  "description": "用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL 的浏览器扩展",
   "private": true,
   "version": "0.0.1",
   "type": "module",

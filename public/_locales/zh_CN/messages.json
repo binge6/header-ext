@@ -4,7 +4,7 @@
     "description": "扩展名称"
   },
   "extDesc": {
-    "message": "类似 ModHeader 的 HTTP 请求/响应头修改插件。",
+    "message": "用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL 的浏览器扩展。",
     "description": "扩展描述"
   }
 }
