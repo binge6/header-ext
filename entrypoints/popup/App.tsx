@@ -34,6 +34,7 @@ import { FilterRowList } from "@/src/components/FilterRowList";
 import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
 import { ImportExportButtons } from "@/src/components/ImportExportButtons";
+import { NoFilterBanner } from "@/src/components/NoFilterBanner";
 import { openOptionsPage } from "@/src/core/browserApi";
 import type {
   HeaderRule,
@@ -623,7 +624,8 @@ function App() {
 
         {/* Footer: 主要动作（Mod / 模板 / 过滤） */}
         <div style={{ margin: "8px 0 6px" }}>
-          <Divider />
+          <NoFilterBanner compact />
+          <Divider style={{ marginTop: 8 }} />
         </div>
         <div
           style={{

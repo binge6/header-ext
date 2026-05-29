@@ -5,6 +5,7 @@ import { HeaderRuleList } from "./HeaderRuleList";
 import { TabFilterList } from "./TabFilterList";
 import { FilterRowList } from "./FilterRowList";
 import { MethodFilterPicker } from "./MethodFilterPicker";
+import { NoFilterBanner } from "./NoFilterBanner";
 import type {
   HeaderRule,
   RuleKind,
@@ -97,6 +98,8 @@ export function RuleTable() {
       }}
     >
       <h3 style={{ margin: 0 }}>{profile.name}</h3>
+
+      <NoFilterBanner />
 
       {card(
         <HeaderRuleList

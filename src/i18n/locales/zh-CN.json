@@ -116,7 +116,8 @@
     "excludeUrl": "排除请求 URL",
     "excludeUrlDesc": "命中 URL（按 hostname）的请求不应用规则",
     "method": "请求方法过滤",
-    "methodDesc": "限定规则只对匹配方法（GET / POST / ...）的请求生效"
+    "methodDesc": "限定规则只对匹配方法（GET / POST / ...）的请求生效",
+    "noFilterHint": "当前修改将作用于所有请求。可添加过滤将其限定到特定 URL、域名、Tab 或请求方法。"
   },
   "domainFilters": {
     "title": "请求域名过滤",
