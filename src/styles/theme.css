@@ -1,47 +1,31 @@
 /* Header Ext 全局色板（CSS 变量）
- * 通过 <html data-theme="light|dark"> 切换；与 useThemeMode hook 保持同步。
- * 命名约定 --he-* 避免与 AntD --ant-* 冲突。
+ * 统一映射到 Semi Design 色值变量（--semi-color-*），
+ * 暗色模式由 Semi 通过 <body theme-mode="dark"> 自动切换，无需重复定义。
+ * 命名约定 --he-* 仅用于业务侧语义聚合，避免散落硬编码色值。
  */
 
 :root,
-html[data-theme="light"] {
-  /* 品牌色（与 AntD 默认 colorPrimary 对齐） */
-  --he-color-primary: #1677ff;
-  --he-color-warning: #faad14;
+html,
+body {
+  /* 品牌色 */
+  --he-color-primary: var(--semi-color-primary);
+  --he-color-warning: var(--semi-color-warning);
 
   /* 文字 */
-  --he-text-primary: rgba(0, 0, 0, 0.88);
-  --he-text-secondary: rgba(0, 0, 0, 0.65);
-  --he-text-tertiary: rgba(0, 0, 0, 0.45);
+  --he-text-primary: var(--semi-color-text-0);
+  --he-text-secondary: var(--semi-color-text-1);
+  --he-text-tertiary: var(--semi-color-text-2);
 
   /* 背景 */
-  --he-bg-page: #fafafa;
-  --he-bg-surface: #ffffff;
-  --he-bg-popup: #ffffff;
-  --he-bg-selected: #e6f4ff;
+  --he-bg-page: var(--semi-color-bg-0);
+  --he-bg-surface: var(--semi-color-bg-1);
+  --he-bg-popup: var(--semi-color-bg-2);
+  --he-bg-selected: var(--semi-color-primary-light-default);
 
   /* 暂停状态横幅 */
-  --he-bg-pause: #fffbe6;
-  --he-border-pause: #ffe58f;
+  --he-bg-pause: var(--semi-color-warning-light-default);
+  --he-border-pause: var(--semi-color-warning-light-active);
 
   /* 边框 */
-  --he-border: #f0f0f0;
-}
-html[data-theme="dark"] {
-  --he-color-primary: #1677ff;
-  --he-color-warning: #faad14;
-
-  --he-text-primary: rgba(255, 255, 255, 0.85);
-  --he-text-secondary: rgba(255, 255, 255, 0.65);
-  --he-text-tertiary: rgba(255, 255, 255, 0.45);
-
-  --he-bg-page: #000000;
-  --he-bg-surface: #141414;
-  --he-bg-popup: #1f1f1f;
-  --he-bg-selected: #111d2c;
-
-  --he-bg-pause: #2b2611;
-  --he-border-pause: #594214;
-
-  --he-border: #303030;
+  --he-border: var(--semi-color-border);
 }
