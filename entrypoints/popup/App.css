@@ -9,3 +9,8 @@ body {
   background: var(--he-bg-popup);
   color: var(--he-text-primary);
 }
+
+/* popup 视口高度有限，限制 AutoComplete 历史建议下拉层不超过视口 45% */
+.semi-autocomplete-option-list {
+  max-height: 45vh !important;
+}

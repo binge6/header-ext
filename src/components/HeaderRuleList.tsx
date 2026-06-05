@@ -9,8 +9,10 @@ import {
   Popover,
   Select,
   Switch,
+  Tooltip,
 } from "@douyinfe/semi-ui";
 import { IconClose, IconFilter, IconPlus } from "@douyinfe/semi-icons";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   HeaderAction,
@@ -76,6 +78,10 @@ export function HeaderRuleList({
     kind === "cookie-request-append" || kind === "cookie-response-append";
   const isRedirect = kind === "redirect";
   const { names, valuesByName } = useHistorySuggestions();
+  // 当前打开过滤 Popover 的规则 id，用于和 Tooltip 互斥
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+  // 当前 hover 的过滤按钮规则 id（受控 Tooltip 显隐）
+  const [hoverFilterId, setHoverFilterId] = useState<string | null>(null);
 
   // 优先使用显式 target，其次用首条规则的 target，最后兜底 request
   const headerTarget = target ?? rules[0]?.target ?? "request";
@@ -410,29 +416,52 @@ export function HeaderRuleList({
                   position="left"
                   autoAdjustOverflow
                   content={renderFilterPopover(rule)}
+                  onVisibleChange={(v) =>
+                    setOpenFilterId(v ? rule.id : null)
+                  }
+                >
+                  <span style={{ display: "inline-flex" }}>
+                    <Tooltip
+                      trigger="custom"
+                      visible={
+                        hoverFilterId === rule.id && openFilterId !== rule.id
+                      }
+                      content={t("rule.filter")}
+                      position="top"
+                    >
+                      <Button
+                        theme="borderless"
+                        type="tertiary"
+                        size="small"
+                        icon={
+                          <IconFilter
+                            style={{
+                              color: filterActive
+                                ? "var(--he-color-primary)"
+                                : undefined,
+                            }}
+                          />
+                        }
+                        onMouseEnter={() => setHoverFilterId(rule.id)}
+                        onMouseLeave={() => setHoverFilterId(null)}
+                        onClick={() => setHoverFilterId(null)}
+                      />
+                    </Tooltip>
+                  </span>
+                </Popover>
+                <Tooltip
+                  trigger="hover"
+                  content={t("common.delete")}
+                  position="top"
                 >
                   <Button
                     theme="borderless"
-                    type="tertiary"
+                    type="danger"
                     size="small"
-                    icon={
-                      <IconFilter
-                        style={{
-                          color: filterActive
-                            ? "var(--he-color-primary)"
-                            : undefined,
-                        }}
-                      />
-                    }
+                    icon={<IconClose />}
+                    onClick={() => onDelete(rule.id)}
                   />
-                </Popover>
-                <Button
-                  theme="borderless"
-                  type="danger"
-                  size="small"
-                  icon={<IconClose />}
-                  onClick={() => onDelete(rule.id)}
-                />
+                </Tooltip>
               </div>
             );
           })}

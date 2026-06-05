@@ -30,6 +30,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportHover, setExportHover] = useState(false);
   // null = 默认全选；数组 = 用户显式选择
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
 
@@ -163,15 +164,28 @@ export function ImportExportButtons({ iconOnly }: Props) {
   );
 
   const exportTrigger = iconOnly ? (
-    // Popover 子节点不再包裹 Tooltip，避免 onClick 丢失
-    <Button
-      theme="borderless"
-      type="tertiary"
-      size="small"
-      icon={<IconDownload />}
-      disabled={profiles.length === 0}
-      onClick={() => setExportOpen((v) => !v)}
-    />
+    <span style={{ display: "inline-flex" }}>
+      <Tooltip
+        trigger="custom"
+        visible={exportHover && !exportOpen}
+        content={t("options.export")}
+        position="top"
+      >
+        <Button
+          theme="borderless"
+          type="tertiary"
+          size="small"
+          icon={<IconDownload />}
+          disabled={profiles.length === 0}
+          onMouseEnter={() => setExportHover(true)}
+          onMouseLeave={() => setExportHover(false)}
+          onClick={() => {
+            setExportHover(false);
+            setExportOpen((v) => !v);
+          }}
+        />
+      </Tooltip>
+    </span>
   ) : (
     <Button
       size="small"
