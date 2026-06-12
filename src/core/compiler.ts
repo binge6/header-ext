@@ -25,6 +25,8 @@ const DNR_BASE_PRIORITY = 1;
 // DNR 默认行为：省略 resourceTypes 时匹配「除 main_frame 外的所有类型」，
 // 导致页面文档（main_frame）请求不被命中。这里显式覆盖全部资源类型，
 // 使未指定资源类型的规则也能作用于初始 document 请求。
+// 注：`webtransport` / `webbundle` 是 Chrome 专属类型，Firefox DNR 不识别，
+// 若传入会导致 updateDynamicRules 整条 reject（全部规则注册失败），故 Firefox 构建时剔除。
 const ALL_RESOURCE_TYPES: ResourceType[] = [
   "main_frame",
   "sub_frame",
@@ -38,9 +40,10 @@ const ALL_RESOURCE_TYPES: ResourceType[] = [
   "csp_report",
   "media",
   "websocket",
-  "webtransport",
-  "webbundle",
   "other",
+  ...(import.meta.env.FIREFOX
+    ? []
+    : (["webtransport", "webbundle"] as ResourceType[])),
 ];
 
 const idMap = new Map<string, number>();

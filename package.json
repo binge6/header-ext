@@ -2,7 +2,7 @@
   "name": "header-ext",
   "description": "A browser extension to modify HTTP request/response headers, append cookies, and redirect URLs by rules.",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.6",
   "type": "module",
   "scripts": {
     "dev": "wxt",
