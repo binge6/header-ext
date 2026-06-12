@@ -1,6 +1,6 @@
 // UserRule -> DNR Rule 编译器
 
-import type { HeaderRule, Profile, TabFilter } from "./types";
+import type { HeaderRule, Profile, ResourceType, TabFilter } from "./types";
 import type { DnrRule, DnrHeaderAction } from "./browserApi";
 
 export interface CompileError {
@@ -21,6 +21,27 @@ export interface CompileContext {
 }
 
 const DNR_BASE_PRIORITY = 1;
+
+// DNR 默认行为：省略 resourceTypes 时匹配「除 main_frame 外的所有类型」，
+// 导致页面文档（main_frame）请求不被命中。这里显式覆盖全部资源类型，
+// 使未指定资源类型的规则也能作用于初始 document 请求。
+const ALL_RESOURCE_TYPES: ResourceType[] = [
+  "main_frame",
+  "sub_frame",
+  "stylesheet",
+  "script",
+  "image",
+  "font",
+  "object",
+  "xmlhttprequest",
+  "ping",
+  "csp_report",
+  "media",
+  "websocket",
+  "webtransport",
+  "webbundle",
+  "other",
+];
 
 const idMap = new Map<string, number>();
 let nextDnrId = 1;
@@ -145,6 +166,9 @@ function compileOne(
   if (cond.resourceTypes?.length)
     condition.resourceTypes =
       cond.resourceTypes as DnrRule["condition"]["resourceTypes"];
+  else
+    condition.resourceTypes =
+      ALL_RESOURCE_TYPES as DnrRule["condition"]["resourceTypes"];
   if (cond.requestMethods?.length)
     condition.requestMethods = cond.requestMethods.map((m) =>
       m.toLowerCase()
