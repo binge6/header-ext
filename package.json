@@ -15,8 +15,8 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@douyinfe/semi-icons": "^2.99.2",
-    "@douyinfe/semi-ui": "^2.99.2",
+    "@douyinfe/semi-icons": "^2.101.0",
+    "@douyinfe/semi-ui": "^2.101.0",
     "i18next": "^26.3.0",
     "nanoid": "^5.1.11",
     "react": "^19.2.4",
@@ -32,6 +32,6 @@
     "@wxt-dev/module-react": "^1.1.5",
     "tailwindcss": "^4.3.2",
     "typescript": "^5.9.3",
-    "wxt": "^0.20.26"
+    "wxt": "^0.20.27"
   }
 }
