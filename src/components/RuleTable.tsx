@@ -54,16 +54,16 @@ export function RuleTable() {
   }
 
   const requestRules = profile.rules.filter(
-    (r) => ruleKind(r) === "header" && r.target === "request"
+    (r) => ruleKind(r) === "header" && r.target === "request",
   );
   const responseRules = profile.rules.filter(
-    (r) => ruleKind(r) === "header" && r.target === "response"
+    (r) => ruleKind(r) === "header" && r.target === "response",
   );
   const cookieRequestRules = profile.rules.filter(
-    (r) => ruleKind(r) === "cookie-request-append"
+    (r) => ruleKind(r) === "cookie-request-append",
   );
   const cookieResponseRules = profile.rules.filter(
-    (r) => ruleKind(r) === "cookie-response-append"
+    (r) => ruleKind(r) === "cookie-response-append",
   );
   const redirectRules = profile.rules.filter((r) => ruleKind(r) === "redirect");
 
@@ -76,28 +76,14 @@ export function RuleTable() {
   };
 
   const card = (children: React.ReactNode) => (
-    <div
-      style={{
-        background: "var(--he-bg-surface)",
-        borderRadius: 6,
-        padding: 16,
-        border: "1px solid var(--he-border)",
-      }}
-    >
+    <div className="rounded-md border border-semi-color-border bg-semi-color-bg-1 p-4">
       {children}
     </div>
   );
 
   return (
-    <div
-      style={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <h3 style={{ margin: 0 }}>{profile.name}</h3>
+    <div className="flex w-full flex-col gap-3">
+      <h3 className="m-0">{profile.name}</h3>
 
       <NoFilterBanner />
 
@@ -110,7 +96,7 @@ export function RuleTable() {
           onUpdate={handleUpdate}
           onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
           onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-        />
+        />,
       )}
 
       {card(
@@ -122,7 +108,7 @@ export function RuleTable() {
           onUpdate={handleUpdate}
           onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
           onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-        />
+        />,
       )}
 
       {card(
@@ -133,7 +119,7 @@ export function RuleTable() {
           onUpdate={handleUpdate}
           onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
           onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-        />
+        />,
       )}
 
       {card(
@@ -144,7 +130,7 @@ export function RuleTable() {
           onUpdate={handleUpdate}
           onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
           onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-        />
+        />,
       )}
 
       {card(
@@ -155,7 +141,7 @@ export function RuleTable() {
           onUpdate={handleUpdate}
           onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
           onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-        />
+        />,
       )}
 
       {card(
@@ -165,7 +151,7 @@ export function RuleTable() {
           onUpdate={(f) => updateTabFilter(profile.id, f)}
           onDelete={(id) => deleteTabFilter(profile.id, id)}
           onToggle={(id) => toggleTabFilter(profile.id, id)}
-        />
+        />,
       )}
 
       {card(
@@ -177,7 +163,7 @@ export function RuleTable() {
           onUpdate={(f) => updateDomainFilter(profile.id, f)}
           onDelete={(id) => deleteDomainFilter(profile.id, id)}
           onToggle={(id) => toggleDomainFilter(profile.id, id)}
-        />
+        />,
       )}
 
       {card(
@@ -189,7 +175,7 @@ export function RuleTable() {
           onUpdate={(f) => updateUrlFilter(profile.id, f)}
           onDelete={(id) => deleteUrlFilter(profile.id, id)}
           onToggle={(id) => toggleUrlFilter(profile.id, id)}
-        />
+        />,
       )}
 
       {card(
@@ -201,7 +187,7 @@ export function RuleTable() {
           onUpdate={(f) => updateExcludeUrlFilter(profile.id, f)}
           onDelete={(id) => deleteExcludeUrlFilter(profile.id, id)}
           onToggle={(id) => toggleExcludeUrlFilter(profile.id, id)}
-        />
+        />,
       )}
 
       {card(
@@ -218,7 +204,7 @@ export function RuleTable() {
             }
             setMethodFilters(profile.id, methods);
           }}
-        />
+        />,
       )}
     </div>
   );

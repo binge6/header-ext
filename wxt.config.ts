@@ -1,10 +1,18 @@
 import { defineConfig } from "wxt";
+import tailwindcss from "@tailwindcss/vite";
+import semiTheming from "@douyinfe/semi-vite-plugin";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   srcDir: ".",
   manifestVersion: 3,
+  vite: () => ({
+    // Semi 官方 Vite 插件：将 Semi 编译产物包进 @layer semi{}，
+    // 使 Tailwind Preflight(base 层) 优先级低于 Semi、Semi 又低于用户原子类(utilities)。
+    // 层级顺序在 tailwind.css 中通过 `@layer base, semi, utilities;` 声明。
+    plugins: [semiTheming({ cssLayer: true }), tailwindcss()],
+  }),
   manifest: ({ browser }) => {
     const isFirefox = browser === "firefox";
     return {

@@ -10,8 +10,9 @@ import {
   Select,
   Switch,
   Tooltip,
+  Typography,
 } from "@douyinfe/semi-ui";
-import { IconClose, IconFilter, IconPlus } from "@douyinfe/semi-icons";
+import { IconClose, IconFilter } from "@douyinfe/semi-icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -21,6 +22,7 @@ import type {
   RuleKind,
 } from "@/src/core/types";
 import { useHistorySuggestions } from "@/src/hooks/useHistorySuggestions";
+import { GroupHeader } from "./GroupHeader";
 
 interface Props {
   // 用 kind 决定标题和行字段：
@@ -90,49 +92,33 @@ export function HeaderRuleList({
     kind === "cookie-request-append"
       ? "rule.group.cookieRequestAppend"
       : kind === "cookie-response-append"
-      ? "rule.group.cookieResponseAppend"
-      : kind === "redirect"
-      ? "rule.group.redirect"
-      : `rule.targetOption.${headerTarget}`;
+        ? "rule.group.cookieResponseAppend"
+        : kind === "redirect"
+          ? "rule.group.redirect"
+          : `rule.targetOption.${headerTarget}`;
 
   const addLabelKey =
     kind === "cookie-request-append"
       ? "rule.addCookieRequestItem"
       : kind === "cookie-response-append"
-      ? "rule.addCookieResponseItem"
-      : kind === "redirect"
-      ? "rule.addRedirectItem"
-      : "rule.addRule";
+        ? "rule.addCookieResponseItem"
+        : kind === "redirect"
+          ? "rule.addRedirectItem"
+          : "rule.addRule";
 
   const renderFilterPopover = (rule: HeaderRule) => {
     const cond = rule.condition;
+    // 各字段小标题统一样式
+    const label = (text: string) => (
+      <Typography.Text type="tertiary" size="small" className="mb-1 block">
+        {text}
+      </Typography.Text>
+    );
     return (
-      <div
-        style={{
-          width: 260,
-          maxHeight: 320,
-          overflowY: "auto",
-          padding: "8px 4px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-            width: "100%",
-          }}
-        >
+      <div className="max-h-80 w-65 overflow-y-auto px-1 py-2">
+        <div className="flex w-full flex-col gap-3">
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--he-text-tertiary)",
-                marginBottom: 4,
-              }}
-            >
-              {t("rule.filter")}
-            </div>
+            {label(t("rule.filter"))}
             <Input
               size="small"
               placeholder={
@@ -149,7 +135,7 @@ export function HeaderRuleList({
               }
             />
             <Checkbox
-              style={{ marginTop: 4 }}
+              className="mt-1"
               checked={!!cond.useRegex}
               onChange={(e) =>
                 onUpdate({
@@ -158,26 +144,18 @@ export function HeaderRuleList({
                 })
               }
             >
-              <span style={{ fontSize: 12 }}>{t("rule.useRegex")}</span>
+              <span className="text-xs">{t("rule.useRegex")}</span>
             </Checkbox>
           </div>
 
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--he-text-tertiary)",
-                marginBottom: 4,
-              }}
-            >
-              {t("rule.excludeDomains")}
-            </div>
+            {label(t("rule.excludeDomains"))}
             <Select
               size="small"
               multiple
               allowCreate
               filter
-              style={{ width: "100%" }}
+              className="w-full"
               placeholder={t("rule.excludeDomainsPlaceholder")}
               value={cond.excludedDomains ?? []}
               onChange={(v) =>
@@ -190,20 +168,12 @@ export function HeaderRuleList({
           </div>
 
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--he-text-tertiary)",
-                marginBottom: 4,
-              }}
-            >
-              {t("rule.resourceTypes")}
-            </div>
+            {label(t("rule.resourceTypes"))}
             <Select
               size="small"
               multiple
               showClear
-              style={{ width: "100%" }}
+              className="w-full"
               placeholder={t("rule.resourceTypesPlaceholder")}
               value={cond.resourceTypes ?? []}
               onChange={(v) =>
@@ -221,20 +191,12 @@ export function HeaderRuleList({
           </div>
 
           <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--he-text-tertiary)",
-                marginBottom: 4,
-              }}
-            >
-              {t("rule.requestMethods")}
-            </div>
+            {label(t("rule.requestMethods"))}
             <Select
               size="small"
               multiple
               showClear
-              style={{ width: "100%" }}
+              className="w-full"
               placeholder={t("rule.requestMethodsPlaceholder")}
               value={cond.requestMethods ?? []}
               onChange={(v) =>
@@ -257,27 +219,11 @@ export function HeaderRuleList({
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "4px 0",
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600 }}>
-          {t(groupTitleKey)}
-        </span>
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size="small"
-          icon={<IconPlus />}
-          onClick={onAdd}
-        >
-          {t(addLabelKey)}
-        </Button>
-      </div>
+      <GroupHeader
+        title={t(groupTitleKey)}
+        addLabel={t(addLabelKey)}
+        onAdd={onAdd}
+      />
 
       {rules.length === 0
         ? null
@@ -295,7 +241,7 @@ export function HeaderRuleList({
                   .filter(
                     (n) =>
                       !rule.name ||
-                      n.toLowerCase().includes(rule.name.toLowerCase())
+                      n.toLowerCase().includes(rule.name.toLowerCase()),
                   )
                   .slice(0, 20)
                   .map((n) => ({ value: n, label: n }));
@@ -306,20 +252,12 @@ export function HeaderRuleList({
                   .filter(
                     (v) =>
                       !rule.value ||
-                      v.toLowerCase().includes(rule.value.toLowerCase())
+                      v.toLowerCase().includes(rule.value.toLowerCase()),
                   )
                   .slice(0, 20)
                   .map((v) => ({ value: v, label: v }));
             return (
-              <div
-                key={rule.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "4px 0",
-                }}
-              >
+              <div key={rule.id} className="flex items-center gap-1 py-1">
                 <Switch
                   size="small"
                   checked={rule.enabled}
@@ -329,7 +267,7 @@ export function HeaderRuleList({
                 {!isCookie && !isRedirect && (
                   <Select
                     size="small"
-                    style={{ width: 76 }}
+                    className="w-19"
                     value={rule.action}
                     onChange={(v) =>
                       onUpdate({ ...rule, action: v as HeaderAction })
@@ -349,7 +287,7 @@ export function HeaderRuleList({
                         ? t("rule.redirectFromRegexPlaceholder")
                         : t("rule.redirectFromPlaceholder")
                     }
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={cond.urlFilter ?? ""}
                     onChange={(v) =>
                       onUpdate({
@@ -362,14 +300,14 @@ export function HeaderRuleList({
                   <Input
                     size="small"
                     placeholder={t("rule.cookieNamePlaceholder")}
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={rule.name}
                     onChange={(v) => onUpdate({ ...rule, name: v })}
                   />
                 ) : (
                   <AutoComplete
                     size="small"
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={rule.name}
                     data={nameOptions}
                     placeholder={t("rule.namePlaceholder")}
@@ -386,7 +324,7 @@ export function HeaderRuleList({
                         ? t("rule.redirectToRegexPlaceholder")
                         : t("rule.redirectToPlaceholder")
                     }
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={rule.value}
                     onChange={(v) => onUpdate({ ...rule, value: v })}
                   />
@@ -394,14 +332,14 @@ export function HeaderRuleList({
                   <Input
                     size="small"
                     placeholder={t("rule.cookieValuePlaceholder")}
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={rule.value}
                     onChange={(v) => onUpdate({ ...rule, value: v })}
                   />
                 ) : (
                   <AutoComplete
                     size="small"
-                    style={{ flex: 1, minWidth: 0 }}
+                    className="min-w-0 flex-1"
                     value={rule.value}
                     data={valueOptions}
                     placeholder={t("rule.valuePlaceholder")}
@@ -416,11 +354,9 @@ export function HeaderRuleList({
                   position="left"
                   autoAdjustOverflow
                   content={renderFilterPopover(rule)}
-                  onVisibleChange={(v) =>
-                    setOpenFilterId(v ? rule.id : null)
-                  }
+                  onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
                 >
-                  <span style={{ display: "inline-flex" }}>
+                  <span className="inline-flex">
                     <Tooltip
                       trigger="custom"
                       visible={
@@ -435,11 +371,11 @@ export function HeaderRuleList({
                         size="small"
                         icon={
                           <IconFilter
-                            style={{
-                              color: filterActive
-                                ? "var(--he-color-primary)"
-                                : undefined,
-                            }}
+                            className={
+                              filterActive
+                                ? "text-semi-color-primary"
+                                : undefined
+                            }
                           />
                         }
                         onMouseEnter={() => setHoverFilterId(rule.id)}

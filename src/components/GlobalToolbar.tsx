@@ -54,14 +54,7 @@ export function GlobalToolbar() {
           {t("popup.globalPaused")}
         </Tag>
       )}
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          lineHeight: 1,
-        }}
-      >
+      <span className="inline-flex items-center gap-1.5 leading-none">
         {t("options.globalPaused")}
         <Switch size="small" checked={paused} onChange={() => togglePause()} />
       </span>

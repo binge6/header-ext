@@ -37,7 +37,7 @@ function App() {
 
   if (!hydrated) {
     return (
-      <div style={{ padding: 80, textAlign: "center" }}>
+      <div className="p-20 text-center">
         <Spin />
       </div>
     );
@@ -45,47 +45,21 @@ function App() {
 
   return (
     <ConfigProvider locale={semiLocale}>
-      <Layout style={{ minHeight: "100vh", background: "var(--he-bg-page)" }}>
-        <Header
-          style={{
-            background: "var(--he-bg-surface)",
-            borderBottom: "1px solid var(--he-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 32px",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <h2 style={{ margin: 0 }}>{t("options.title")}</h2>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <Layout className="min-h-screen bg-semi-color-bg-0">
+        <Header className="sticky top-0 z-10 flex items-center justify-between border-b border-semi-color-border bg-semi-color-bg-1 px-8 py-2.5">
+          <h2 className="m-0">{t("options.title")}</h2>
+          <div className="flex items-center gap-3">
             <TemplateMenu profileId={activeProfileId} />
             <GlobalToolbar />
             <LanguageSwitcher />
             <ThemeSwitcher variant="icon" />
           </div>
         </Header>
-        <Layout
-          style={{
-            maxWidth: 1440,
-            width: "100%",
-            margin: "0 auto",
-            background: "transparent",
-          }}
-        >
-          <Sider
-            style={{
-              width: 280,
-              background: "var(--he-bg-surface)",
-              borderRight: "1px solid var(--he-border)",
-              minHeight: "calc(100vh - 64px)",
-            }}
-          >
+        <Layout className="mx-auto w-full max-w-360 bg-transparent">
+          <Sider className="w-70 min-h-[calc(100vh-4rem)] border-r border-semi-color-border bg-semi-color-bg-1">
             <ProfilePanel />
           </Sider>
-          <Content style={{ padding: 32, background: "var(--he-bg-page)" }}>
+          <Content className="bg-semi-color-bg-0 p-8">
             <RuleTable />
           </Content>
         </Layout>

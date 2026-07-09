@@ -1,5 +1,12 @@
 import { useMemo, useRef, useState } from "react";
-import { Button, Toast, Popover, Checkbox, Tooltip } from "@douyinfe/semi-ui";
+import {
+  Button,
+  Toast,
+  Popover,
+  Checkbox,
+  Tooltip,
+  Typography,
+} from "@douyinfe/semi-ui";
 import { IconDownload, IconUpload } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
@@ -73,25 +80,15 @@ export function ImportExportButtons({ iconOnly }: Props) {
   };
 
   const exportPanel = (
-    <div
-      style={{
-        width: 240,
-        maxHeight: 320,
-        display: "flex",
-        flexDirection: "column",
-        padding: "8px 4px",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12,
-          color: "var(--he-text-tertiary)",
-          padding: "0 8px 6px",
-        }}
+    <div className="flex max-h-80 w-60 flex-col px-1 py-2">
+      <Typography.Text
+        type="tertiary"
+        size="small"
+        className="block px-2 pb-1.5"
       >
         {t("options.exportSelectHint")}
-      </div>
-      <div style={{ padding: "0 8px 6px" }}>
+      </Typography.Text>
+      <div className="px-2 pb-1.5">
         <Checkbox
           indeterminate={
             effectiveSelected.length > 0 &&
@@ -103,16 +100,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
           {t("options.exportSelectAll")}
         </Checkbox>
       </div>
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          padding: "0 8px",
-        }}
-      >
+      <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-2">
         {profiles.map((p) => (
           <Checkbox
             key={p.id}
@@ -123,14 +111,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
           </Checkbox>
         ))}
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 8,
-          padding: "8px 8px 0",
-        }}
-      >
+      <div className="flex justify-end gap-2 px-2 pt-2">
         <Button size="small" onClick={() => setExportOpen(false)}>
           {t("common.cancel")}
         </Button>
@@ -164,7 +145,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
   );
 
   const exportTrigger = iconOnly ? (
-    <span style={{ display: "inline-flex" }}>
+    <span className="inline-flex">
       <Tooltip
         trigger="custom"
         visible={exportHover && !exportOpen}
@@ -213,7 +194,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
         ref={fileRef}
         type="file"
         accept="application/json,.json"
-        style={{ display: "none" }}
+        className="hidden"
         onChange={handleFileChange}
       />
     </>

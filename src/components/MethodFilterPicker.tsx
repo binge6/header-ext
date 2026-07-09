@@ -32,17 +32,14 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
 
   return (
     <div>
-      <Typography.Text
-        strong
-        style={{ fontSize: 13, display: "block", marginBottom: 6 }}
-      >
+      <Typography.Text strong className="text-group-title mb-1.5 block">
         {t("methodFilters.title")}
       </Typography.Text>
       <Select
         size="small"
         multiple
         showClear
-        style={{ width: "100%" }}
+        className="w-full"
         value={value}
         placeholder={t("methodFilters.placeholder")}
         optionList={HTTP_METHODS.map((m) => ({ value: m, label: m }))}
@@ -53,7 +50,7 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
         outerBottomSlot={
           <>
             <Divider margin="4px" />
-            <Space style={{ padding: "4px 8px" }}>
+            <Space className="px-2 py-1">
               <Button
                 size="small"
                 theme="borderless"
@@ -68,7 +65,7 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
           </>
         }
       />
-      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+      <Typography.Text type="secondary" className="text-xs">
         {value.length === 0
           ? t("methodFilters.empty")
           : t("methodFilters.hint")}

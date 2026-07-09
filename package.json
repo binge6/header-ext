@@ -25,9 +25,12 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@douyinfe/semi-vite-plugin": "^2.101.0",
+    "@tailwindcss/vite": "^4.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",
+    "tailwindcss": "^4.3.2",
     "typescript": "^5.9.3",
     "wxt": "^0.20.26"
   }

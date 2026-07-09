@@ -39,24 +39,15 @@ export function NoFilterBanner({ compact }: Props) {
   if (compact) {
     // 紧凑提示：使用 Semi Text ellipsis 单行省略 + 自动 Tooltip
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "4px 8px",
-          background: "var(--semi-color-warning-light-default)",
-          borderRadius: 4,
-        }}
-      >
+      <div className="flex items-center gap-1.5 rounded bg-semi-color-warning-light-default px-2 py-1">
         <IconAlertTriangle
           size="small"
-          style={{ color: "var(--semi-color-warning)", flexShrink: 0 }}
+          className="shrink-0 text-semi-color-warning"
         />
         <Text
           size="small"
           ellipsis={{ showTooltip: { opts: { content: fullText } } }}
-          style={{ flex: 1, minWidth: 0 }}
+          className="min-w-0 flex-1"
         >
           {fullText}
         </Text>

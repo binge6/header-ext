@@ -35,6 +35,7 @@ import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
 import { ImportExportButtons } from "@/src/components/ImportExportButtons";
 import { NoFilterBanner } from "@/src/components/NoFilterBanner";
+import { MenuItemLabel } from "@/src/components/MenuItemLabel";
 import { openOptionsPage } from "@/src/core/browserApi";
 import type {
   HeaderRule,
@@ -165,12 +166,12 @@ function App() {
 
   const semiLocale = useMemo(
     () => (i18n.language === "zh-CN" ? zh_CN : en_US),
-    [i18n.language]
+    [i18n.language],
   );
 
   if (!hydrated) {
     return (
-      <div style={{ padding: 40, textAlign: "center", width: 460 }}>
+      <div className="w-155 p-10 text-center">
         <Spin />
       </div>
     );
@@ -180,11 +181,11 @@ function App() {
 
   const requestRules =
     active?.rules.filter(
-      (r) => ruleKind(r) === "header" && r.target === "request"
+      (r) => ruleKind(r) === "header" && r.target === "request",
     ) ?? [];
   const responseRules =
     active?.rules.filter(
-      (r) => ruleKind(r) === "header" && r.target === "response"
+      (r) => ruleKind(r) === "header" && r.target === "response",
     ) ?? [];
   const cookieRequestRules =
     active?.rules.filter((r) => ruleKind(r) === "cookie-request-append") ?? [];
@@ -217,50 +218,28 @@ function App() {
       <Dropdown.Item
         onClick={() => active && addTabFilter(active.id, currentTabUrlPattern)}
       >
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {t("filters.tab")}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-            {t("filters.tabDesc")}
-          </div>
-        </div>
+        <MenuItemLabel title={t("filters.tab")} desc={t("filters.tabDesc")} />
       </Dropdown.Item>
       <Dropdown.Item
         onClick={() => active && addDomainFilter(active.id, currentTabDomain)}
       >
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {t("filters.domain")}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-            {t("filters.domainDesc")}
-          </div>
-        </div>
+        <MenuItemLabel
+          title={t("filters.domain")}
+          desc={t("filters.domainDesc")}
+        />
       </Dropdown.Item>
       <Dropdown.Item
         onClick={() => active && addUrlFilter(active.id, currentTabRegex)}
       >
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {t("filters.url")}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-            {t("filters.urlDesc")}
-          </div>
-        </div>
+        <MenuItemLabel title={t("filters.url")} desc={t("filters.urlDesc")} />
       </Dropdown.Item>
       <Dropdown.Item
         onClick={() => active && addExcludeUrlFilter(active.id, currentTabUrl)}
       >
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {t("filters.excludeUrl")}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-            {t("filters.excludeUrlDesc")}
-          </div>
-        </div>
+        <MenuItemLabel
+          title={t("filters.excludeUrl")}
+          desc={t("filters.excludeUrlDesc")}
+        />
       </Dropdown.Item>
       <Dropdown.Item
         onClick={() => {
@@ -270,14 +249,10 @@ function App() {
           }
         }}
       >
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {t("filters.method")}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-            {t("filters.methodDesc")}
-          </div>
-        </div>
+        <MenuItemLabel
+          title={t("filters.method")}
+          desc={t("filters.methodDesc")}
+        />
       </Dropdown.Item>
     </Dropdown.Menu>
   );
@@ -310,31 +285,15 @@ function App() {
 
   return (
     <ConfigProvider locale={semiLocale}>
-      <div
-        style={{
-          width: 520,
-          minHeight: 360,
-          padding: 12,
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--he-bg-popup)",
-          color: "var(--he-text-primary)",
-        }}
-      >
+      <div className="flex w-155 min-h-90 flex-col bg-semi-color-bg-2 p-3 text-semi-color-text-0">
         {/* 顶栏：Profile 选择 + 全局动作（暂停/锁 Tab/语言/设置） */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Tag color={mapTagColor(active?.color)} style={{ marginRight: 0 }}>
+        <div className="flex items-center gap-1.5">
+          <Tag color={mapTagColor(active?.color)} className="mr-0">
             {active?.rules.length ?? 0}
           </Tag>
           <Select
             size="small"
-            style={{ width: 200 }}
+            className="w-50"
             value={meta.activeProfileId ?? undefined}
             onChange={(v) => setActive(v as string)}
             placeholder={t("popup.activeProfile")}
@@ -358,7 +317,7 @@ function App() {
               </>
             }
           />
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
           <Tooltip
             position="bottom"
             content={
@@ -371,7 +330,7 @@ function App() {
               size="small"
               icon={
                 meta.globalPaused ? (
-                  <IconPlay style={{ color: "var(--he-color-warning)" }} />
+                  <IconPlay className="text-semi-color-warning" />
                 ) : (
                   <IconPause />
                 )
@@ -385,8 +344,8 @@ function App() {
               lockedHere
                 ? t("popup.unlockTab")
                 : isLocked
-                ? t("popup.lockedTo", { id: meta.lockedTabId })
-                : t("popup.lockTab")
+                  ? t("popup.lockedTo", { id: meta.lockedTabId })
+                  : t("popup.lockTab")
             }
           >
             <Button
@@ -395,14 +354,10 @@ function App() {
               size="small"
               icon={
                 lockedHere ? (
-                  <IconUnlock style={{ color: "var(--he-color-primary)" }} />
+                  <IconUnlock className="text-semi-color-primary" />
                 ) : (
                   <IconLock
-                    style={
-                      isLocked
-                        ? { color: "var(--he-color-primary)" }
-                        : undefined
-                    }
+                    className={isLocked ? "text-semi-color-primary" : undefined}
                   />
                 )
               }
@@ -429,19 +384,7 @@ function App() {
         </div>
 
         {meta.globalPaused && (
-          <div
-            style={{
-              marginTop: 8,
-              padding: "4px 8px",
-              background: "var(--he-bg-pause)",
-              border: "1px solid var(--he-border-pause)",
-              borderRadius: 4,
-              fontSize: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
+          <div className="mt-2 flex items-center justify-between rounded border border-semi-color-warning-light-active bg-semi-color-warning-light-default px-2 py-1 text-xs">
             <span>{t("popup.globalPaused")}</span>
             <Switch
               size="small"
@@ -451,30 +394,18 @@ function App() {
           </div>
         )}
 
-        <div style={{ margin: "12px 0 4px" }}>
+        <div className="my-3 mb-1">
           <Divider />
         </div>
 
         {!active ? (
-          <div
-            style={{
-              color: "var(--he-text-tertiary)",
-              textAlign: "center",
-              padding: "24px 0",
-            }}
-          >
+          <div className="py-6 text-center text-semi-color-text-2">
             {t("options.noProfiles")}
           </div>
         ) : (
           <div
-            style={{
-              flex: 1,
-              maxHeight: 460,
-              overflowY: "auto",
-              // 把滚动条压到外层 padding 区域内（marginRight: -12），并恢复内容左右对称
-              marginRight: -12,
-              paddingRight: 12,
-            }}
+            // -mr-3/pr-3：把滚动条压到外层 padding 区域内，并恢复内容左右对称
+            className="max-h-115 flex-1 -mr-3 overflow-y-auto pr-3"
           >
             <HeaderRuleList
               kind="header"
@@ -487,7 +418,7 @@ function App() {
             />
             {responseRules.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <HeaderRuleList
@@ -503,7 +434,7 @@ function App() {
             )}
             {cookieRequestRules.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <HeaderRuleList
@@ -518,7 +449,7 @@ function App() {
             )}
             {cookieResponseRules.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <HeaderRuleList
@@ -533,7 +464,7 @@ function App() {
             )}
             {redirectRules.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <HeaderRuleList
@@ -548,7 +479,7 @@ function App() {
             )}
             {tabFilters.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <TabFilterList
@@ -562,7 +493,7 @@ function App() {
             )}
             {domainFilters.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <FilterRowList<DomainFilter>
@@ -578,7 +509,7 @@ function App() {
             )}
             {urlFilters.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <FilterRowList<UrlFilter>
@@ -594,7 +525,7 @@ function App() {
             )}
             {excludeUrlFilters.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <FilterRowList<ExcludeUrlFilter>
@@ -610,7 +541,7 @@ function App() {
             )}
             {methodFilters.length > 0 && (
               <>
-                <div style={{ margin: "8px 0" }}>
+                <div className="my-2">
                   <Divider />
                 </div>
                 <MethodFilterPicker
@@ -623,17 +554,11 @@ function App() {
         )}
 
         {/* Footer: 主要动作（Mod / 模板 / 过滤） */}
-        <div style={{ margin: "8px 0 6px" }}>
+        <div className="mt-2 mb-1.5">
           <NoFilterBanner compact />
-          <Divider style={{ marginTop: 8 }} />
+          <Divider className="mt-2" />
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
+        <div className="flex items-center gap-1.5">
           <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
             <Button
               theme="solid"
@@ -650,7 +575,7 @@ function App() {
               {t("filters.title")}
             </Button>
           </Dropdown>
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
           <ImportExportButtons iconOnly />
         </div>
       </div>

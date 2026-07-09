@@ -44,7 +44,7 @@ export function LanguageSwitcher({
     <Select
       size={size}
       value={i18n.language as Lang}
-      style={{ width: 130 }}
+      className="w-select"
       onChange={(v) => void setLanguage(v as Lang)}
       optionList={SUPPORTED_LANGS.map((l) => ({
         value: l,

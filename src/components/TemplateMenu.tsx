@@ -5,6 +5,7 @@ import { IconBolt } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileActions } from "@/src/store/profileStore";
 import { TEMPLATE_KEYS, buildTemplate } from "@/src/core/templates";
+import { MenuItemLabel } from "./MenuItemLabel";
 
 interface Props {
   profileId: string | null;
@@ -31,14 +32,10 @@ export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
                 applyTemplate(profileId, buildTemplate(k));
               }}
             >
-              <div style={{ minWidth: 220 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>
-                  {t(`templates.${k}`)}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--he-text-tertiary)" }}>
-                  {t(`templates.${k}Desc`)}
-                </div>
-              </div>
+              <MenuItemLabel
+                title={t(`templates.${k}`)}
+                desc={t(`templates.${k}Desc`)}
+              />
             </Dropdown.Item>
           ))}
         </Dropdown.Menu>

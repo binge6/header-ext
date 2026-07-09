@@ -71,26 +71,20 @@ export function ProfilePanel() {
   };
 
   return (
-    <div style={{ padding: 12 }}>
+    <div className="p-3">
       <Button
         theme="solid"
         type="primary"
         icon={<IconPlus />}
         block
         onClick={handleAdd}
-        style={{ marginBottom: 12 }}
+        className="mb-3"
       >
         {t("options.newProfile")}
       </Button>
 
       {profiles.length === 0 ? (
-        <div
-          style={{
-            color: "var(--he-text-tertiary)",
-            textAlign: "center",
-            padding: 24,
-          }}
-        >
+        <div className="p-6 text-center text-semi-color-text-2">
           {t("options.noProfiles")}
         </div>
       ) : (
@@ -102,19 +96,13 @@ export function ProfilePanel() {
             return (
               <div
                 key={p.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  cursor: "pointer",
-                  background: isActive ? "var(--he-bg-selected)" : undefined,
-                  borderRadius: 4,
-                  padding: "8px 12px",
-                }}
+                className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 ${
+                  isActive ? "bg-semi-color-primary-light-default" : ""
+                }`}
                 onClick={() => setActive(p.id)}
               >
                 <Space>
-                  <Tag color={mapTagColor(p.color)} style={{ marginRight: 0 }}>
+                  <Tag color={mapTagColor(p.color)} className="mr-0">
                     {p.rules.length}
                   </Tag>
                   <span>{p.name}</span>

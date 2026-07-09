@@ -54,7 +54,7 @@ export function ThemeSwitcher({
     <Select
       size={size}
       value={mode}
-      style={{ width: 130 }}
+      className="w-select"
       onChange={(v) => setMode(v as ThemeMode)}
       optionList={MODES.map((m) => ({ value: m, label: t(`theme.${m}`) }))}
     />

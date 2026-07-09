@@ -2,9 +2,10 @@
 // 用于：请求域名 / 排除域名 / URL 正则等同构结构。
 // items 内部字段名通过 valueField 指定，存取从 i18n key 注入。
 
-import { Button, Input, Switch, Tooltip } from "@douyinfe/semi-ui";
-import { IconClose, IconPlus } from "@douyinfe/semi-icons";
+import { Button, Input, Switch, Tooltip, Typography } from "@douyinfe/semi-ui";
+import { IconClose } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
+import { GroupHeader } from "./GroupHeader";
 
 export interface FilterRowItem {
   id: string;
@@ -36,49 +37,19 @@ export function FilterRowList<T extends FilterRowItem>({
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "4px 0",
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600 }}>
-          {t(`${i18nKey}.title`)}
-        </span>
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size="small"
-          icon={<IconPlus />}
-          onClick={onAdd}
-        >
-          {t(`${i18nKey}.addItem`)}
-        </Button>
-      </div>
+      <GroupHeader
+        title={t(`${i18nKey}.title`)}
+        addLabel={t(`${i18nKey}.addItem`)}
+        onAdd={onAdd}
+      />
 
       {filters.length === 0 ? (
-        <div
-          style={{
-            color: "var(--he-text-tertiary)",
-            fontSize: 12,
-            padding: "4px 0",
-          }}
-        >
+        <Typography.Text type="tertiary" size="small" className="block py-1">
           {t(`${i18nKey}.empty`)}
-        </div>
+        </Typography.Text>
       ) : (
         filters.map((f) => (
-          <div
-            key={f.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 0",
-            }}
-          >
+          <div key={f.id} className="flex items-center gap-1 py-1">
             <Switch
               size="small"
               checked={f.enabled}
@@ -87,7 +58,7 @@ export function FilterRowList<T extends FilterRowItem>({
             <Input
               size="small"
               placeholder={t(`${i18nKey}.placeholder`)}
-              style={{ flex: 1, minWidth: 0 }}
+              className="min-w-0 flex-1"
               value={(f[valueField] as unknown as string) ?? ""}
               onChange={(v) => onUpdate({ ...f, [valueField]: v } as T)}
             />

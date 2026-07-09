@@ -2,10 +2,11 @@
 // 多条 OR 关系；启用任一项 = 仅匹配 Tab 生效。
 // 没有任何启用项时规则作用于全部 Tab。
 
-import { Button, Input, Switch, Tooltip } from "@douyinfe/semi-ui";
-import { IconClose, IconPlus } from "@douyinfe/semi-icons";
+import { Button, Input, Switch, Tooltip, Typography } from "@douyinfe/semi-ui";
+import { IconClose } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
+import { GroupHeader } from "./GroupHeader";
 
 interface Props {
   filters: TabFilter[];
@@ -26,49 +27,19 @@ export function TabFilterList({
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "4px 0",
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600 }}>
-          {t("tabFilters.title")}
-        </span>
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size="small"
-          icon={<IconPlus />}
-          onClick={onAdd}
-        >
-          {t("tabFilters.addItem")}
-        </Button>
-      </div>
+      <GroupHeader
+        title={t("tabFilters.title")}
+        addLabel={t("tabFilters.addItem")}
+        onAdd={onAdd}
+      />
 
       {filters.length === 0 ? (
-        <div
-          style={{
-            color: "var(--he-text-tertiary)",
-            fontSize: 12,
-            padding: "4px 0",
-          }}
-        >
+        <Typography.Text type="tertiary" size="small" className="block py-1">
           {t("tabFilters.empty")}
-        </div>
+        </Typography.Text>
       ) : (
         filters.map((f) => (
-          <div
-            key={f.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 0",
-            }}
-          >
+          <div key={f.id} className="flex items-center gap-1 py-1">
             <Switch
               size="small"
               checked={f.enabled}
@@ -77,7 +48,7 @@ export function TabFilterList({
             <Input
               size="small"
               placeholder={t("tabFilters.urlPlaceholder")}
-              style={{ flex: 1, minWidth: 0 }}
+              className="min-w-0 flex-1"
               value={f.urlFilter}
               onChange={(v) => onUpdate({ ...f, urlFilter: v })}
             />
