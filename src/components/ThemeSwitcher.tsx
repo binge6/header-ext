@@ -2,7 +2,12 @@
 // 与 LanguageSwitcher 风格保持一致：icon 模式 hover 出菜单，select 模式下拉
 
 import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import { IconBulb, IconMoon, IconSun, IconTick } from "@douyinfe/semi-icons";
+import {
+  IconMonitorStroked as IconBulb,
+  IconMoonStroked as IconMoon,
+  IconSunStroked as IconSun,
+  IconTick,
+} from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useThemeMode, type ThemeMode } from "@/src/hooks/useThemeMode";
 import { cn } from "@/src/utils/cn";

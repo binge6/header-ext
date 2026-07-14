@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button, Divider, Select, Space, Typography } from "@douyinfe/semi-ui";
-import { IconFilter } from "@douyinfe/semi-icons";
+import { IconFilterStroked as IconFilter } from "@douyinfe/semi-icons";
 import type { MethodFilter } from "../core/types";
 
 interface Props {
@@ -77,17 +77,24 @@ export function MethodFilterPicker({
   );
 
   if (variant === "editor") {
+    if (filters.length === 0) return null;
+
     return (
-      <section className="he-editor-section rounded-xl border border-semi-color-border p-3">
-        <div className="mb-1.5 flex items-center gap-1.5">
-          <span className="he-editor-section-icon he-editor-section-icon-filter">
-            <IconFilter />
-          </span>
-          <Typography.Text strong className="text-group-title">
-            {t("methodFilters.title")}
-          </Typography.Text>
+      <section className="he-editor-section rounded-xl border border-semi-color-border">
+        <div className="he-editor-section-header flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="he-editor-section-icon he-editor-section-icon-filter">
+              <IconFilter />
+            </span>
+            <Typography.Text strong className="text-group-title">
+              {t("methodFilters.title")}
+            </Typography.Text>
+            <span className="he-editor-section-count">{value.length}</span>
+          </div>
         </div>
-        {content}
+        <div className="flex flex-col gap-1.5 p-3">
+          {content}
+        </div>
       </section>
     );
   }

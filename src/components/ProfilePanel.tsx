@@ -9,7 +9,11 @@ import {
   Popconfirm,
 } from "@douyinfe/semi-ui";
 import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
-import { IconPlus, IconEdit, IconDelete } from "@douyinfe/semi-icons";
+import {
+  IconDeleteStroked as IconDelete,
+  IconEditStroked as IconEdit,
+  IconPlusStroked as IconPlus,
+} from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 

@@ -1,5 +1,8 @@
 import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import { IconLanguage, IconTick } from "@douyinfe/semi-icons";
+import {
+  IconGlobeStrokeStroked as IconLanguage,
+  IconTick,
+} from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { setLanguage, SUPPORTED_LANGS, type Lang } from "@/src/i18n";
 import { cn } from "@/src/utils/cn";

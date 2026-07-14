@@ -7,7 +7,7 @@ import {
   Tooltip,
   Typography,
 } from "@douyinfe/semi-ui";
-import { IconDownload, IconUpload } from "@douyinfe/semi-icons";
+import { IconExport, IconImport } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import {
@@ -134,12 +134,12 @@ export function ImportExportButtons({ iconOnly }: Props) {
         theme="borderless"
         type="tertiary"
         size="small"
-        icon={<IconUpload />}
+        icon={<IconImport />}
         onClick={handleImportClick}
       />
     </Tooltip>
   ) : (
-    <Button size="small" icon={<IconUpload />} onClick={handleImportClick}>
+    <Button size="small" icon={<IconImport />} onClick={handleImportClick}>
       {t("options.import")}
     </Button>
   );
@@ -156,7 +156,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
           theme="borderless"
           type="tertiary"
           size="small"
-          icon={<IconDownload />}
+          icon={<IconExport />}
           disabled={profiles.length === 0}
           onMouseEnter={() => setExportHover(true)}
           onMouseLeave={() => setExportHover(false)}
@@ -170,7 +170,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
   ) : (
     <Button
       size="small"
-      icon={<IconDownload />}
+      icon={<IconExport />}
       disabled={profiles.length === 0}
       onClick={() => setExportOpen((v) => !v)}
     >

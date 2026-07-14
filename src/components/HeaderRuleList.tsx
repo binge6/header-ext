@@ -13,14 +13,14 @@ import {
   Typography,
 } from "@douyinfe/semi-ui";
 import {
-  IconCode,
-  IconDelete,
-  IconFilter,
+  IconChainStroked as IconLink,
+  IconCodeStroked as IconCode,
+  IconDeleteStroked as IconDelete,
+  IconDownloadStroked as IconUndo,
+  IconFilterStroked as IconFilter,
   IconHandle,
-  IconLink,
-  IconPlus,
-  IconSend,
-  IconUndo,
+  IconPlusStroked as IconPlus,
+  IconSendStroked as IconSend,
 } from "@douyinfe/semi-icons";
 import { useState, type DragEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,11 +51,6 @@ interface Props {
 }
 
 const ACTION_OPTIONS: HeaderAction[] = ["set", "append", "remove"];
-
-function getNextAction(action: HeaderAction): HeaderAction {
-  const index = ACTION_OPTIONS.indexOf(action);
-  return ACTION_OPTIONS[(index + 1) % ACTION_OPTIONS.length] ?? "set";
-}
 
 const RESOURCE_TYPES: ResourceType[] = [
   "main_frame",
@@ -142,6 +137,17 @@ export function HeaderRuleList({
     if (isCookie) return <IconCode />;
     return headerTarget === "request" ? <IconSend /> : <IconUndo />;
   };
+
+  const sectionIconClassName = cn(
+    "he-editor-section-icon",
+    kind === "redirect"
+      ? "he-editor-section-icon-redirect"
+      : isCookie
+        ? "he-editor-section-icon-cookie"
+        : headerTarget === "request"
+          ? "he-editor-section-icon-request"
+          : "he-editor-section-icon-response",
+  );
 
   const buildReorderedRuleIds = (fromId: string, toId: string): string[] => {
     const ruleIds = rules.map((rule) => rule.id);
@@ -334,8 +340,6 @@ export function HeaderRuleList({
       isEditor && "he-editor-field",
       isEditor ? "w-22" : "w-19",
     );
-    const nextAction = getNextAction(rule.action);
-
     return (
       <div
         key={rule.id}
@@ -369,35 +373,18 @@ export function HeaderRuleList({
           />
         )}
         {/* header 模式才有 action 选择器；redirect / cookie 不需要 */}
-        {!isCookie &&
-          !isRedirect &&
-          (isEditor ? (
-            <Tooltip
-              content={`${t("rule.action")}: ${t(`rule.actionOption.${rule.action}`)}`}
-              position="top"
-            >
-              <Button
-                size="small"
-                theme="light"
-                type="tertiary"
-                className="he-action-cycle-button w-auto shrink-0 px-2"
-                onClick={() => onUpdate({ ...rule, action: nextAction })}
-              >
-                {t(`rule.actionOption.${rule.action}`)}
-              </Button>
-            </Tooltip>
-          ) : (
-            <Select
-              size="small"
-              className={actionClassName}
-              value={rule.action}
-              onChange={(v) => onUpdate({ ...rule, action: v as HeaderAction })}
-              optionList={ACTION_OPTIONS.map((a) => ({
-                value: a,
-                label: t(`rule.actionOption.${a}`),
-              }))}
-            />
-          ))}
+        {!isCookie && !isRedirect && (
+          <Select
+            size="small"
+            className={actionClassName}
+            value={rule.action}
+            onChange={(v) => onUpdate({ ...rule, action: v as HeaderAction })}
+            optionList={ACTION_OPTIONS.map((a) => ({
+              value: a,
+              label: t(`rule.actionOption.${a}`),
+            }))}
+          />
+        )}
         {isRedirect ? (
           // redirect 模式：源 URL（写入 condition.urlFilter） + 目标 URL（写入 value）
           <Input
@@ -454,14 +441,13 @@ export function HeaderRuleList({
             value={rule.value}
             onChange={(v) => onUpdate({ ...rule, value: v })}
           />
-        ) : (
+        ) : rule.action === "remove" ? null : (
           <AutoComplete
             size="small"
             className={fieldClassName}
             value={rule.value}
             data={valueOptions}
             placeholder={t("rule.valuePlaceholder")}
-            disabled={rule.action === "remove"}
             onChange={(v) => onUpdate({ ...rule, value: String(v ?? "") })}
           />
         )}
@@ -473,47 +459,71 @@ export function HeaderRuleList({
           />
         )}
         <div className={cn("flex items-center", isEditor ? "gap-0" : "gap-1")}>
-          <Popover
-            trigger="click"
-            position="left"
-            autoAdjustOverflow
-            content={renderFilterPopover(rule)}
-            onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
-          >
-            <span className="inline-flex">
+          {isEditor ? (
+            <Tooltip
+              trigger="hover"
+              content={t("common.delete")}
+              position="top"
+            >
+              <Button
+                theme="borderless"
+                type="tertiary"
+                size="small"
+                icon={<IconDelete />}
+                onClick={() => onDelete(rule.id)}
+              />
+            </Tooltip>
+          ) : (
+            <>
+              <Popover
+                trigger="click"
+                position="left"
+                autoAdjustOverflow
+                content={renderFilterPopover(rule)}
+                onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
+              >
+                <span className="inline-flex">
+                  <Tooltip
+                    trigger="custom"
+                    visible={
+                      hoverFilterId === rule.id && openFilterId !== rule.id
+                    }
+                    content={t("rule.filter")}
+                    position="top"
+                  >
+                    <Button
+                      theme="borderless"
+                      type="tertiary"
+                      size="small"
+                      icon={
+                        <IconFilter
+                          className={
+                            filterActive ? "text-semi-color-primary" : undefined
+                          }
+                        />
+                      }
+                      onMouseEnter={() => setHoverFilterId(rule.id)}
+                      onMouseLeave={() => setHoverFilterId(null)}
+                      onClick={() => setHoverFilterId(null)}
+                    />
+                  </Tooltip>
+                </span>
+              </Popover>
               <Tooltip
-                trigger="custom"
-                visible={hoverFilterId === rule.id && openFilterId !== rule.id}
-                content={t("rule.filter")}
+                trigger="hover"
+                content={t("common.delete")}
                 position="top"
               >
                 <Button
                   theme="borderless"
                   type="tertiary"
                   size="small"
-                  icon={
-                    <IconFilter
-                      className={
-                        filterActive ? "text-semi-color-primary" : undefined
-                      }
-                    />
-                  }
-                  onMouseEnter={() => setHoverFilterId(rule.id)}
-                  onMouseLeave={() => setHoverFilterId(null)}
-                  onClick={() => setHoverFilterId(null)}
+                  icon={<IconDelete />}
+                  onClick={() => onDelete(rule.id)}
                 />
               </Tooltip>
-            </span>
-          </Popover>
-          <Tooltip trigger="hover" content={t("common.delete")} position="top">
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconDelete />}
-              onClick={() => onDelete(rule.id)}
-            />
-          </Tooltip>
+            </>
+          )}
         </div>
       </div>
     );
@@ -532,44 +542,39 @@ export function HeaderRuleList({
     );
   }
 
+  if (rules.length === 0) return null;
+
   return (
-    <section className="he-editor-section rounded-xl border border-semi-color-border p-3">
-      <div className="mb-1.5 flex items-center justify-between">
+    <section className="he-editor-section rounded-xl border border-semi-color-border">
+      <div className="he-editor-section-header flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "he-editor-section-icon",
-              headerTarget === "request"
-                ? "he-editor-section-icon-request"
-                : "he-editor-section-icon-response",
-            )}
-          >
-            {renderSectionIcon()}
-          </span>
+          <span className={sectionIconClassName}>{renderSectionIcon()}</span>
           <Typography.Text strong className="text-group-title">
             {t(groupTitleKey)}
           </Typography.Text>
+          <span className="he-editor-section-count">{rules.length}</span>
         </div>
-        <Switch
-          size="small"
-          checked={groupEnabled}
-          disabled={rules.length === 0}
-          onChange={(checked) => handleToggleGroup(Boolean(checked))}
-        />
+        <div className="flex items-center gap-1">
+          <Tooltip content={t(addLabelKey)} position="topRight">
+            <Button
+              theme="borderless"
+              type="tertiary"
+              size="small"
+              icon={<IconPlus />}
+              aria-label={t(addLabelKey)}
+              onClick={onAdd}
+            />
+          </Tooltip>
+          <Switch
+            size="small"
+            checked={groupEnabled}
+            disabled={rules.length === 0}
+            onChange={(checked) => handleToggleGroup(Boolean(checked))}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col">{rows}</div>
-
-      <Button
-        theme="borderless"
-        type="tertiary"
-        size="small"
-        className="mt-1 px-0 text-group-title"
-        icon={<IconPlus />}
-        onClick={onAdd}
-      >
-        {t(addLabelKey)}
-      </Button>
     </section>
   );
 }

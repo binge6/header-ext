@@ -3,7 +3,11 @@
 // 没有任何启用项时规则作用于全部 Tab。
 
 import { Button, Input, Switch, Tooltip, Typography } from "@douyinfe/semi-ui";
-import { IconDelete, IconFilter, IconPlus } from "@douyinfe/semi-icons";
+import {
+  IconDeleteStroked as IconDelete,
+  IconFilterStroked as IconFilter,
+  IconPlusStroked as IconPlus,
+} from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
 import { cn } from "@/src/utils/cn";
@@ -38,7 +42,11 @@ export function TabFilterList({
 
   const rows =
     filters.length === 0 ? (
-      <Typography.Text type="tertiary" size="small" className="block py-1">
+      <Typography.Text
+        type="tertiary"
+        size="small"
+        className={cn("block", isEditor ? "px-3 py-2" : "py-1")}
+      >
         {t("tabFilters.empty")}
       </Typography.Text>
     ) : (
@@ -86,9 +94,11 @@ export function TabFilterList({
     );
 
   if (isEditor) {
+    if (filters.length === 0) return null;
+
     return (
-      <section className="he-editor-section rounded-xl border border-semi-color-border p-3">
-        <div className="mb-1.5 flex items-center justify-between">
+      <section className="he-editor-section rounded-xl border border-semi-color-border">
+        <div className="he-editor-section-header flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="he-editor-section-icon he-editor-section-icon-filter">
               <IconFilter />
@@ -96,25 +106,28 @@ export function TabFilterList({
             <Typography.Text strong className="text-group-title">
               {t("tabFilters.title")}
             </Typography.Text>
+            <span className="he-editor-section-count">{filters.length}</span>
           </div>
-          <Switch
-            size="small"
-            checked={groupEnabled}
-            disabled={filters.length === 0}
-            onChange={(checked) => handleToggleGroup(Boolean(checked))}
-          />
+          <div className="flex items-center gap-1">
+            <Tooltip content={t("tabFilters.addItem")} position="topRight">
+              <Button
+                theme="borderless"
+                type="tertiary"
+                size="small"
+                icon={<IconPlus />}
+                aria-label={t("tabFilters.addItem")}
+                onClick={onAdd}
+              />
+            </Tooltip>
+            <Switch
+              size="small"
+              checked={groupEnabled}
+              disabled={filters.length === 0}
+              onChange={(checked) => handleToggleGroup(Boolean(checked))}
+            />
+          </div>
         </div>
         <div className="flex flex-col">{rows}</div>
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size="small"
-          className="mt-1 px-0 text-group-title"
-          icon={<IconPlus />}
-          onClick={onAdd}
-        >
-          {t("tabFilters.addItem")}
-        </Button>
       </section>
     );
   }

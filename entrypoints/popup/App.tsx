@@ -2,21 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   ConfigProvider,
-  Divider,
   Dropdown,
-  Select,
+  Nav,
   Spin,
   Tooltip,
+  Typography,
 } from "@douyinfe/semi-ui";
 import {
-  IconFilter,
-  IconFolder,
-  IconLock,
-  IconPause,
-  IconPlay,
-  IconPlus,
-  IconSetting,
-  IconUnlock,
+  IconFilterStroked as IconFilter,
+  IconForwardStroked as IconPlay,
+  IconLockStroked as IconLock,
+  IconPlusStroked as IconPlus,
+  IconSettingStroked as IconSetting,
+  IconUnlockStroked as IconUnlock,
 } from "@douyinfe/semi-icons";
 import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
@@ -45,9 +43,19 @@ import type {
 import { cn } from "@/src/utils/cn";
 import "./App.css";
 
+const logoUrl = new URL("../../assets/logo.svg", import.meta.url).href;
+
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
 }
+
+function getProfileBadgeText(name?: string): string {
+  const trimmed = name?.trim() ?? "";
+  const edgeNumber = trimmed.match(/^\d+/)?.[0] ?? trimmed.match(/\d+$/)?.[0];
+  return edgeNumber ?? (trimmed.charAt(0).toUpperCase() || "H");
+}
+
+const { Text } = Typography;
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -158,6 +166,19 @@ function App() {
   const urlFilters = active?.urlFilters ?? [];
   const excludeUrlFilters = active?.excludeUrlFilters ?? [];
   const methodFilters = active?.methodFilters ?? [];
+  const profileNavItems = useMemo(
+    () =>
+      profiles.map((profile) => ({
+        itemKey: profile.id,
+        text: profile.name,
+        icon: (
+          <span className="he-profile-rail-number" aria-hidden="true">
+            {getProfileBadgeText(profile.name)}
+          </span>
+        ),
+      })),
+    [profiles],
+  );
 
   const handleAddHeader = (target: "request" | "response") => {
     if (!active) return;
@@ -311,253 +332,294 @@ function App() {
 
   return (
     <ConfigProvider locale={semiLocale}>
-      <div className="he-editor-panel flex w-155 min-h-76 flex-col p-2 text-semi-color-text-0">
-        <div className="flex items-center gap-1.5">
-          <Select
-            size="small"
-            className="he-profile-select w-62"
-            prefix={<IconFolder />}
-            value={meta.activeProfileId ?? undefined}
-            onChange={(v) => setActive(v as string)}
-            placeholder={t("popup.activeProfile")}
-            optionList={profiles.map((p) => ({ value: p.id, label: p.name }))}
-            outerBottomSlot={
-              <>
-                <Divider margin="4px" />
-                <Button
-                  theme="borderless"
-                  type="tertiary"
-                  size="small"
-                  icon={<IconPlus />}
-                  block
-                  onClick={() => {
-                    const id = addProfile();
-                    setActive(id);
-                  }}
-                >
-                  {t("options.newProfile")}
-                </Button>
-              </>
-            }
-          />
-          <div className="flex-1" />
-          <Tooltip
-            position="bottom"
-            content={
-              meta.globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")
-            }
-          >
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={
-                meta.globalPaused ? (
-                  <IconPlay className="text-semi-color-warning" />
-                ) : (
-                  <IconPause />
-                )
-              }
-              onClick={() => togglePause()}
-            />
-          </Tooltip>
-          <Tooltip content={lockLabel} position="bottom">
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              disabled={currentTabId == null && !lockedHere}
-              icon={
-                lockedHere ? (
-                  <IconUnlock className="text-semi-color-primary" />
-                ) : (
-                  <IconLock
-                    className={isLocked ? "text-semi-color-primary" : undefined}
-                  />
-                )
-              }
-              onClick={handleToggleTabLock}
-            />
-          </Tooltip>
-          <LanguageSwitcher variant="icon" />
-          <ThemeSwitcher variant="icon" />
-          <Tooltip content={t("popup.openOptions")} position="bottom">
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconSetting />}
-              onClick={() => void openOptionsPage()}
-            />
-          </Tooltip>
-        </div>
+      <div className="he-editor-panel flex w-155 min-h-76 text-semi-color-text-0">
+        <Nav
+          className="he-profile-rail w-12 shrink-0"
+          mode="vertical"
+          isCollapsed
+          header={
+            <img className="he-rail-logo" src={logoUrl} alt="Header Ext" />
+          }
+          selectedKeys={meta.activeProfileId ? [meta.activeProfileId] : []}
+          items={profileNavItems}
+          tooltipShowDelay={0.24}
+          onSelect={({ itemKey }) => setActive(String(itemKey))}
+          footer={
+            <Tooltip content={t("options.newProfile")} position="right">
+              <Button
+                className="he-profile-rail-add"
+                theme="light"
+                type="primary"
+                size="small"
+                icon={<IconPlus />}
+                aria-label={t("options.newProfile")}
+                onClick={() => {
+                  const id = addProfile();
+                  setActive(id);
+                }}
+              />
+            </Tooltip>
+          }
+        />
 
-        {!active ? (
-          <div className="flex flex-1 items-center justify-center py-8 text-semi-color-text-2">
-            {t("options.noProfiles")}
-          </div>
-        ) : (
-          <div className="relative mt-2 -mx-2 px-2">
-            <div
-              className={cn(
-                "he-scroll-shadow he-scroll-shadow-top",
-                scrollShadow.top && "he-scroll-shadow-visible",
+        <main className="flex min-w-0 flex-1 flex-col">
+          <div className="he-main-header flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="he-profile-mark" aria-hidden="true">
+                {getProfileBadgeText(active?.name)}
+              </span>
+              <Text
+                strong
+                ellipsis={{ showTooltip: true }}
+                className="min-w-0 text-base"
+              >
+                {active?.name ?? t("options.noProfiles")}
+              </Text>
+              {active && (
+                <span
+                  className={cn(
+                    "he-profile-status-dot",
+                    meta.globalPaused && "he-profile-status-dot-paused",
+                  )}
+                />
               )}
-            />
-            <div
-              ref={scrollAreaRef}
-              className="max-h-110 -mr-2 overflow-y-auto pr-2"
-              onScroll={updateScrollShadow}
-            >
-              <div className="flex flex-col gap-2">
-                <HeaderRuleList
-                  variant="editor"
-                  kind="header"
-                  target="request"
-                  rules={requestRules}
-                  onAdd={() => handleAddHeader("request")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                  onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                />
-                <HeaderRuleList
-                  variant="editor"
-                  kind="header"
-                  target="response"
-                  rules={responseRules}
-                  onAdd={() => handleAddHeader("response")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                  onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                />
-                {cookieRequestRules.length > 0 && (
-                  <HeaderRuleList
-                    variant="editor"
-                    kind="cookie-request-append"
-                    rules={cookieRequestRules}
-                    onAdd={() => addRule(active.id, "cookie-request-append")}
-                    onUpdate={handleUpdate}
-                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-4">
+              <div className="he-header-action-group he-header-action-group-primary flex items-center">
+                <Tooltip
+                  position="bottom"
+                  content={
+                    meta.globalPaused
+                      ? t("popup.resumeAll")
+                      : t("popup.pauseAll")
+                  }
+                >
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={
+                      meta.globalPaused ? (
+                        <IconPlay className="text-semi-color-warning" />
+                      ) : (
+                        <span className="he-pause-stroked-icon" />
+                      )
+                    }
+                    onClick={() => togglePause()}
                   />
-                )}
-                {cookieResponseRules.length > 0 && (
-                  <HeaderRuleList
-                    variant="editor"
-                    kind="cookie-response-append"
-                    rules={cookieResponseRules}
-                    onAdd={() => addRule(active.id, "cookie-response-append")}
-                    onUpdate={handleUpdate}
-                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                </Tooltip>
+                <Tooltip content={lockLabel} position="bottom">
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    disabled={currentTabId == null && !lockedHere}
+                    icon={
+                      lockedHere ? (
+                        <IconUnlock className="text-semi-color-primary" />
+                      ) : (
+                        <IconLock
+                          className={
+                            isLocked ? "text-semi-color-primary" : undefined
+                          }
+                        />
+                      )
+                    }
+                    onClick={handleToggleTabLock}
                   />
-                )}
-                {redirectRules.length > 0 && (
-                  <HeaderRuleList
-                    variant="editor"
-                    kind="redirect"
-                    rules={redirectRules}
-                    onAdd={() => addRule(active.id, "redirect")}
-                    onUpdate={handleUpdate}
-                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                </Tooltip>
+              </div>
+              <span className="he-header-divider" />
+              <div className="he-header-action-group he-header-action-group-secondary flex items-center">
+                <LanguageSwitcher variant="icon" />
+                <ThemeSwitcher variant="icon" />
+                <Tooltip content={t("popup.openOptions")} position="bottom">
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={<IconSetting />}
+                    onClick={() => void openOptionsPage()}
                   />
-                )}
-                {tabFilters.length > 0 && (
-                  <TabFilterList
-                    variant="editor"
-                    filters={tabFilters}
-                    onAdd={() => addTabFilter(active.id, currentTabUrlPattern)}
-                    onUpdate={(f) => updateTabFilter(active.id, f)}
-                    onDelete={(id) => deleteTabFilter(active.id, id)}
-                    onToggle={(id) => toggleTabFilter(active.id, id)}
-                  />
-                )}
-                {domainFilters.length > 0 && (
-                  <FilterRowList<DomainFilter>
-                    variant="editor"
-                    filters={domainFilters}
-                    valueField="domain"
-                    i18nKey="domainFilters"
-                    onAdd={() => addDomainFilter(active.id, currentTabDomain)}
-                    onUpdate={(f) => updateDomainFilter(active.id, f)}
-                    onDelete={(id) => deleteDomainFilter(active.id, id)}
-                    onToggle={(id) => toggleDomainFilter(active.id, id)}
-                  />
-                )}
-                {urlFilters.length > 0 && (
-                  <FilterRowList<UrlFilter>
-                    variant="editor"
-                    filters={urlFilters}
-                    valueField="regex"
-                    i18nKey="urlFilters"
-                    onAdd={() => addUrlFilter(active.id, currentTabRegex)}
-                    onUpdate={(f) => updateUrlFilter(active.id, f)}
-                    onDelete={(id) => deleteUrlFilter(active.id, id)}
-                    onToggle={(id) => toggleUrlFilter(active.id, id)}
-                  />
-                )}
-                {excludeUrlFilters.length > 0 && (
-                  <FilterRowList<ExcludeUrlFilter>
-                    variant="editor"
-                    filters={excludeUrlFilters}
-                    valueField="url"
-                    i18nKey="excludeUrlFilters"
-                    onAdd={() => addExcludeUrlFilter(active.id, currentTabUrl)}
-                    onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
-                    onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
-                    onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
-                  />
-                )}
-                {methodFilters.length > 0 && (
-                  <MethodFilterPicker
-                    variant="editor"
-                    filters={methodFilters}
-                    onChange={(methods) => setMethodFilters(active.id, methods)}
-                  />
-                )}
+                </Tooltip>
               </div>
             </div>
-            <div
-              className={cn(
-                "he-scroll-shadow he-scroll-shadow-bottom",
-                scrollShadow.bottom && "he-scroll-shadow-visible",
-              )}
-            />
           </div>
-        )}
 
-        <div className="mt-1.5">
-          <NoFilterBanner compact />
-        </div>
+          {!active ? (
+            <div className="flex flex-1 items-center justify-center py-8 text-semi-color-text-2">
+              {t("options.noProfiles")}
+            </div>
+          ) : (
+            <div className="he-main-content relative flex-1 px-3 py-3">
+              <div
+                className={cn(
+                  "he-scroll-shadow he-scroll-shadow-top",
+                  scrollShadow.top && "he-scroll-shadow-visible",
+                )}
+              />
+              <div
+                ref={scrollAreaRef}
+                className="max-h-110 overflow-y-auto"
+                onScroll={updateScrollShadow}
+              >
+                <div className="flex flex-col gap-3">
+                  <HeaderRuleList
+                    variant="editor"
+                    kind="header"
+                    target="request"
+                    rules={requestRules}
+                    onAdd={() => handleAddHeader("request")}
+                    onUpdate={handleUpdate}
+                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                  />
+                  <HeaderRuleList
+                    variant="editor"
+                    kind="header"
+                    target="response"
+                    rules={responseRules}
+                    onAdd={() => handleAddHeader("response")}
+                    onUpdate={handleUpdate}
+                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                  />
+                  {cookieRequestRules.length > 0 && (
+                    <HeaderRuleList
+                      variant="editor"
+                      kind="cookie-request-append"
+                      rules={cookieRequestRules}
+                      onAdd={() => addRule(active.id, "cookie-request-append")}
+                      onUpdate={handleUpdate}
+                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                    />
+                  )}
+                  {cookieResponseRules.length > 0 && (
+                    <HeaderRuleList
+                      variant="editor"
+                      kind="cookie-response-append"
+                      rules={cookieResponseRules}
+                      onAdd={() => addRule(active.id, "cookie-response-append")}
+                      onUpdate={handleUpdate}
+                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                    />
+                  )}
+                  {redirectRules.length > 0 && (
+                    <HeaderRuleList
+                      variant="editor"
+                      kind="redirect"
+                      rules={redirectRules}
+                      onAdd={() => addRule(active.id, "redirect")}
+                      onUpdate={handleUpdate}
+                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                    />
+                  )}
+                  {tabFilters.length > 0 && (
+                    <TabFilterList
+                      variant="editor"
+                      filters={tabFilters}
+                      onAdd={() =>
+                        addTabFilter(active.id, currentTabUrlPattern)
+                      }
+                      onUpdate={(f) => updateTabFilter(active.id, f)}
+                      onDelete={(id) => deleteTabFilter(active.id, id)}
+                      onToggle={(id) => toggleTabFilter(active.id, id)}
+                    />
+                  )}
+                  {domainFilters.length > 0 && (
+                    <FilterRowList<DomainFilter>
+                      variant="editor"
+                      filters={domainFilters}
+                      valueField="domain"
+                      i18nKey="domainFilters"
+                      onAdd={() => addDomainFilter(active.id, currentTabDomain)}
+                      onUpdate={(f) => updateDomainFilter(active.id, f)}
+                      onDelete={(id) => deleteDomainFilter(active.id, id)}
+                      onToggle={(id) => toggleDomainFilter(active.id, id)}
+                    />
+                  )}
+                  {urlFilters.length > 0 && (
+                    <FilterRowList<UrlFilter>
+                      variant="editor"
+                      filters={urlFilters}
+                      valueField="regex"
+                      i18nKey="urlFilters"
+                      onAdd={() => addUrlFilter(active.id, currentTabRegex)}
+                      onUpdate={(f) => updateUrlFilter(active.id, f)}
+                      onDelete={(id) => deleteUrlFilter(active.id, id)}
+                      onToggle={(id) => toggleUrlFilter(active.id, id)}
+                    />
+                  )}
+                  {excludeUrlFilters.length > 0 && (
+                    <FilterRowList<ExcludeUrlFilter>
+                      variant="editor"
+                      filters={excludeUrlFilters}
+                      valueField="url"
+                      i18nKey="excludeUrlFilters"
+                      onAdd={() =>
+                        addExcludeUrlFilter(active.id, currentTabUrl)
+                      }
+                      onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
+                      onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
+                      onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
+                    />
+                  )}
+                  {methodFilters.length > 0 && (
+                    <MethodFilterPicker
+                      variant="editor"
+                      filters={methodFilters}
+                      onChange={(methods) =>
+                        setMethodFilters(active.id, methods)
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  "he-scroll-shadow he-scroll-shadow-bottom",
+                  scrollShadow.bottom && "he-scroll-shadow-visible",
+                )}
+              />
+            </div>
+          )}
 
-        <div className="mt-2 flex items-center gap-1.5">
-          <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
-            <Button
-              className="he-mod-button"
-              theme="solid"
-              type="primary"
-              size="small"
-              icon={<IconPlus />}
-              disabled={!active}
-            >
-              {t("popup.mod")}
-            </Button>
-          </Dropdown>
-          <TemplateMenu profileId={active?.id ?? null} />
-          <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
-            <Button size="small" icon={<IconFilter />} disabled={!active}>
-              {t("filters.title")}
-            </Button>
-          </Dropdown>
-          <div className="flex-1" />
-          <ImportExportButtons iconOnly />
-        </div>
+          <div className="px-3">
+            <NoFilterBanner compact />
+          </div>
+
+          <div className="he-bottom-bar flex items-center gap-2">
+            <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
+              <Button
+                className="he-mod-button"
+                theme="solid"
+                type="primary"
+                size="small"
+                icon={<IconPlus />}
+                disabled={!active}
+              >
+                {t("popup.mod")}
+              </Button>
+            </Dropdown>
+            <TemplateMenu profileId={active?.id ?? null} />
+            <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
+              <Button size="small" icon={<IconFilter />} disabled={!active}>
+                {t("filters.title")}
+              </Button>
+            </Dropdown>
+            <div className="flex-1" />
+            <ImportExportButtons iconOnly />
+          </div>
+        </main>
       </div>
     </ConfigProvider>
   );
