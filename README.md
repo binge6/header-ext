@@ -2,6 +2,11 @@
 
 一款用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL 的浏览器扩展，支持 Chrome 与 Firefox（MV3）。
 
+## 安装
+
+- Chrome Web Store：<https://chromewebstore.google.com/detail/header-ext/fmeahkfblcdknabpmhlmbkconfcaoemi>
+- Firefox Add-ons：<https://addons.mozilla.org/zh-CN/firefox/addon/header-ext/>
+
 ## 功能特性
 
 - **请求/响应头修改**：增删改 Header，支持模板（CORS、CSP 等常用预设）和历史值自动补全。
