@@ -1,7 +1,8 @@
 import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import { IconLanguage } from "@douyinfe/semi-icons";
+import { IconLanguage, IconTick } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { setLanguage, SUPPORTED_LANGS, type Lang } from "@/src/i18n";
+import { cn } from "@/src/utils/cn";
 
 interface Props {
   /** icon: 仅图标按钮（适合空间紧凑的顶栏/底栏）；select: 下拉选择 */
@@ -22,11 +23,27 @@ export function LanguageSwitcher({
         position="bottomRight"
         render={
           <Dropdown.Menu>
-            {SUPPORTED_LANGS.map((l) => (
-              <Dropdown.Item key={l} onClick={() => void setLanguage(l)}>
-                {t(`language.${l}`)}
-              </Dropdown.Item>
-            ))}
+            {SUPPORTED_LANGS.map((l) => {
+              const selected = i18n.language === l;
+              return (
+                <Dropdown.Item
+                  key={l}
+                  selected={selected}
+                  className={cn(
+                    selected &&
+                      "bg-semi-color-primary-light-default text-semi-color-primary",
+                  )}
+                  onClick={() => void setLanguage(l)}
+                >
+                  <span className="flex min-w-24 items-center justify-between gap-4">
+                    <span>{t(`language.${l}`)}</span>
+                    {selected && (
+                      <IconTick className="text-semi-color-primary" />
+                    )}
+                  </span>
+                </Dropdown.Item>
+              );
+            })}
           </Dropdown.Menu>
         }
       >

@@ -35,5 +35,5 @@
   </g>
 
   <!-- 状态指示灯 -->
-  <circle cx="100" cy="32" r="8" fill="#10B981" stroke="#FFFFFF" stroke-width="3"/>
+  <!-- <circle cx="100" cy="32" r="8" fill="#10B981" stroke="#FFFFFF" stroke-width="3"/> -->
 </svg>

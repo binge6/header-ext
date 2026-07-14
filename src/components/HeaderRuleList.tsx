@@ -12,8 +12,17 @@ import {
   Tooltip,
   Typography,
 } from "@douyinfe/semi-ui";
-import { IconClose, IconFilter } from "@douyinfe/semi-icons";
-import { useState } from "react";
+import {
+  IconCode,
+  IconDelete,
+  IconFilter,
+  IconHandle,
+  IconLink,
+  IconPlus,
+  IconSend,
+  IconUndo,
+} from "@douyinfe/semi-icons";
+import { useState, type DragEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   HeaderAction,
@@ -22,6 +31,7 @@ import type {
   RuleKind,
 } from "@/src/core/types";
 import { useHistorySuggestions } from "@/src/hooks/useHistorySuggestions";
+import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
 
 interface Props {
@@ -36,9 +46,16 @@ interface Props {
   onUpdate: (rule: HeaderRule) => void;
   onDelete: (ruleId: string) => void;
   onToggle: (ruleId: string) => void;
+  onReorder?: (orderedRuleIds: string[]) => void;
+  variant?: "compact" | "editor";
 }
 
 const ACTION_OPTIONS: HeaderAction[] = ["set", "append", "remove"];
+
+function getNextAction(action: HeaderAction): HeaderAction {
+  const index = ACTION_OPTIONS.indexOf(action);
+  return ACTION_OPTIONS[(index + 1) % ACTION_OPTIONS.length] ?? "set";
+}
 
 const RESOURCE_TYPES: ResourceType[] = [
   "main_frame",
@@ -74,6 +91,8 @@ export function HeaderRuleList({
   onUpdate,
   onDelete,
   onToggle,
+  onReorder,
+  variant = "compact",
 }: Props) {
   const { t } = useTranslation();
   const isCookie =
@@ -84,6 +103,8 @@ export function HeaderRuleList({
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
   // 当前 hover 的过滤按钮规则 id（受控 Tooltip 显隐）
   const [hoverFilterId, setHoverFilterId] = useState<string | null>(null);
+  const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
+  const [dragOverRuleId, setDragOverRuleId] = useState<string | null>(null);
 
   // 优先使用显式 target，其次用首条规则的 target，最后兜底 request
   const headerTarget = target ?? rules[0]?.target ?? "request";
@@ -105,6 +126,69 @@ export function HeaderRuleList({
         : kind === "redirect"
           ? "rule.addRedirectItem"
           : "rule.addRule";
+
+  const isEditor = variant === "editor";
+  const canDrag = isEditor && !!onReorder && rules.length > 1;
+  const groupEnabled = rules.some((rule) => rule.enabled);
+
+  const handleToggleGroup = (enabled: boolean) => {
+    rules.forEach((rule) => {
+      if (rule.enabled !== enabled) onToggle(rule.id);
+    });
+  };
+
+  const renderSectionIcon = (): ReactNode => {
+    if (kind === "redirect") return <IconLink />;
+    if (isCookie) return <IconCode />;
+    return headerTarget === "request" ? <IconSend /> : <IconUndo />;
+  };
+
+  const buildReorderedRuleIds = (fromId: string, toId: string): string[] => {
+    const ruleIds = rules.map((rule) => rule.id);
+    const fromIndex = ruleIds.indexOf(fromId);
+    const toIndex = ruleIds.indexOf(toId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return ruleIds;
+
+    const next = [...ruleIds];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    return next;
+  };
+
+  const handleDragStart = (
+    event: DragEvent<HTMLSpanElement>,
+    ruleId: string,
+  ) => {
+    if (!canDrag) return;
+    setDraggedRuleId(ruleId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", ruleId);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>, ruleId: string) => {
+    if (!canDrag || !draggedRuleId || draggedRuleId === ruleId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverRuleId(ruleId);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>, ruleId: string) => {
+    if (!canDrag) return;
+    event.preventDefault();
+
+    const fromId = draggedRuleId ?? event.dataTransfer.getData("text/plain");
+    setDraggedRuleId(null);
+    setDragOverRuleId(null);
+    if (!fromId || fromId === ruleId) return;
+
+    const nextRuleIds = buildReorderedRuleIds(fromId, ruleId);
+    onReorder?.(nextRuleIds);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedRuleId(null);
+    setDragOverRuleId(null);
+  };
 
   const renderFilterPopover = (rule: HeaderRule) => {
     const cond = rule.condition;
@@ -217,190 +301,275 @@ export function HeaderRuleList({
     );
   };
 
-  return (
-    <div>
-      <GroupHeader
-        title={t(groupTitleKey)}
-        addLabel={t(addLabelKey)}
-        onAdd={onAdd}
-      />
+  const rows = rules.map((rule) => {
+    const cond = rule.condition;
+    const filterActive =
+      !!cond.urlFilter ||
+      !!cond.excludedDomains?.length ||
+      !!cond.resourceTypes?.length ||
+      !!cond.requestMethods?.length;
+    // 历史 name 列表（cookie 模式不需要建议）
+    const nameOptions = isCookie
+      ? []
+      : names
+          .filter(
+            (n) =>
+              !rule.name || n.toLowerCase().includes(rule.name.toLowerCase()),
+          )
+          .slice(0, 20)
+          .map((n) => ({ value: n, label: n }));
+    // 当前 name 对应的历史值
+    const valueOptions = isCookie
+      ? []
+      : (valuesByName.get(rule.name) ?? [])
+          .filter(
+            (v) =>
+              !rule.value || v.toLowerCase().includes(rule.value.toLowerCase()),
+          )
+          .slice(0, 20)
+          .map((v) => ({ value: v, label: v }));
 
-      {rules.length === 0
-        ? null
-        : rules.map((rule) => {
-            const cond = rule.condition;
-            const filterActive =
-              !!cond.urlFilter ||
-              !!cond.excludedDomains?.length ||
-              !!cond.resourceTypes?.length ||
-              !!cond.requestMethods?.length;
-            // 历史 name 列表（cookie 模式不需要建议）
-            const nameOptions = isCookie
-              ? []
-              : names
-                  .filter(
-                    (n) =>
-                      !rule.name ||
-                      n.toLowerCase().includes(rule.name.toLowerCase()),
-                  )
-                  .slice(0, 20)
-                  .map((n) => ({ value: n, label: n }));
-            // 当前 name 对应的历史值
-            const valueOptions = isCookie
-              ? []
-              : (valuesByName.get(rule.name) ?? [])
-                  .filter(
-                    (v) =>
-                      !rule.value ||
-                      v.toLowerCase().includes(rule.value.toLowerCase()),
-                  )
-                  .slice(0, 20)
-                  .map((v) => ({ value: v, label: v }));
-            return (
-              <div key={rule.id} className="flex items-center gap-1 py-1">
-                <Switch
+    const fieldClassName = cn("min-w-0 flex-1", isEditor && "he-editor-field");
+    const actionClassName = cn(
+      isEditor && "he-editor-field",
+      isEditor ? "w-22" : "w-19",
+    );
+    const nextAction = getNextAction(rule.action);
+
+    return (
+      <div
+        key={rule.id}
+        className={cn(
+          "flex items-center",
+          isEditor ? "he-editor-rule-row gap-1.5 py-1" : "gap-1 py-1",
+          isEditor && !rule.enabled && "opacity-70",
+          draggedRuleId === rule.id && "opacity-50",
+          dragOverRuleId === rule.id && "he-editor-rule-row-drag-over",
+        )}
+        onDragOver={(event) => handleDragOver(event, rule.id)}
+        onDrop={(event) => handleDrop(event, rule.id)}
+      >
+        {isEditor ? (
+          <span
+            draggable={canDrag}
+            className={cn(
+              "inline-flex shrink-0 text-semi-color-text-3",
+              canDrag && "cursor-grab active:cursor-grabbing",
+            )}
+            onDragStart={(event) => handleDragStart(event, rule.id)}
+            onDragEnd={handleDragEnd}
+          >
+            <IconHandle />
+          </span>
+        ) : (
+          <Switch
+            size="small"
+            checked={rule.enabled}
+            onChange={() => onToggle(rule.id)}
+          />
+        )}
+        {/* header 模式才有 action 选择器；redirect / cookie 不需要 */}
+        {!isCookie &&
+          !isRedirect &&
+          (isEditor ? (
+            <Tooltip
+              content={`${t("rule.action")}: ${t(`rule.actionOption.${rule.action}`)}`}
+              position="top"
+            >
+              <Button
+                size="small"
+                theme="light"
+                type="tertiary"
+                className="he-action-cycle-button w-auto shrink-0 px-2"
+                onClick={() => onUpdate({ ...rule, action: nextAction })}
+              >
+                {t(`rule.actionOption.${rule.action}`)}
+              </Button>
+            </Tooltip>
+          ) : (
+            <Select
+              size="small"
+              className={actionClassName}
+              value={rule.action}
+              onChange={(v) => onUpdate({ ...rule, action: v as HeaderAction })}
+              optionList={ACTION_OPTIONS.map((a) => ({
+                value: a,
+                label: t(`rule.actionOption.${a}`),
+              }))}
+            />
+          ))}
+        {isRedirect ? (
+          // redirect 模式：源 URL（写入 condition.urlFilter） + 目标 URL（写入 value）
+          <Input
+            size="small"
+            placeholder={
+              cond.useRegex
+                ? t("rule.redirectFromRegexPlaceholder")
+                : t("rule.redirectFromPlaceholder")
+            }
+            className={fieldClassName}
+            value={cond.urlFilter ?? ""}
+            onChange={(v) =>
+              onUpdate({
+                ...rule,
+                condition: { ...cond, urlFilter: v },
+              })
+            }
+          />
+        ) : isCookie ? (
+          <Input
+            size="small"
+            placeholder={t("rule.cookieNamePlaceholder")}
+            className={fieldClassName}
+            value={rule.name}
+            onChange={(v) => onUpdate({ ...rule, name: v })}
+          />
+        ) : (
+          <AutoComplete
+            size="small"
+            className={fieldClassName}
+            value={rule.name}
+            data={nameOptions}
+            placeholder={t("rule.namePlaceholder")}
+            onChange={(v) => onUpdate({ ...rule, name: String(v ?? "") })}
+          />
+        )}
+        {isRedirect ? (
+          <Input
+            size="small"
+            placeholder={
+              cond.useRegex
+                ? t("rule.redirectToRegexPlaceholder")
+                : t("rule.redirectToPlaceholder")
+            }
+            className={fieldClassName}
+            value={rule.value}
+            onChange={(v) => onUpdate({ ...rule, value: v })}
+          />
+        ) : isCookie ? (
+          <Input
+            size="small"
+            placeholder={t("rule.cookieValuePlaceholder")}
+            className={fieldClassName}
+            value={rule.value}
+            onChange={(v) => onUpdate({ ...rule, value: v })}
+          />
+        ) : (
+          <AutoComplete
+            size="small"
+            className={fieldClassName}
+            value={rule.value}
+            data={valueOptions}
+            placeholder={t("rule.valuePlaceholder")}
+            disabled={rule.action === "remove"}
+            onChange={(v) => onUpdate({ ...rule, value: String(v ?? "") })}
+          />
+        )}
+        {isEditor && (
+          <Switch
+            size="small"
+            checked={rule.enabled}
+            onChange={() => onToggle(rule.id)}
+          />
+        )}
+        <div className={cn("flex items-center", isEditor ? "gap-0" : "gap-1")}>
+          <Popover
+            trigger="click"
+            position="left"
+            autoAdjustOverflow
+            content={renderFilterPopover(rule)}
+            onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
+          >
+            <span className="inline-flex">
+              <Tooltip
+                trigger="custom"
+                visible={hoverFilterId === rule.id && openFilterId !== rule.id}
+                content={t("rule.filter")}
+                position="top"
+              >
+                <Button
+                  theme="borderless"
+                  type="tertiary"
                   size="small"
-                  checked={rule.enabled}
-                  onChange={() => onToggle(rule.id)}
-                />
-                {/* header 模式才有 action 选择器；redirect / cookie 不需要 */}
-                {!isCookie && !isRedirect && (
-                  <Select
-                    size="small"
-                    className="w-19"
-                    value={rule.action}
-                    onChange={(v) =>
-                      onUpdate({ ...rule, action: v as HeaderAction })
-                    }
-                    optionList={ACTION_OPTIONS.map((a) => ({
-                      value: a,
-                      label: t(`rule.actionOption.${a}`),
-                    }))}
-                  />
-                )}
-                {isRedirect ? (
-                  // redirect 模式：源 URL（写入 condition.urlFilter） + 目标 URL（写入 value）
-                  <Input
-                    size="small"
-                    placeholder={
-                      cond.useRegex
-                        ? t("rule.redirectFromRegexPlaceholder")
-                        : t("rule.redirectFromPlaceholder")
-                    }
-                    className="min-w-0 flex-1"
-                    value={cond.urlFilter ?? ""}
-                    onChange={(v) =>
-                      onUpdate({
-                        ...rule,
-                        condition: { ...cond, urlFilter: v },
-                      })
-                    }
-                  />
-                ) : isCookie ? (
-                  <Input
-                    size="small"
-                    placeholder={t("rule.cookieNamePlaceholder")}
-                    className="min-w-0 flex-1"
-                    value={rule.name}
-                    onChange={(v) => onUpdate({ ...rule, name: v })}
-                  />
-                ) : (
-                  <AutoComplete
-                    size="small"
-                    className="min-w-0 flex-1"
-                    value={rule.name}
-                    data={nameOptions}
-                    placeholder={t("rule.namePlaceholder")}
-                    onChange={(v) =>
-                      onUpdate({ ...rule, name: String(v ?? "") })
-                    }
-                  />
-                )}
-                {isRedirect ? (
-                  <Input
-                    size="small"
-                    placeholder={
-                      cond.useRegex
-                        ? t("rule.redirectToRegexPlaceholder")
-                        : t("rule.redirectToPlaceholder")
-                    }
-                    className="min-w-0 flex-1"
-                    value={rule.value}
-                    onChange={(v) => onUpdate({ ...rule, value: v })}
-                  />
-                ) : isCookie ? (
-                  <Input
-                    size="small"
-                    placeholder={t("rule.cookieValuePlaceholder")}
-                    className="min-w-0 flex-1"
-                    value={rule.value}
-                    onChange={(v) => onUpdate({ ...rule, value: v })}
-                  />
-                ) : (
-                  <AutoComplete
-                    size="small"
-                    className="min-w-0 flex-1"
-                    value={rule.value}
-                    data={valueOptions}
-                    placeholder={t("rule.valuePlaceholder")}
-                    disabled={rule.action === "remove"}
-                    onChange={(v) =>
-                      onUpdate({ ...rule, value: String(v ?? "") })
-                    }
-                  />
-                )}
-                <Popover
-                  trigger="click"
-                  position="left"
-                  autoAdjustOverflow
-                  content={renderFilterPopover(rule)}
-                  onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
-                >
-                  <span className="inline-flex">
-                    <Tooltip
-                      trigger="custom"
-                      visible={
-                        hoverFilterId === rule.id && openFilterId !== rule.id
+                  icon={
+                    <IconFilter
+                      className={
+                        filterActive ? "text-semi-color-primary" : undefined
                       }
-                      content={t("rule.filter")}
-                      position="top"
-                    >
-                      <Button
-                        theme="borderless"
-                        type="tertiary"
-                        size="small"
-                        icon={
-                          <IconFilter
-                            className={
-                              filterActive
-                                ? "text-semi-color-primary"
-                                : undefined
-                            }
-                          />
-                        }
-                        onMouseEnter={() => setHoverFilterId(rule.id)}
-                        onMouseLeave={() => setHoverFilterId(null)}
-                        onClick={() => setHoverFilterId(null)}
-                      />
-                    </Tooltip>
-                  </span>
-                </Popover>
-                <Tooltip
-                  trigger="hover"
-                  content={t("common.delete")}
-                  position="top"
-                >
-                  <Button
-                    theme="borderless"
-                    type="danger"
-                    size="small"
-                    icon={<IconClose />}
-                    onClick={() => onDelete(rule.id)}
-                  />
-                </Tooltip>
-              </div>
-            );
-          })}
-    </div>
+                    />
+                  }
+                  onMouseEnter={() => setHoverFilterId(rule.id)}
+                  onMouseLeave={() => setHoverFilterId(null)}
+                  onClick={() => setHoverFilterId(null)}
+                />
+              </Tooltip>
+            </span>
+          </Popover>
+          <Tooltip trigger="hover" content={t("common.delete")} position="top">
+            <Button
+              theme="borderless"
+              type="tertiary"
+              size="small"
+              icon={<IconDelete />}
+              onClick={() => onDelete(rule.id)}
+            />
+          </Tooltip>
+        </div>
+      </div>
+    );
+  });
+
+  if (!isEditor) {
+    return (
+      <div>
+        <GroupHeader
+          title={t(groupTitleKey)}
+          addLabel={t(addLabelKey)}
+          onAdd={onAdd}
+        />
+        {rows}
+      </div>
+    );
+  }
+
+  return (
+    <section className="he-editor-section rounded-xl border border-semi-color-border p-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "he-editor-section-icon",
+              headerTarget === "request"
+                ? "he-editor-section-icon-request"
+                : "he-editor-section-icon-response",
+            )}
+          >
+            {renderSectionIcon()}
+          </span>
+          <Typography.Text strong className="text-group-title">
+            {t(groupTitleKey)}
+          </Typography.Text>
+        </div>
+        <Switch
+          size="small"
+          checked={groupEnabled}
+          disabled={rules.length === 0}
+          onChange={(checked) => handleToggleGroup(Boolean(checked))}
+        />
+      </div>
+
+      <div className="flex flex-col">{rows}</div>
+
+      <Button
+        theme="borderless"
+        type="tertiary"
+        size="small"
+        className="mt-1 px-0 text-group-title"
+        icon={<IconPlus />}
+        onClick={onAdd}
+      >
+        {t(addLabelKey)}
+      </Button>
+    </section>
   );
 }

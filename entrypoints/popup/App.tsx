@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   ConfigProvider,
@@ -6,13 +6,11 @@ import {
   Dropdown,
   Select,
   Spin,
-  Switch,
-  Tag,
   Tooltip,
 } from "@douyinfe/semi-ui";
-import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
 import {
   IconFilter,
+  IconFolder,
   IconLock,
   IconPause,
   IconPlay,
@@ -44,44 +42,8 @@ import type {
   UrlFilter,
   ExcludeUrlFilter,
 } from "@/src/core/types";
+import { cn } from "@/src/utils/cn";
 import "./App.css";
-
-const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
-  "amber",
-  "blue",
-  "cyan",
-  "green",
-  "grey",
-  "indigo",
-  "light-blue",
-  "light-green",
-  "lime",
-  "orange",
-  "pink",
-  "purple",
-  "red",
-  "teal",
-  "violet",
-  "yellow",
-  "white",
-]);
-
-function mapTagColor(input?: string): TagColor {
-  if (!input) return "grey";
-  switch (input) {
-    case "warning":
-      return "amber";
-    case "success":
-      return "green";
-    case "processing":
-      return "blue";
-    case "error":
-      return "red";
-    case "default":
-      return "grey";
-  }
-  return TAG_COLORS.has(input as TagColor) ? (input as TagColor) : "grey";
-}
 
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
@@ -102,6 +64,7 @@ function App() {
     updateRule,
     deleteRule,
     toggleRule,
+    reorderRules,
     addProfile,
     setLockedTabId,
     addTabFilter,
@@ -132,6 +95,11 @@ function App() {
   const [currentTabUrlPattern, setCurrentTabUrlPattern] = useState<string>("");
   // 用于 URL 过滤的正则（自动转义 hostname，匹配该 host 下任意路径）
   const [currentTabRegex, setCurrentTabRegex] = useState<string>("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [scrollShadow, setScrollShadow] = useState({
+    top: false,
+    bottom: false,
+  });
 
   useEffect(() => {
     void (async () => {
@@ -168,14 +136,6 @@ function App() {
     () => (i18n.language === "zh-CN" ? zh_CN : en_US),
     [i18n.language],
   );
-
-  if (!hydrated) {
-    return (
-      <div className="w-155 p-10 text-center">
-        <Spin />
-      </div>
-    );
-  }
 
   const active = profiles.find((p) => p.id === meta.activeProfileId);
 
@@ -283,17 +243,80 @@ function App() {
     </Dropdown.Menu>
   );
 
+  const handleToggleTabLock = () => {
+    if (lockedHere) {
+      setLockedTabId(null);
+    } else if (currentTabId != null) {
+      setLockedTabId(currentTabId);
+    }
+  };
+
+  const lockLabel = lockedHere
+    ? t("popup.unlockTab")
+    : isLocked
+      ? t("popup.lockedTo", { id: meta.lockedTabId })
+      : t("popup.lockTab");
+
+  const updateScrollShadow = useCallback(() => {
+    const el = scrollAreaRef.current;
+    if (!el) {
+      setScrollShadow({ top: false, bottom: false });
+      return;
+    }
+
+    const maxScrollTop = el.scrollHeight - el.clientHeight;
+    const next = {
+      top: el.scrollTop > 1,
+      bottom: maxScrollTop - el.scrollTop > 1,
+    };
+
+    setScrollShadow((prev) =>
+      prev.top === next.top && prev.bottom === next.bottom ? prev : next,
+    );
+  }, []);
+
+  useEffect(() => {
+    updateScrollShadow();
+
+    const el = scrollAreaRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateScrollShadow);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+
+    return () => observer.disconnect();
+  }, [
+    active?.id,
+    cookieRequestRules.length,
+    cookieResponseRules.length,
+    domainFilters.length,
+    excludeUrlFilters.length,
+    methodFilters.length,
+    redirectRules.length,
+    requestRules.length,
+    responseRules.length,
+    tabFilters.length,
+    updateScrollShadow,
+    urlFilters.length,
+  ]);
+
+  if (!hydrated) {
+    return (
+      <div className="w-155 p-10 text-center">
+        <Spin />
+      </div>
+    );
+  }
+
   return (
     <ConfigProvider locale={semiLocale}>
-      <div className="flex w-155 min-h-90 flex-col bg-semi-color-bg-2 p-3 text-semi-color-text-0">
-        {/* 顶栏：Profile 选择 + 全局动作（暂停/锁 Tab/语言/设置） */}
+      <div className="he-editor-panel flex w-155 min-h-76 flex-col p-2 text-semi-color-text-0">
         <div className="flex items-center gap-1.5">
-          <Tag color={mapTagColor(active?.color)} className="mr-0">
-            {active?.rules.length ?? 0}
-          </Tag>
           <Select
             size="small"
-            className="w-50"
+            className="he-profile-select w-62"
+            prefix={<IconFolder />}
             value={meta.activeProfileId ?? undefined}
             onChange={(v) => setActive(v as string)}
             placeholder={t("popup.activeProfile")}
@@ -338,20 +361,12 @@ function App() {
               onClick={() => togglePause()}
             />
           </Tooltip>
-          <Tooltip
-            position="bottom"
-            content={
-              lockedHere
-                ? t("popup.unlockTab")
-                : isLocked
-                  ? t("popup.lockedTo", { id: meta.lockedTabId })
-                  : t("popup.lockTab")
-            }
-          >
+          <Tooltip content={lockLabel} position="bottom">
             <Button
               theme="borderless"
               type="tertiary"
               size="small"
+              disabled={currentTabId == null && !lockedHere}
               icon={
                 lockedHere ? (
                   <IconUnlock className="text-semi-color-primary" />
@@ -361,18 +376,12 @@ function App() {
                   />
                 )
               }
-              onClick={() => {
-                if (lockedHere) {
-                  setLockedTabId(null);
-                } else if (currentTabId != null) {
-                  setLockedTabId(currentTabId);
-                }
-              }}
+              onClick={handleToggleTabLock}
             />
           </Tooltip>
           <LanguageSwitcher variant="icon" />
           <ThemeSwitcher variant="icon" />
-          <Tooltip content={t("popup.openOptions")} position="bottomRight">
+          <Tooltip content={t("popup.openOptions")} position="bottom">
             <Button
               theme="borderless"
               type="tertiary"
@@ -383,45 +392,37 @@ function App() {
           </Tooltip>
         </div>
 
-        {meta.globalPaused && (
-          <div className="mt-2 flex items-center justify-between rounded border border-semi-color-warning-light-active bg-semi-color-warning-light-default px-2 py-1 text-xs">
-            <span>{t("popup.globalPaused")}</span>
-            <Switch
-              size="small"
-              checked={!meta.globalPaused}
-              onChange={() => togglePause()}
-            />
-          </div>
-        )}
-
-        <div className="my-3 mb-1">
-          <Divider />
-        </div>
-
         {!active ? (
-          <div className="py-6 text-center text-semi-color-text-2">
+          <div className="flex flex-1 items-center justify-center py-8 text-semi-color-text-2">
             {t("options.noProfiles")}
           </div>
         ) : (
-          <div
-            // -mr-3/pr-3：把滚动条压到外层 padding 区域内，并恢复内容左右对称
-            className="max-h-115 flex-1 -mr-3 overflow-y-auto pr-3"
-          >
-            <HeaderRuleList
-              kind="header"
-              target="request"
-              rules={requestRules}
-              onAdd={() => handleAddHeader("request")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+          <div className="relative mt-2 -mx-2 px-2">
+            <div
+              className={cn(
+                "he-scroll-shadow he-scroll-shadow-top",
+                scrollShadow.top && "he-scroll-shadow-visible",
+              )}
             />
-            {responseRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
+            <div
+              ref={scrollAreaRef}
+              className="max-h-110 -mr-2 overflow-y-auto pr-2"
+              onScroll={updateScrollShadow}
+            >
+              <div className="flex flex-col gap-2">
                 <HeaderRuleList
+                  variant="editor"
+                  kind="header"
+                  target="request"
+                  rules={requestRules}
+                  onAdd={() => handleAddHeader("request")}
+                  onUpdate={handleUpdate}
+                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                  onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                />
+                <HeaderRuleList
+                  variant="editor"
                   kind="header"
                   target="response"
                   rules={responseRules}
@@ -429,142 +430,121 @@ function App() {
                   onUpdate={handleUpdate}
                   onDelete={(ruleId) => deleteRule(active.id, ruleId)}
                   onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                  onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
                 />
-              </>
-            )}
-            {cookieRequestRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="cookie-request-append"
-                  rules={cookieRequestRules}
-                  onAdd={() => addRule(active.id, "cookie-request-append")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {cookieResponseRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="cookie-response-append"
-                  rules={cookieResponseRules}
-                  onAdd={() => addRule(active.id, "cookie-response-append")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {redirectRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="redirect"
-                  rules={redirectRules}
-                  onAdd={() => addRule(active.id, "redirect")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {tabFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <TabFilterList
-                  filters={tabFilters}
-                  onAdd={() => addTabFilter(active.id, currentTabUrlPattern)}
-                  onUpdate={(f) => updateTabFilter(active.id, f)}
-                  onDelete={(id) => deleteTabFilter(active.id, id)}
-                  onToggle={(id) => toggleTabFilter(active.id, id)}
-                />
-              </>
-            )}
-            {domainFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<DomainFilter>
-                  filters={domainFilters}
-                  valueField="domain"
-                  i18nKey="domainFilters"
-                  onAdd={() => addDomainFilter(active.id, currentTabDomain)}
-                  onUpdate={(f) => updateDomainFilter(active.id, f)}
-                  onDelete={(id) => deleteDomainFilter(active.id, id)}
-                  onToggle={(id) => toggleDomainFilter(active.id, id)}
-                />
-              </>
-            )}
-            {urlFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<UrlFilter>
-                  filters={urlFilters}
-                  valueField="regex"
-                  i18nKey="urlFilters"
-                  onAdd={() => addUrlFilter(active.id, currentTabRegex)}
-                  onUpdate={(f) => updateUrlFilter(active.id, f)}
-                  onDelete={(id) => deleteUrlFilter(active.id, id)}
-                  onToggle={(id) => toggleUrlFilter(active.id, id)}
-                />
-              </>
-            )}
-            {excludeUrlFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<ExcludeUrlFilter>
-                  filters={excludeUrlFilters}
-                  valueField="url"
-                  i18nKey="excludeUrlFilters"
-                  onAdd={() => addExcludeUrlFilter(active.id, currentTabUrl)}
-                  onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
-                  onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
-                  onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
-                />
-              </>
-            )}
-            {methodFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <MethodFilterPicker
-                  filters={methodFilters}
-                  onChange={(methods) => setMethodFilters(active.id, methods)}
-                />
-              </>
-            )}
+                {cookieRequestRules.length > 0 && (
+                  <HeaderRuleList
+                    variant="editor"
+                    kind="cookie-request-append"
+                    rules={cookieRequestRules}
+                    onAdd={() => addRule(active.id, "cookie-request-append")}
+                    onUpdate={handleUpdate}
+                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                  />
+                )}
+                {cookieResponseRules.length > 0 && (
+                  <HeaderRuleList
+                    variant="editor"
+                    kind="cookie-response-append"
+                    rules={cookieResponseRules}
+                    onAdd={() => addRule(active.id, "cookie-response-append")}
+                    onUpdate={handleUpdate}
+                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                  />
+                )}
+                {redirectRules.length > 0 && (
+                  <HeaderRuleList
+                    variant="editor"
+                    kind="redirect"
+                    rules={redirectRules}
+                    onAdd={() => addRule(active.id, "redirect")}
+                    onUpdate={handleUpdate}
+                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
+                  />
+                )}
+                {tabFilters.length > 0 && (
+                  <TabFilterList
+                    variant="editor"
+                    filters={tabFilters}
+                    onAdd={() => addTabFilter(active.id, currentTabUrlPattern)}
+                    onUpdate={(f) => updateTabFilter(active.id, f)}
+                    onDelete={(id) => deleteTabFilter(active.id, id)}
+                    onToggle={(id) => toggleTabFilter(active.id, id)}
+                  />
+                )}
+                {domainFilters.length > 0 && (
+                  <FilterRowList<DomainFilter>
+                    variant="editor"
+                    filters={domainFilters}
+                    valueField="domain"
+                    i18nKey="domainFilters"
+                    onAdd={() => addDomainFilter(active.id, currentTabDomain)}
+                    onUpdate={(f) => updateDomainFilter(active.id, f)}
+                    onDelete={(id) => deleteDomainFilter(active.id, id)}
+                    onToggle={(id) => toggleDomainFilter(active.id, id)}
+                  />
+                )}
+                {urlFilters.length > 0 && (
+                  <FilterRowList<UrlFilter>
+                    variant="editor"
+                    filters={urlFilters}
+                    valueField="regex"
+                    i18nKey="urlFilters"
+                    onAdd={() => addUrlFilter(active.id, currentTabRegex)}
+                    onUpdate={(f) => updateUrlFilter(active.id, f)}
+                    onDelete={(id) => deleteUrlFilter(active.id, id)}
+                    onToggle={(id) => toggleUrlFilter(active.id, id)}
+                  />
+                )}
+                {excludeUrlFilters.length > 0 && (
+                  <FilterRowList<ExcludeUrlFilter>
+                    variant="editor"
+                    filters={excludeUrlFilters}
+                    valueField="url"
+                    i18nKey="excludeUrlFilters"
+                    onAdd={() => addExcludeUrlFilter(active.id, currentTabUrl)}
+                    onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
+                    onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
+                    onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
+                  />
+                )}
+                {methodFilters.length > 0 && (
+                  <MethodFilterPicker
+                    variant="editor"
+                    filters={methodFilters}
+                    onChange={(methods) => setMethodFilters(active.id, methods)}
+                  />
+                )}
+              </div>
+            </div>
+            <div
+              className={cn(
+                "he-scroll-shadow he-scroll-shadow-bottom",
+                scrollShadow.bottom && "he-scroll-shadow-visible",
+              )}
+            />
           </div>
         )}
 
-        {/* Footer: 主要动作（Mod / 模板 / 过滤） */}
-        <div className="mt-2 mb-1.5">
+        <div className="mt-1.5">
           <NoFilterBanner compact />
-          <Divider className="mt-2" />
         </div>
-        <div className="flex items-center gap-1.5">
+
+        <div className="mt-2 flex items-center gap-1.5">
           <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
             <Button
+              className="he-mod-button"
               theme="solid"
               type="primary"
               size="small"
               icon={<IconPlus />}
+              disabled={!active}
             >
               {t("popup.mod")}
             </Button>

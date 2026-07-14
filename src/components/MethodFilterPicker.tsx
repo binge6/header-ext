@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { Button, Divider, Select, Space, Typography } from "@douyinfe/semi-ui";
+import { IconFilter } from "@douyinfe/semi-icons";
 import type { MethodFilter } from "../core/types";
 
 interface Props {
   filters: MethodFilter[];
   onChange: (methods: string[]) => void;
+  variant?: "compact" | "editor";
 }
 
 const HTTP_METHODS = [
@@ -21,7 +23,11 @@ const HTTP_METHODS = [
 
 // 请求方法过滤：以多选下拉形式呈现，避免逐项添加。
 // outerBottomSlot 底部增加 "全选 / 清空" 快捷操作。
-export function MethodFilterPicker({ filters, onChange }: Props) {
+export function MethodFilterPicker({
+  filters,
+  onChange,
+  variant = "compact",
+}: Props) {
   const { t } = useTranslation();
   // 仅保留启用的方法值；停用项视为未选
   const value = filters
@@ -30,11 +36,8 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
 
   const allSelected = value.length === HTTP_METHODS.length;
 
-  return (
-    <div>
-      <Typography.Text strong className="text-group-title mb-1.5 block">
-        {t("methodFilters.title")}
-      </Typography.Text>
+  const content = (
+    <>
       <Select
         size="small"
         multiple
@@ -70,6 +73,31 @@ export function MethodFilterPicker({ filters, onChange }: Props) {
           ? t("methodFilters.empty")
           : t("methodFilters.hint")}
       </Typography.Text>
+    </>
+  );
+
+  if (variant === "editor") {
+    return (
+      <section className="he-editor-section rounded-xl border border-semi-color-border p-3">
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <span className="he-editor-section-icon he-editor-section-icon-filter">
+            <IconFilter />
+          </span>
+          <Typography.Text strong className="text-group-title">
+            {t("methodFilters.title")}
+          </Typography.Text>
+        </div>
+        {content}
+      </section>
+    );
+  }
+
+  return (
+    <div>
+      <Typography.Text strong className="text-group-title mb-1.5 block">
+        {t("methodFilters.title")}
+      </Typography.Text>
+      {content}
     </div>
   );
 }

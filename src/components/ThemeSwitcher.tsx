@@ -2,9 +2,10 @@
 // 与 LanguageSwitcher 风格保持一致：icon 模式 hover 出菜单，select 模式下拉
 
 import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import { IconBulb, IconMoon, IconSun } from "@douyinfe/semi-icons";
+import { IconBulb, IconMoon, IconSun, IconTick } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useThemeMode, type ThemeMode } from "@/src/hooks/useThemeMode";
+import { cn } from "@/src/utils/cn";
 
 interface Props {
   variant?: "icon" | "select";
@@ -32,11 +33,27 @@ export function ThemeSwitcher({
         position="bottomRight"
         render={
           <Dropdown.Menu>
-            {MODES.map((m) => (
-              <Dropdown.Item key={m} onClick={() => setMode(m)}>
-                {t(`theme.${m}`)}
-              </Dropdown.Item>
-            ))}
+            {MODES.map((m) => {
+              const selected = m === mode;
+              return (
+                <Dropdown.Item
+                  key={m}
+                  selected={selected}
+                  className={cn(
+                    selected &&
+                      "bg-semi-color-primary-light-default text-semi-color-primary",
+                  )}
+                  onClick={() => setMode(m)}
+                >
+                  <span className="flex min-w-20 items-center justify-between gap-4">
+                    <span>{t(`theme.${m}`)}</span>
+                    {selected && (
+                      <IconTick className="text-semi-color-primary" />
+                    )}
+                  </span>
+                </Dropdown.Item>
+              );
+            })}
           </Dropdown.Menu>
         }
       >

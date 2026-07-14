@@ -36,6 +36,7 @@ interface ProfileActions {
   updateRule: (profileId: string, rule: HeaderRule) => void;
   deleteRule: (profileId: string, ruleId: string) => void;
   toggleRule: (profileId: string, ruleId: string) => void;
+  reorderRules: (profileId: string, orderedRuleIds: string[]) => void;
 
   // tab filters (Profile 级)
   addTabFilter: (profileId: string, urlFilter?: string) => string;
@@ -167,6 +168,29 @@ async function persist(state: AppState): Promise<void> {
   await saveState({ profiles: state.profiles, meta: state.meta });
 }
 
+function reorderRulesByIds(
+  rules: HeaderRule[],
+  orderedRuleIds: string[]
+): HeaderRule[] {
+  if (orderedRuleIds.length < 2) return rules;
+
+  const idSet = new Set(orderedRuleIds);
+  if (idSet.size !== orderedRuleIds.length) return rules;
+
+  const ruleById = new Map(rules.map((rule) => [rule.id, rule]));
+  const orderedRules: HeaderRule[] = [];
+  for (const id of orderedRuleIds) {
+    const rule = ruleById.get(id);
+    if (!rule) return rules;
+    orderedRules.push(rule);
+  }
+
+  let cursor = 0;
+  return rules.map((rule) =>
+    idSet.has(rule.id) ? orderedRules[cursor++] : rule
+  );
+}
+
 export const useProfileStore = create<ProfileStore>((set, get) => ({
   profiles: [],
   meta: {
@@ -292,6 +316,20 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
             }
           : p
       );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    reorderRules: (profileId, orderedRuleIds) => {
+      let changed = false;
+      const profiles = get().profiles.map((p) => {
+        if (p.id !== profileId) return p;
+        const rules = reorderRulesByIds(p.rules, orderedRuleIds);
+        if (rules === p.rules) return p;
+        changed = true;
+        return { ...p, rules, updatedAt: Date.now() };
+      });
+      if (!changed) return;
       set({ profiles });
       void persist({ profiles, meta: get().meta });
     },
