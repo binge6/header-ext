@@ -1,5 +1,5 @@
 import { Button } from "@douyinfe/semi-ui";
-import { IconPlus } from "@douyinfe/semi-icons";
+import { IconPlusStroked as IconPlus } from "@douyinfe/semi-icons";
 
 interface Props {
   title: string;

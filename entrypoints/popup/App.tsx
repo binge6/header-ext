@@ -1,24 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   ConfigProvider,
-  Divider,
   Dropdown,
-  Select,
+  Input,
+  Modal,
+  Nav,
   Spin,
-  Switch,
-  Tag,
   Tooltip,
+  Typography,
 } from "@douyinfe/semi-ui";
-import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
 import {
-  IconFilter,
-  IconLock,
+  IconConfigStroked as IconConfig,
+  IconCopyStroked as IconCopy,
+  IconDeleteStroked as IconDelete,
+  IconEditStroked as IconEdit,
+  IconFilterStroked as IconFilter,
+  IconLockStroked as IconLock,
+  IconMoreStroked as IconMore,
   IconPause,
   IconPlay,
-  IconPlus,
-  IconSetting,
-  IconUnlock,
+  IconPlusStroked as IconPlus,
+  IconSettingStroked as IconSetting,
+  IconUnlockStroked as IconUnlock,
 } from "@douyinfe/semi-icons";
 import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
@@ -44,48 +48,22 @@ import type {
   UrlFilter,
   ExcludeUrlFilter,
 } from "@/src/core/types";
+import { cn } from "@/src/utils/cn";
 import "./App.css";
 
-const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
-  "amber",
-  "blue",
-  "cyan",
-  "green",
-  "grey",
-  "indigo",
-  "light-blue",
-  "light-green",
-  "lime",
-  "orange",
-  "pink",
-  "purple",
-  "red",
-  "teal",
-  "violet",
-  "yellow",
-  "white",
-]);
-
-function mapTagColor(input?: string): TagColor {
-  if (!input) return "grey";
-  switch (input) {
-    case "warning":
-      return "amber";
-    case "success":
-      return "green";
-    case "processing":
-      return "blue";
-    case "error":
-      return "red";
-    case "default":
-      return "grey";
-  }
-  return TAG_COLORS.has(input as TagColor) ? (input as TagColor) : "grey";
-}
+const logoUrl = new URL("../../assets/logo.svg", import.meta.url).href;
 
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
 }
+
+function getProfileBadgeText(name?: string): string {
+  const trimmed = name?.trim() ?? "";
+  const edgeNumber = trimmed.match(/^\d+/)?.[0] ?? trimmed.match(/\d+$/)?.[0];
+  return edgeNumber ?? (trimmed.charAt(0).toUpperCase() || "H");
+}
+
+const { Text } = Typography;
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -99,10 +77,14 @@ function App() {
     setActiveProfile: setActive,
     togglePause,
     addRule,
+    renameProfile,
     updateRule,
     deleteRule,
     toggleRule,
+    reorderRules,
     addProfile,
+    duplicateProfile,
+    deleteProfile,
     setLockedTabId,
     addTabFilter,
     updateTabFilter,
@@ -132,6 +114,16 @@ function App() {
   const [currentTabUrlPattern, setCurrentTabUrlPattern] = useState<string>("");
   // 用于 URL 过滤的正则（自动转义 hostname，匹配该 host 下任意路径）
   const [currentTabRegex, setCurrentTabRegex] = useState<string>("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [scrollShadow, setScrollShadow] = useState({
+    top: false,
+    bottom: false,
+  });
+  const [renamingProfile, setRenamingProfile] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [profileMenuVisible, setProfileMenuVisible] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -169,14 +161,6 @@ function App() {
     [i18n.language],
   );
 
-  if (!hydrated) {
-    return (
-      <div className="w-155 p-10 text-center">
-        <Spin />
-      </div>
-    );
-  }
-
   const active = profiles.find((p) => p.id === meta.activeProfileId);
 
   const requestRules =
@@ -198,6 +182,19 @@ function App() {
   const urlFilters = active?.urlFilters ?? [];
   const excludeUrlFilters = active?.excludeUrlFilters ?? [];
   const methodFilters = active?.methodFilters ?? [];
+  const profileNavItems = useMemo(
+    () =>
+      profiles.map((profile) => ({
+        itemKey: profile.id,
+        text: profile.name,
+        icon: (
+          <span className="he-profile-rail-number" aria-hidden="true">
+            {getProfileBadgeText(profile.name)}
+          </span>
+        ),
+      })),
+    [profiles],
+  );
 
   const handleAddHeader = (target: "request" | "response") => {
     if (!active) return;
@@ -207,6 +204,44 @@ function App() {
   const handleUpdate = (rule: HeaderRule) => {
     if (!active) return;
     updateRule(active.id, rule);
+  };
+
+  const handleOpenRenameProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+    setRenamingProfile({ id: active.id, name: active.name });
+  };
+
+  const handleRenameProfile = () => {
+    if (!renamingProfile) return;
+    renameProfile(renamingProfile.id, renamingProfile.name);
+    setRenamingProfile(null);
+  };
+
+  const handleDuplicateActiveProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+
+    const id = duplicateProfile(
+      active.id,
+      t("options.profileCopyName", { name: active.name }),
+    );
+    if (id) setActive(id);
+  };
+
+  const handleDeleteActiveProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+    const profileId = active.id;
+
+    Modal.confirm({
+      title: t("options.deleteProfile"),
+      content: t("options.deleteProfileConfirm"),
+      okText: t("common.confirm"),
+      cancelText: t("common.cancel"),
+      okButtonProps: { type: "danger" },
+      onOk: () => deleteProfile(profileId),
+    });
   };
 
   const isLocked = meta.lockedTabId != null;
@@ -283,302 +318,480 @@ function App() {
     </Dropdown.Menu>
   );
 
+  const profileMenu = (
+    <Dropdown.Menu>
+      <Dropdown.Item icon={<IconEdit />} onClick={handleOpenRenameProfile}>
+        {t("options.renameProfile")}
+      </Dropdown.Item>
+      <Dropdown.Item icon={<IconCopy />} onClick={handleDuplicateActiveProfile}>
+        {t("options.copyProfile")}
+      </Dropdown.Item>
+      <Dropdown.Divider />
+      <Dropdown.Item
+        type="danger"
+        icon={<IconDelete />}
+        onClick={handleDeleteActiveProfile}
+      >
+        {t("options.deleteProfile")}
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  );
+
+  const handleToggleTabLock = () => {
+    if (lockedHere) {
+      setLockedTabId(null);
+    } else if (currentTabId != null) {
+      setLockedTabId(currentTabId);
+    }
+  };
+
+  const lockLabel = lockedHere
+    ? t("popup.unlockTab")
+    : isLocked
+      ? t("popup.lockedTo", { id: meta.lockedTabId })
+      : t("popup.lockTab");
+
+  const hasEditorContent =
+    requestRules.length +
+      responseRules.length +
+      cookieRequestRules.length +
+      cookieResponseRules.length +
+      redirectRules.length +
+      tabFilters.length +
+      domainFilters.length +
+      urlFilters.length +
+      excludeUrlFilters.length +
+      methodFilters.length >
+    0;
+
+  const updateScrollShadow = useCallback(() => {
+    const el = scrollAreaRef.current;
+    if (!el) {
+      setScrollShadow({ top: false, bottom: false });
+      return;
+    }
+
+    const maxScrollTop = el.scrollHeight - el.clientHeight;
+    const next = {
+      top: el.scrollTop > 1,
+      bottom: maxScrollTop - el.scrollTop > 1,
+    };
+
+    setScrollShadow((prev) =>
+      prev.top === next.top && prev.bottom === next.bottom ? prev : next,
+    );
+  }, []);
+
+  useEffect(() => {
+    updateScrollShadow();
+
+    const el = scrollAreaRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateScrollShadow);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+
+    return () => observer.disconnect();
+  }, [
+    active?.id,
+    cookieRequestRules.length,
+    cookieResponseRules.length,
+    domainFilters.length,
+    excludeUrlFilters.length,
+    methodFilters.length,
+    redirectRules.length,
+    requestRules.length,
+    responseRules.length,
+    tabFilters.length,
+    updateScrollShadow,
+    urlFilters.length,
+  ]);
+
+  if (!hydrated) {
+    return (
+      <div className="w-155 p-10 text-center">
+        <Spin />
+      </div>
+    );
+  }
+
   return (
     <ConfigProvider locale={semiLocale}>
-      <div className="flex w-155 min-h-90 flex-col bg-semi-color-bg-2 p-3 text-semi-color-text-0">
-        {/* 顶栏：Profile 选择 + 全局动作（暂停/锁 Tab/语言/设置） */}
-        <div className="flex items-center gap-1.5">
-          <Tag color={mapTagColor(active?.color)} className="mr-0">
-            {active?.rules.length ?? 0}
-          </Tag>
-          <Select
-            size="small"
-            className="w-50"
-            value={meta.activeProfileId ?? undefined}
-            onChange={(v) => setActive(v as string)}
-            placeholder={t("popup.activeProfile")}
-            optionList={profiles.map((p) => ({ value: p.id, label: p.name }))}
-            outerBottomSlot={
-              <>
-                <Divider margin="4px" />
-                <Button
-                  theme="borderless"
-                  type="tertiary"
-                  size="small"
-                  icon={<IconPlus />}
-                  block
-                  onClick={() => {
-                    const id = addProfile();
-                    setActive(id);
-                  }}
+      <div className="he-editor-panel flex w-155 min-h-76 text-semi-color-text-0">
+        <Nav
+          className="he-profile-rail w-12 shrink-0"
+          mode="vertical"
+          isCollapsed
+          header={
+            <img className="he-rail-logo" src={logoUrl} alt="Header Ext" />
+          }
+          selectedKeys={meta.activeProfileId ? [meta.activeProfileId] : []}
+          items={profileNavItems}
+          tooltipShowDelay={0.24}
+          onSelect={({ itemKey }) => setActive(String(itemKey))}
+          footer={
+            <Tooltip content={t("options.newProfile")} position="right">
+              <Button
+                className="he-profile-rail-add"
+                theme="light"
+                type="primary"
+                size="small"
+                icon={<IconPlus />}
+                aria-label={t("options.newProfile")}
+                onClick={() => {
+                  const id = addProfile();
+                  setActive(id);
+                }}
+              />
+            </Tooltip>
+          }
+        />
+
+        <main className="flex min-w-0 flex-1 flex-col">
+          <div className="he-main-header flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="he-profile-mark" aria-hidden="true">
+                {getProfileBadgeText(active?.name)}
+              </span>
+              <Text
+                strong
+                ellipsis={{ showTooltip: true }}
+                className="min-w-0 text-base"
+              >
+                {active?.name ?? t("options.noProfiles")}
+              </Text>
+              {active && (
+                <span
+                  className={cn(
+                    "he-profile-status-dot",
+                    meta.globalPaused && "he-profile-status-dot-paused",
+                  )}
+                />
+              )}
+              {active && (
+                <Dropdown
+                  trigger="click"
+                  position="bottomLeft"
+                  render={profileMenu}
+                  visible={profileMenuVisible}
+                  onVisibleChange={setProfileMenuVisible}
                 >
-                  {t("options.newProfile")}
-                </Button>
-              </>
-            }
-          />
-          <div className="flex-1" />
-          <Tooltip
-            position="bottom"
-            content={
-              meta.globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")
-            }
-          >
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={
-                meta.globalPaused ? (
-                  <IconPlay className="text-semi-color-warning" />
-                ) : (
-                  <IconPause />
-                )
-              }
-              onClick={() => togglePause()}
-            />
-          </Tooltip>
-          <Tooltip
-            position="bottom"
-            content={
-              lockedHere
-                ? t("popup.unlockTab")
-                : isLocked
-                  ? t("popup.lockedTo", { id: meta.lockedTabId })
-                  : t("popup.lockTab")
-            }
-          >
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={
-                lockedHere ? (
-                  <IconUnlock className="text-semi-color-primary" />
-                ) : (
-                  <IconLock
-                    className={isLocked ? "text-semi-color-primary" : undefined}
+                  <Button
+                    className="h-6 w-6 min-w-0 p-0"
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={<IconMore />}
+                    aria-label={t("popup.profileActions")}
                   />
-                )
-              }
-              onClick={() => {
-                if (lockedHere) {
-                  setLockedTabId(null);
-                } else if (currentTabId != null) {
-                  setLockedTabId(currentTabId);
-                }
-              }}
-            />
-          </Tooltip>
-          <LanguageSwitcher variant="icon" />
-          <ThemeSwitcher variant="icon" />
-          <Tooltip content={t("popup.openOptions")} position="bottomRight">
-            <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconSetting />}
-              onClick={() => void openOptionsPage()}
-            />
-          </Tooltip>
-        </div>
+                </Dropdown>
+              )}
+            </div>
 
-        {meta.globalPaused && (
-          <div className="mt-2 flex items-center justify-between rounded border border-semi-color-warning-light-active bg-semi-color-warning-light-default px-2 py-1 text-xs">
-            <span>{t("popup.globalPaused")}</span>
-            <Switch
-              size="small"
-              checked={!meta.globalPaused}
-              onChange={() => togglePause()}
-            />
+            <div className="flex shrink-0 items-center gap-4">
+              <div className="he-header-action-group he-header-action-group-primary flex items-center">
+                <Tooltip
+                  position="bottom"
+                  content={
+                    meta.globalPaused
+                      ? t("popup.resumeAll")
+                      : t("popup.pauseAll")
+                  }
+                >
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={
+                      meta.globalPaused ? (
+                        <IconPlay className="text-semi-color-warning" />
+                      ) : (
+                        <IconPause />
+                      )
+                    }
+                    onClick={() => togglePause()}
+                  />
+                </Tooltip>
+                <Tooltip content={lockLabel} position="bottom">
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    disabled={currentTabId == null && !lockedHere}
+                    icon={
+                      lockedHere ? (
+                        <IconUnlock className="text-semi-color-primary" />
+                      ) : (
+                        <IconLock
+                          className={
+                            isLocked ? "text-semi-color-primary" : undefined
+                          }
+                        />
+                      )
+                    }
+                    onClick={handleToggleTabLock}
+                  />
+                </Tooltip>
+              </div>
+              <span className="he-header-divider" />
+              <div className="he-header-action-group he-header-action-group-secondary flex items-center">
+                <LanguageSwitcher variant="icon" />
+                <ThemeSwitcher variant="icon" />
+                <Tooltip content={t("popup.openOptions")} position="bottom">
+                  <Button
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={<IconSetting />}
+                    onClick={() => void openOptionsPage()}
+                  />
+                </Tooltip>
+              </div>
+            </div>
           </div>
-        )}
 
-        <div className="my-3 mb-1">
-          <Divider />
-        </div>
+          {!active ? (
+            <div className="flex flex-1 items-center justify-center py-8 text-semi-color-text-2">
+              {t("options.noProfiles")}
+            </div>
+          ) : (
+            <div className="he-main-content relative flex-1 px-3 py-3">
+              <div
+                className={cn(
+                  "he-scroll-shadow he-scroll-shadow-top",
+                  scrollShadow.top && "he-scroll-shadow-visible",
+                )}
+              />
+              <div
+                ref={scrollAreaRef}
+                className="max-h-110 overflow-y-auto"
+                onScroll={updateScrollShadow}
+              >
+                <div className="flex flex-col gap-3">
+                  {!hasEditorContent && (
+                    <div className="he-empty-mod-state">
+                      <div className="he-empty-mod-visual" aria-hidden="true">
+                        <IconConfig />
+                      </div>
+                      <div className="flex flex-col items-center gap-1 text-center">
+                        <Text strong>{t("popup.noRules")}</Text>
+                        <Text type="tertiary" size="small">
+                          {t("popup.emptyModHint")}
+                        </Text>
+                      </div>
+                      <Dropdown
+                        trigger="click"
+                        position="bottom"
+                        render={modMenu}
+                      >
+                        <Button
+                          theme="solid"
+                          type="primary"
+                          size="small"
+                          icon={<IconPlus />}
+                        >
+                          {t("popup.addMod")}
+                        </Button>
+                      </Dropdown>
+                    </div>
+                  )}
+                  {hasEditorContent && (
+                    <>
+                      <HeaderRuleList
+                        variant="editor"
+                        kind="header"
+                        target="request"
+                        rules={requestRules}
+                        onAdd={() => handleAddHeader("request")}
+                        onUpdate={handleUpdate}
+                        onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                        onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                        onReorder={(ruleIds) =>
+                          reorderRules(active.id, ruleIds)
+                        }
+                      />
+                      <HeaderRuleList
+                        variant="editor"
+                        kind="header"
+                        target="response"
+                        rules={responseRules}
+                        onAdd={() => handleAddHeader("response")}
+                        onUpdate={handleUpdate}
+                        onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                        onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                        onReorder={(ruleIds) =>
+                          reorderRules(active.id, ruleIds)
+                        }
+                      />
+                      {cookieRequestRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="cookie-request-append"
+                          rules={cookieRequestRules}
+                          onAdd={() =>
+                            addRule(active.id, "cookie-request-append")
+                          }
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {cookieResponseRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="cookie-response-append"
+                          rules={cookieResponseRules}
+                          onAdd={() =>
+                            addRule(active.id, "cookie-response-append")
+                          }
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {redirectRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="redirect"
+                          rules={redirectRules}
+                          onAdd={() => addRule(active.id, "redirect")}
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {tabFilters.length > 0 && (
+                        <TabFilterList
+                          variant="editor"
+                          filters={tabFilters}
+                          onAdd={() =>
+                            addTabFilter(active.id, currentTabUrlPattern)
+                          }
+                          onUpdate={(f) => updateTabFilter(active.id, f)}
+                          onDelete={(id) => deleteTabFilter(active.id, id)}
+                          onToggle={(id) => toggleTabFilter(active.id, id)}
+                        />
+                      )}
+                      {domainFilters.length > 0 && (
+                        <FilterRowList<DomainFilter>
+                          variant="editor"
+                          filters={domainFilters}
+                          valueField="domain"
+                          i18nKey="domainFilters"
+                          onAdd={() =>
+                            addDomainFilter(active.id, currentTabDomain)
+                          }
+                          onUpdate={(f) => updateDomainFilter(active.id, f)}
+                          onDelete={(id) => deleteDomainFilter(active.id, id)}
+                          onToggle={(id) => toggleDomainFilter(active.id, id)}
+                        />
+                      )}
+                      {urlFilters.length > 0 && (
+                        <FilterRowList<UrlFilter>
+                          variant="editor"
+                          filters={urlFilters}
+                          valueField="regex"
+                          i18nKey="urlFilters"
+                          onAdd={() => addUrlFilter(active.id, currentTabRegex)}
+                          onUpdate={(f) => updateUrlFilter(active.id, f)}
+                          onDelete={(id) => deleteUrlFilter(active.id, id)}
+                          onToggle={(id) => toggleUrlFilter(active.id, id)}
+                        />
+                      )}
+                      {excludeUrlFilters.length > 0 && (
+                        <FilterRowList<ExcludeUrlFilter>
+                          variant="editor"
+                          filters={excludeUrlFilters}
+                          valueField="url"
+                          i18nKey="excludeUrlFilters"
+                          onAdd={() =>
+                            addExcludeUrlFilter(active.id, currentTabUrl)
+                          }
+                          onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
+                          onDelete={(id) =>
+                            deleteExcludeUrlFilter(active.id, id)
+                          }
+                          onToggle={(id) =>
+                            toggleExcludeUrlFilter(active.id, id)
+                          }
+                        />
+                      )}
+                      {methodFilters.length > 0 && (
+                        <MethodFilterPicker
+                          variant="editor"
+                          filters={methodFilters}
+                          onChange={(methods) =>
+                            setMethodFilters(active.id, methods)
+                          }
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  "he-scroll-shadow he-scroll-shadow-bottom",
+                  scrollShadow.bottom && "he-scroll-shadow-visible",
+                )}
+              />
+            </div>
+          )}
 
-        {!active ? (
-          <div className="py-6 text-center text-semi-color-text-2">
-            {t("options.noProfiles")}
+          <div className="px-3">
+            <NoFilterBanner compact />
           </div>
-        ) : (
-          <div
-            // -mr-3/pr-3：把滚动条压到外层 padding 区域内，并恢复内容左右对称
-            className="max-h-115 flex-1 -mr-3 overflow-y-auto pr-3"
-          >
-            <HeaderRuleList
-              kind="header"
-              target="request"
-              rules={requestRules}
-              onAdd={() => handleAddHeader("request")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-            />
-            {responseRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="header"
-                  target="response"
-                  rules={responseRules}
-                  onAdd={() => handleAddHeader("response")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {cookieRequestRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="cookie-request-append"
-                  rules={cookieRequestRules}
-                  onAdd={() => addRule(active.id, "cookie-request-append")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {cookieResponseRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="cookie-response-append"
-                  rules={cookieResponseRules}
-                  onAdd={() => addRule(active.id, "cookie-response-append")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {redirectRules.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <HeaderRuleList
-                  kind="redirect"
-                  rules={redirectRules}
-                  onAdd={() => addRule(active.id, "redirect")}
-                  onUpdate={handleUpdate}
-                  onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                  onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                />
-              </>
-            )}
-            {tabFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <TabFilterList
-                  filters={tabFilters}
-                  onAdd={() => addTabFilter(active.id, currentTabUrlPattern)}
-                  onUpdate={(f) => updateTabFilter(active.id, f)}
-                  onDelete={(id) => deleteTabFilter(active.id, id)}
-                  onToggle={(id) => toggleTabFilter(active.id, id)}
-                />
-              </>
-            )}
-            {domainFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<DomainFilter>
-                  filters={domainFilters}
-                  valueField="domain"
-                  i18nKey="domainFilters"
-                  onAdd={() => addDomainFilter(active.id, currentTabDomain)}
-                  onUpdate={(f) => updateDomainFilter(active.id, f)}
-                  onDelete={(id) => deleteDomainFilter(active.id, id)}
-                  onToggle={(id) => toggleDomainFilter(active.id, id)}
-                />
-              </>
-            )}
-            {urlFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<UrlFilter>
-                  filters={urlFilters}
-                  valueField="regex"
-                  i18nKey="urlFilters"
-                  onAdd={() => addUrlFilter(active.id, currentTabRegex)}
-                  onUpdate={(f) => updateUrlFilter(active.id, f)}
-                  onDelete={(id) => deleteUrlFilter(active.id, id)}
-                  onToggle={(id) => toggleUrlFilter(active.id, id)}
-                />
-              </>
-            )}
-            {excludeUrlFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <FilterRowList<ExcludeUrlFilter>
-                  filters={excludeUrlFilters}
-                  valueField="url"
-                  i18nKey="excludeUrlFilters"
-                  onAdd={() => addExcludeUrlFilter(active.id, currentTabUrl)}
-                  onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
-                  onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
-                  onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
-                />
-              </>
-            )}
-            {methodFilters.length > 0 && (
-              <>
-                <div className="my-2">
-                  <Divider />
-                </div>
-                <MethodFilterPicker
-                  filters={methodFilters}
-                  onChange={(methods) => setMethodFilters(active.id, methods)}
-                />
-              </>
-            )}
-          </div>
-        )}
 
-        {/* Footer: 主要动作（Mod / 模板 / 过滤） */}
-        <div className="mt-2 mb-1.5">
-          <NoFilterBanner compact />
-          <Divider className="mt-2" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
-            <Button
-              theme="solid"
-              type="primary"
-              size="small"
-              icon={<IconPlus />}
-            >
-              {t("popup.mod")}
-            </Button>
-          </Dropdown>
-          <TemplateMenu profileId={active?.id ?? null} />
-          <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
-            <Button size="small" icon={<IconFilter />} disabled={!active}>
-              {t("filters.title")}
-            </Button>
-          </Dropdown>
-          <div className="flex-1" />
-          <ImportExportButtons iconOnly />
-        </div>
+          <div className="he-bottom-bar flex items-center gap-2">
+            <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
+              <Button
+                className="he-mod-button"
+                theme="solid"
+                type="primary"
+                size="small"
+                icon={<IconPlus />}
+                disabled={!active}
+              >
+                {t("popup.mod")}
+              </Button>
+            </Dropdown>
+            <TemplateMenu profileId={active?.id ?? null} />
+            <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
+              <Button size="small" icon={<IconFilter />} disabled={!active}>
+                {t("filters.title")}
+              </Button>
+            </Dropdown>
+            <div className="flex-1" />
+            <ImportExportButtons iconOnly />
+          </div>
+        </main>
       </div>
+      <Modal
+        visible={!!renamingProfile}
+        title={t("options.renameProfile")}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        onOk={handleRenameProfile}
+        onCancel={() => setRenamingProfile(null)}
+      >
+        <Input
+          value={renamingProfile?.name ?? ""}
+          autoFocus
+          onChange={(name) =>
+            setRenamingProfile((prev) => (prev ? { ...prev, name } : prev))
+          }
+        />
+      </Modal>
     </ConfigProvider>
   );
 }

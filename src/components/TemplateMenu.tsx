@@ -1,7 +1,7 @@
 // 一键模板下拉菜单：插入常见 CSP / CORS / X-Frame / UA / no-cache 预设
 
 import { Button, Dropdown } from "@douyinfe/semi-ui";
-import { IconBolt } from "@douyinfe/semi-icons";
+import { IconLightningStroked as IconBolt } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileActions } from "@/src/store/profileStore";
 import { TEMPLATE_KEYS, buildTemplate } from "@/src/core/templates";

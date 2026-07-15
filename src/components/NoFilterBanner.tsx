@@ -1,5 +1,5 @@
 import { Banner, Typography } from "@douyinfe/semi-ui";
-import { IconAlertTriangle } from "@douyinfe/semi-icons";
+import { IconIssueStroked as IconAlertTriangle } from "@douyinfe/semi-icons";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
 
