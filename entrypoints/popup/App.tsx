@@ -3,15 +3,23 @@ import {
   Button,
   ConfigProvider,
   Dropdown,
+  Input,
+  Modal,
   Nav,
   Spin,
   Tooltip,
   Typography,
 } from "@douyinfe/semi-ui";
 import {
+  IconConfigStroked as IconConfig,
+  IconCopyStroked as IconCopy,
+  IconDeleteStroked as IconDelete,
+  IconEditStroked as IconEdit,
   IconFilterStroked as IconFilter,
-  IconForwardStroked as IconPlay,
   IconLockStroked as IconLock,
+  IconMoreStroked as IconMore,
+  IconPause,
+  IconPlay,
   IconPlusStroked as IconPlus,
   IconSettingStroked as IconSetting,
   IconUnlockStroked as IconUnlock,
@@ -69,11 +77,14 @@ function App() {
     setActiveProfile: setActive,
     togglePause,
     addRule,
+    renameProfile,
     updateRule,
     deleteRule,
     toggleRule,
     reorderRules,
     addProfile,
+    duplicateProfile,
+    deleteProfile,
     setLockedTabId,
     addTabFilter,
     updateTabFilter,
@@ -108,6 +119,11 @@ function App() {
     top: false,
     bottom: false,
   });
+  const [renamingProfile, setRenamingProfile] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [profileMenuVisible, setProfileMenuVisible] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -190,6 +206,44 @@ function App() {
     updateRule(active.id, rule);
   };
 
+  const handleOpenRenameProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+    setRenamingProfile({ id: active.id, name: active.name });
+  };
+
+  const handleRenameProfile = () => {
+    if (!renamingProfile) return;
+    renameProfile(renamingProfile.id, renamingProfile.name);
+    setRenamingProfile(null);
+  };
+
+  const handleDuplicateActiveProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+
+    const id = duplicateProfile(
+      active.id,
+      t("options.profileCopyName", { name: active.name }),
+    );
+    if (id) setActive(id);
+  };
+
+  const handleDeleteActiveProfile = () => {
+    if (!active) return;
+    setProfileMenuVisible(false);
+    const profileId = active.id;
+
+    Modal.confirm({
+      title: t("options.deleteProfile"),
+      content: t("options.deleteProfileConfirm"),
+      okText: t("common.confirm"),
+      cancelText: t("common.cancel"),
+      okButtonProps: { type: "danger" },
+      onOk: () => deleteProfile(profileId),
+    });
+  };
+
   const isLocked = meta.lockedTabId != null;
   const lockedHere =
     isLocked && currentTabId != null && meta.lockedTabId === currentTabId;
@@ -264,6 +318,25 @@ function App() {
     </Dropdown.Menu>
   );
 
+  const profileMenu = (
+    <Dropdown.Menu>
+      <Dropdown.Item icon={<IconEdit />} onClick={handleOpenRenameProfile}>
+        {t("options.renameProfile")}
+      </Dropdown.Item>
+      <Dropdown.Item icon={<IconCopy />} onClick={handleDuplicateActiveProfile}>
+        {t("options.copyProfile")}
+      </Dropdown.Item>
+      <Dropdown.Divider />
+      <Dropdown.Item
+        type="danger"
+        icon={<IconDelete />}
+        onClick={handleDeleteActiveProfile}
+      >
+        {t("options.deleteProfile")}
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  );
+
   const handleToggleTabLock = () => {
     if (lockedHere) {
       setLockedTabId(null);
@@ -277,6 +350,19 @@ function App() {
     : isLocked
       ? t("popup.lockedTo", { id: meta.lockedTabId })
       : t("popup.lockTab");
+
+  const hasEditorContent =
+    requestRules.length +
+      responseRules.length +
+      cookieRequestRules.length +
+      cookieResponseRules.length +
+      redirectRules.length +
+      tabFilters.length +
+      domainFilters.length +
+      urlFilters.length +
+      excludeUrlFilters.length +
+      methodFilters.length >
+    0;
 
   const updateScrollShadow = useCallback(() => {
     const el = scrollAreaRef.current;
@@ -383,6 +469,24 @@ function App() {
                   )}
                 />
               )}
+              {active && (
+                <Dropdown
+                  trigger="click"
+                  position="bottomLeft"
+                  render={profileMenu}
+                  visible={profileMenuVisible}
+                  onVisibleChange={setProfileMenuVisible}
+                >
+                  <Button
+                    className="h-6 w-6 min-w-0 p-0"
+                    theme="borderless"
+                    type="tertiary"
+                    size="small"
+                    icon={<IconMore />}
+                    aria-label={t("popup.profileActions")}
+                  />
+                </Dropdown>
+              )}
             </div>
 
             <div className="flex shrink-0 items-center gap-4">
@@ -403,7 +507,7 @@ function App() {
                       meta.globalPaused ? (
                         <IconPlay className="text-semi-color-warning" />
                       ) : (
-                        <span className="he-pause-stroked-icon" />
+                        <IconPause />
                       )
                     }
                     onClick={() => togglePause()}
@@ -465,122 +569,173 @@ function App() {
                 onScroll={updateScrollShadow}
               >
                 <div className="flex flex-col gap-3">
-                  <HeaderRuleList
-                    variant="editor"
-                    kind="header"
-                    target="request"
-                    rules={requestRules}
-                    onAdd={() => handleAddHeader("request")}
-                    onUpdate={handleUpdate}
-                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                  />
-                  <HeaderRuleList
-                    variant="editor"
-                    kind="header"
-                    target="response"
-                    rules={responseRules}
-                    onAdd={() => handleAddHeader("response")}
-                    onUpdate={handleUpdate}
-                    onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                    onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                    onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                  />
-                  {cookieRequestRules.length > 0 && (
-                    <HeaderRuleList
-                      variant="editor"
-                      kind="cookie-request-append"
-                      rules={cookieRequestRules}
-                      onAdd={() => addRule(active.id, "cookie-request-append")}
-                      onUpdate={handleUpdate}
-                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                    />
+                  {!hasEditorContent && (
+                    <div className="he-empty-mod-state">
+                      <div className="he-empty-mod-visual" aria-hidden="true">
+                        <IconConfig />
+                      </div>
+                      <div className="flex flex-col items-center gap-1 text-center">
+                        <Text strong>{t("popup.noRules")}</Text>
+                        <Text type="tertiary" size="small">
+                          {t("popup.emptyModHint")}
+                        </Text>
+                      </div>
+                      <Dropdown
+                        trigger="click"
+                        position="bottom"
+                        render={modMenu}
+                      >
+                        <Button
+                          theme="solid"
+                          type="primary"
+                          size="small"
+                          icon={<IconPlus />}
+                        >
+                          {t("popup.addMod")}
+                        </Button>
+                      </Dropdown>
+                    </div>
                   )}
-                  {cookieResponseRules.length > 0 && (
-                    <HeaderRuleList
-                      variant="editor"
-                      kind="cookie-response-append"
-                      rules={cookieResponseRules}
-                      onAdd={() => addRule(active.id, "cookie-response-append")}
-                      onUpdate={handleUpdate}
-                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                    />
-                  )}
-                  {redirectRules.length > 0 && (
-                    <HeaderRuleList
-                      variant="editor"
-                      kind="redirect"
-                      rules={redirectRules}
-                      onAdd={() => addRule(active.id, "redirect")}
-                      onUpdate={handleUpdate}
-                      onDelete={(ruleId) => deleteRule(active.id, ruleId)}
-                      onToggle={(ruleId) => toggleRule(active.id, ruleId)}
-                      onReorder={(ruleIds) => reorderRules(active.id, ruleIds)}
-                    />
-                  )}
-                  {tabFilters.length > 0 && (
-                    <TabFilterList
-                      variant="editor"
-                      filters={tabFilters}
-                      onAdd={() =>
-                        addTabFilter(active.id, currentTabUrlPattern)
-                      }
-                      onUpdate={(f) => updateTabFilter(active.id, f)}
-                      onDelete={(id) => deleteTabFilter(active.id, id)}
-                      onToggle={(id) => toggleTabFilter(active.id, id)}
-                    />
-                  )}
-                  {domainFilters.length > 0 && (
-                    <FilterRowList<DomainFilter>
-                      variant="editor"
-                      filters={domainFilters}
-                      valueField="domain"
-                      i18nKey="domainFilters"
-                      onAdd={() => addDomainFilter(active.id, currentTabDomain)}
-                      onUpdate={(f) => updateDomainFilter(active.id, f)}
-                      onDelete={(id) => deleteDomainFilter(active.id, id)}
-                      onToggle={(id) => toggleDomainFilter(active.id, id)}
-                    />
-                  )}
-                  {urlFilters.length > 0 && (
-                    <FilterRowList<UrlFilter>
-                      variant="editor"
-                      filters={urlFilters}
-                      valueField="regex"
-                      i18nKey="urlFilters"
-                      onAdd={() => addUrlFilter(active.id, currentTabRegex)}
-                      onUpdate={(f) => updateUrlFilter(active.id, f)}
-                      onDelete={(id) => deleteUrlFilter(active.id, id)}
-                      onToggle={(id) => toggleUrlFilter(active.id, id)}
-                    />
-                  )}
-                  {excludeUrlFilters.length > 0 && (
-                    <FilterRowList<ExcludeUrlFilter>
-                      variant="editor"
-                      filters={excludeUrlFilters}
-                      valueField="url"
-                      i18nKey="excludeUrlFilters"
-                      onAdd={() =>
-                        addExcludeUrlFilter(active.id, currentTabUrl)
-                      }
-                      onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
-                      onDelete={(id) => deleteExcludeUrlFilter(active.id, id)}
-                      onToggle={(id) => toggleExcludeUrlFilter(active.id, id)}
-                    />
-                  )}
-                  {methodFilters.length > 0 && (
-                    <MethodFilterPicker
-                      variant="editor"
-                      filters={methodFilters}
-                      onChange={(methods) =>
-                        setMethodFilters(active.id, methods)
-                      }
-                    />
+                  {hasEditorContent && (
+                    <>
+                      <HeaderRuleList
+                        variant="editor"
+                        kind="header"
+                        target="request"
+                        rules={requestRules}
+                        onAdd={() => handleAddHeader("request")}
+                        onUpdate={handleUpdate}
+                        onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                        onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                        onReorder={(ruleIds) =>
+                          reorderRules(active.id, ruleIds)
+                        }
+                      />
+                      <HeaderRuleList
+                        variant="editor"
+                        kind="header"
+                        target="response"
+                        rules={responseRules}
+                        onAdd={() => handleAddHeader("response")}
+                        onUpdate={handleUpdate}
+                        onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                        onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                        onReorder={(ruleIds) =>
+                          reorderRules(active.id, ruleIds)
+                        }
+                      />
+                      {cookieRequestRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="cookie-request-append"
+                          rules={cookieRequestRules}
+                          onAdd={() =>
+                            addRule(active.id, "cookie-request-append")
+                          }
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {cookieResponseRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="cookie-response-append"
+                          rules={cookieResponseRules}
+                          onAdd={() =>
+                            addRule(active.id, "cookie-response-append")
+                          }
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {redirectRules.length > 0 && (
+                        <HeaderRuleList
+                          variant="editor"
+                          kind="redirect"
+                          rules={redirectRules}
+                          onAdd={() => addRule(active.id, "redirect")}
+                          onUpdate={handleUpdate}
+                          onDelete={(ruleId) => deleteRule(active.id, ruleId)}
+                          onToggle={(ruleId) => toggleRule(active.id, ruleId)}
+                          onReorder={(ruleIds) =>
+                            reorderRules(active.id, ruleIds)
+                          }
+                        />
+                      )}
+                      {tabFilters.length > 0 && (
+                        <TabFilterList
+                          variant="editor"
+                          filters={tabFilters}
+                          onAdd={() =>
+                            addTabFilter(active.id, currentTabUrlPattern)
+                          }
+                          onUpdate={(f) => updateTabFilter(active.id, f)}
+                          onDelete={(id) => deleteTabFilter(active.id, id)}
+                          onToggle={(id) => toggleTabFilter(active.id, id)}
+                        />
+                      )}
+                      {domainFilters.length > 0 && (
+                        <FilterRowList<DomainFilter>
+                          variant="editor"
+                          filters={domainFilters}
+                          valueField="domain"
+                          i18nKey="domainFilters"
+                          onAdd={() =>
+                            addDomainFilter(active.id, currentTabDomain)
+                          }
+                          onUpdate={(f) => updateDomainFilter(active.id, f)}
+                          onDelete={(id) => deleteDomainFilter(active.id, id)}
+                          onToggle={(id) => toggleDomainFilter(active.id, id)}
+                        />
+                      )}
+                      {urlFilters.length > 0 && (
+                        <FilterRowList<UrlFilter>
+                          variant="editor"
+                          filters={urlFilters}
+                          valueField="regex"
+                          i18nKey="urlFilters"
+                          onAdd={() => addUrlFilter(active.id, currentTabRegex)}
+                          onUpdate={(f) => updateUrlFilter(active.id, f)}
+                          onDelete={(id) => deleteUrlFilter(active.id, id)}
+                          onToggle={(id) => toggleUrlFilter(active.id, id)}
+                        />
+                      )}
+                      {excludeUrlFilters.length > 0 && (
+                        <FilterRowList<ExcludeUrlFilter>
+                          variant="editor"
+                          filters={excludeUrlFilters}
+                          valueField="url"
+                          i18nKey="excludeUrlFilters"
+                          onAdd={() =>
+                            addExcludeUrlFilter(active.id, currentTabUrl)
+                          }
+                          onUpdate={(f) => updateExcludeUrlFilter(active.id, f)}
+                          onDelete={(id) =>
+                            deleteExcludeUrlFilter(active.id, id)
+                          }
+                          onToggle={(id) =>
+                            toggleExcludeUrlFilter(active.id, id)
+                          }
+                        />
+                      )}
+                      {methodFilters.length > 0 && (
+                        <MethodFilterPicker
+                          variant="editor"
+                          filters={methodFilters}
+                          onChange={(methods) =>
+                            setMethodFilters(active.id, methods)
+                          }
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -621,6 +776,22 @@ function App() {
           </div>
         </main>
       </div>
+      <Modal
+        visible={!!renamingProfile}
+        title={t("options.renameProfile")}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        onOk={handleRenameProfile}
+        onCancel={() => setRenamingProfile(null)}
+      >
+        <Input
+          value={renamingProfile?.name ?? ""}
+          autoFocus
+          onChange={(name) =>
+            setRenamingProfile((prev) => (prev ? { ...prev, name } : prev))
+          }
+        />
+      </Modal>
     </ConfigProvider>
   );
 }

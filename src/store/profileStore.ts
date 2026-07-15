@@ -24,6 +24,7 @@ interface ProfileActions {
   // profile
   addProfile: (name?: string) => string;
   renameProfile: (profileId: string, name: string) => void;
+  duplicateProfile: (profileId: string, name?: string) => string | null;
   deleteProfile: (profileId: string) => void;
   setActiveProfile: (profileId: string) => void;
 
@@ -31,7 +32,7 @@ interface ProfileActions {
   addRule: (
     profileId: string,
     kind?: RuleKind,
-    target?: "request" | "response"
+    target?: "request" | "response",
   ) => string;
   updateRule: (profileId: string, rule: HeaderRule) => void;
   deleteRule: (profileId: string, ruleId: string) => void;
@@ -91,13 +92,13 @@ let isApplyingRemote = false;
 
 function emptyRule(
   kind: RuleKind = "header",
-  target?: "request" | "response"
+  target?: "request" | "response",
 ): HeaderRule {
   const isCookieReq = kind === "cookie-request-append";
   const isCookieRes = kind === "cookie-response-append";
   const finalTarget: "request" | "response" = isCookieRes
     ? "response"
-    : target ?? "request";
+    : (target ?? "request");
   return {
     id: nanoid(),
     enabled: true,
@@ -128,10 +129,10 @@ function emptyProfile(name: string): Profile {
 function uniqueProfileName(
   base: string,
   profiles: Profile[],
-  excludeId?: string
+  excludeId?: string,
 ): string {
   const used = new Set(
-    profiles.filter((p) => p.id !== excludeId).map((p) => p.name)
+    profiles.filter((p) => p.id !== excludeId).map((p) => p.name),
   );
   if (!used.has(base)) return base;
   let i = 2;
@@ -163,6 +164,66 @@ function emptyDomainFilter(domain = ""): DomainFilter {
   };
 }
 
+function cloneFilters<T extends { id: string }>(filters: T[]): T[] {
+  return filters.map((filter) => ({ ...filter, id: nanoid() }));
+}
+
+function cloneRuleCondition(
+  condition: HeaderRule["condition"],
+): HeaderRule["condition"] {
+  const next = { ...condition };
+
+  if (condition.excludedDomains) {
+    next.excludedDomains = [...condition.excludedDomains];
+  }
+  if (condition.resourceTypes) {
+    next.resourceTypes = [...condition.resourceTypes];
+  }
+  if (condition.requestMethods) {
+    next.requestMethods = [...condition.requestMethods];
+  }
+
+  return next;
+}
+
+function cloneProfile(source: Profile, name: string): Profile {
+  const now = Date.now();
+  const next: Profile = {
+    ...source,
+    id: nanoid(),
+    name,
+    rules: source.rules.map((rule) => ({
+      ...rule,
+      id: nanoid(),
+      condition: cloneRuleCondition(rule.condition),
+    })),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (source.tabFilters) next.tabFilters = cloneFilters(source.tabFilters);
+  else delete next.tabFilters;
+  if (source.domainFilters) {
+    next.domainFilters = cloneFilters(source.domainFilters);
+  } else {
+    delete next.domainFilters;
+  }
+  if (source.urlFilters) next.urlFilters = cloneFilters(source.urlFilters);
+  else delete next.urlFilters;
+  if (source.excludeUrlFilters) {
+    next.excludeUrlFilters = cloneFilters(source.excludeUrlFilters);
+  } else {
+    delete next.excludeUrlFilters;
+  }
+  if (source.methodFilters) {
+    next.methodFilters = cloneFilters(source.methodFilters);
+  } else {
+    delete next.methodFilters;
+  }
+
+  return next;
+}
+
 async function persist(state: AppState): Promise<void> {
   if (isApplyingRemote) return;
   await saveState({ profiles: state.profiles, meta: state.meta });
@@ -170,7 +231,7 @@ async function persist(state: AppState): Promise<void> {
 
 function reorderRulesByIds(
   rules: HeaderRule[],
-  orderedRuleIds: string[]
+  orderedRuleIds: string[],
 ): HeaderRule[] {
   if (orderedRuleIds.length < 2) return rules;
 
@@ -187,7 +248,7 @@ function reorderRulesByIds(
 
   let cursor = 0;
   return rules.map((rule) =>
-    idSet.has(rule.id) ? orderedRules[cursor++] : rule
+    idSet.has(rule.id) ? orderedRules[cursor++] : rule,
   );
 }
 
@@ -237,10 +298,25 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const profiles = get().profiles.map((p) =>
         p.id === profileId
           ? { ...p, name: finalName, updatedAt: Date.now() }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
+    },
+
+    duplicateProfile: (profileId, name) => {
+      const profiles = get().profiles;
+      const source = profiles.find((p) => p.id === profileId);
+      if (!source) return null;
+
+      const base = name?.trim() || `${source.name} Copy`;
+      const finalName = uniqueProfileName(base, profiles);
+      const profile = cloneProfile(source, finalName);
+      const next = [...profiles, profile];
+
+      set({ profiles: next });
+      void persist({ profiles: next, meta: get().meta });
+      return profile.id;
     },
 
     deleteProfile: (profileId) => {
@@ -269,7 +345,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const profiles = get().profiles.map((p) =>
         p.id === profileId
           ? { ...p, rules: [...p.rules, rule], updatedAt: Date.now() }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -284,7 +360,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               rules: p.rules.map((r) => (r.id === rule.id ? rule : r)),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -298,7 +374,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               rules: p.rules.filter((r) => r.id !== ruleId),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -310,11 +386,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               rules: p.rules.map((r) =>
-                r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+                r.id === ruleId ? { ...r, enabled: !r.enabled } : r,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -361,7 +437,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               tabFilters: [...(p.tabFilters ?? []), filter],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -374,11 +450,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               tabFilters: (p.tabFilters ?? []).map((f) =>
-                f.id === filter.id ? filter : f
+                f.id === filter.id ? filter : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -392,7 +468,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               tabFilters: (p.tabFilters ?? []).filter((f) => f.id !== filterId),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -404,11 +480,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               tabFilters: (p.tabFilters ?? []).map((f) =>
-                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -423,7 +499,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               domainFilters: [...(p.domainFilters ?? []), filter],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -436,11 +512,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               domainFilters: (p.domainFilters ?? []).map((f) =>
-                f.id === filter.id ? filter : f
+                f.id === filter.id ? filter : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -452,11 +528,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               domainFilters: (p.domainFilters ?? []).filter(
-                (f) => f.id !== filterId
+                (f) => f.id !== filterId,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -468,11 +544,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               domainFilters: (p.domainFilters ?? []).map((f) =>
-                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -487,7 +563,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               urlFilters: [...(p.urlFilters ?? []), filter],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -500,11 +576,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               urlFilters: (p.urlFilters ?? []).map((f) =>
-                f.id === filter.id ? filter : f
+                f.id === filter.id ? filter : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -518,7 +594,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               urlFilters: (p.urlFilters ?? []).filter((f) => f.id !== filterId),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -530,11 +606,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               urlFilters: (p.urlFilters ?? []).map((f) =>
-                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -553,7 +629,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               excludeUrlFilters: [...(p.excludeUrlFilters ?? []), filter],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -566,11 +642,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
-                f.id === filter.id ? filter : f
+                f.id === filter.id ? filter : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -582,11 +658,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               excludeUrlFilters: (p.excludeUrlFilters ?? []).filter(
-                (f) => f.id !== filterId
+                (f) => f.id !== filterId,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -598,11 +674,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               excludeUrlFilters: (p.excludeUrlFilters ?? []).map((f) =>
-                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -617,7 +693,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               methodFilters: [...(p.methodFilters ?? []), filter],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -630,11 +706,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               methodFilters: (p.methodFilters ?? []).map((f) =>
-                f.id === filter.id ? filter : f
+                f.id === filter.id ? filter : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -646,11 +722,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               methodFilters: (p.methodFilters ?? []).filter(
-                (f) => f.id !== filterId
+                (f) => f.id !== filterId,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -662,11 +738,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           ? {
               ...p,
               methodFilters: (p.methodFilters ?? []).map((f) =>
-                f.id === filterId ? { ...f, enabled: !f.enabled } : f
+                f.id === filterId ? { ...f, enabled: !f.enabled } : f,
               ),
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });
@@ -674,7 +750,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
 
     setMethodFilters: (profileId, methods) => {
       const cleaned = Array.from(
-        new Set(methods.map((m) => m.trim()).filter(Boolean))
+        new Set(methods.map((m) => m.trim()).filter(Boolean)),
       );
       const profiles = get().profiles.map((p) => {
         if (p.id !== profileId) return p;
@@ -702,7 +778,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               rules: [...p.rules, ...templateRules],
               updatedAt: Date.now(),
             }
-          : p
+          : p,
       );
       set({ profiles });
       void persist({ profiles, meta: get().meta });

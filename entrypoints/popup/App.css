@@ -221,24 +221,6 @@ body {
   background: transparent;
 }
 
-.he-pause-stroked-icon {
-  display: inline-flex;
-  width: 14px;
-  height: 14px;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.he-pause-stroked-icon::before,
-.he-pause-stroked-icon::after {
-  width: 2px;
-  height: 12px;
-  border-radius: 999px;
-  background: currentColor;
-  content: "";
-}
-
 .he-header-divider {
   width: 1px;
   height: 24px;
@@ -392,6 +374,78 @@ body {
 .he-editor-field.semi-select .semi-select-arrow {
   padding-left: 6px;
   padding-right: 6px;
+}
+
+.he-empty-mod-state {
+  display: flex;
+  min-height: 256px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+}
+
+.he-empty-mod-visual {
+  position: relative;
+  display: inline-flex;
+  width: 88px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in srgb, var(--semi-color-primary) 18%, transparent);
+  border-radius: var(--semi-border-radius-large);
+  background: linear-gradient(
+    180deg,
+    color-mix(
+      in srgb,
+      var(--semi-color-primary-light-default) 74%,
+      transparent
+    ),
+    color-mix(in srgb, var(--semi-color-bg-1) 88%, transparent)
+  );
+  color: var(--semi-color-primary);
+  box-shadow: 0 10px 24px
+    color-mix(in srgb, var(--semi-color-primary) 12%, transparent);
+}
+
+.he-empty-mod-visual::before {
+  position: absolute;
+  inset: 12px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--semi-color-primary-light-default) 66%,
+    transparent
+  );
+  content: "";
+}
+
+.he-empty-mod-visual::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--semi-color-white) 42%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      circle at 26% 18%,
+      color-mix(in srgb, var(--semi-color-primary) 14%, transparent),
+      transparent 28%
+    );
+  content: "";
+}
+
+.he-empty-mod-visual svg {
+  position: relative;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
 }
 
 .he-mod-button {

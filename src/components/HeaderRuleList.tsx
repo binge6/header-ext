@@ -16,10 +16,10 @@ import {
   IconChainStroked as IconLink,
   IconCodeStroked as IconCode,
   IconDeleteStroked as IconDelete,
-  IconDownloadStroked as IconUndo,
   IconFilterStroked as IconFilter,
   IconHandle,
   IconPlusStroked as IconPlus,
+  IconReplyStroked as IconReply,
   IconSendStroked as IconSend,
 } from "@douyinfe/semi-icons";
 import { useState, type DragEvent, type ReactNode } from "react";
@@ -135,7 +135,7 @@ export function HeaderRuleList({
   const renderSectionIcon = (): ReactNode => {
     if (kind === "redirect") return <IconLink />;
     if (isCookie) return <IconCode />;
-    return headerTarget === "request" ? <IconSend /> : <IconUndo />;
+    return headerTarget === "request" ? <IconSend /> : <IconReply />;
   };
 
   const sectionIconClassName = cn(
