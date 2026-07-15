@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { ConfigProvider, Layout, Spin } from "@douyinfe/semi-ui";
+import { ConfigProvider, Layout, Spin, Typography } from "@douyinfe/semi-ui";
 import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import { GlobalToolbar } from "@/src/components/GlobalToolbar";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
 
 const { Sider, Content, Header } = Layout;
+const { Title } = Typography;
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -32,7 +33,7 @@ function App() {
 
   const semiLocale = useMemo(
     () => (i18n.language === "zh-CN" ? zh_CN : en_US),
-    [i18n.language]
+    [i18n.language],
   );
 
   if (!hydrated) {
@@ -47,7 +48,9 @@ function App() {
     <ConfigProvider locale={semiLocale}>
       <Layout className="min-h-screen bg-semi-color-bg-0">
         <Header className="sticky top-0 z-10 flex items-center justify-between border-b border-semi-color-border bg-semi-color-bg-1 px-8 py-2.5">
-          <h2 className="m-0">{t("options.title")}</h2>
+          <Title heading={5} className="m-0">
+            {t("options.title")}
+          </Title>
           <div className="flex items-center gap-3">
             <TemplateMenu profileId={activeProfileId} />
             <GlobalToolbar />
