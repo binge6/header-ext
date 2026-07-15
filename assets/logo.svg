@@ -15,7 +15,7 @@
     </filter>
   </defs>
 
-  <rect x="58" y="56" width="908" height="912" rx="216" fill="url(#bg)" />
+  <rect width="1024" height="1024" rx="240" fill="url(#bg)" />
 
   <g filter="url(#softShadow)">
     <rect x="250" y="230" width="112" height="568" rx="56" fill="url(#mark)" />
