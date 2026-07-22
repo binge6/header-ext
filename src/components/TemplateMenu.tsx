@@ -1,11 +1,17 @@
-// 一键模板下拉菜单：插入常见 CSP / CORS / X-Frame / UA / no-cache 预设
-
-import { Button, Dropdown } from "@douyinfe/semi-ui";
-import { IconLightningStroked as IconBolt } from "@douyinfe/semi-icons";
+import { Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions } from "@/src/store/profileStore";
 import { TEMPLATE_KEYS, buildTemplate } from "@/src/core/templates";
 import { MenuItemLabel } from "./MenuItemLabel";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+  Tooltip,
+} from "./ui";
 
 interface Props {
   profileId: string | null;
@@ -19,13 +25,26 @@ export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
   const applyTemplate = useProfileActions().applyTemplate;
 
   return (
-    <Dropdown
-      trigger="click"
-      position="bottomRight"
-      render={
-        <Dropdown.Menu>
+    <DropdownMenu>
+      <Tooltip content={t("templates.apply")} disabled={!iconOnly}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size={
+              iconOnly ? (size === "small" ? "icon-sm" : "icon") : "sm"
+            }
+            disabled={!profileId}
+            aria-label={iconOnly ? t("templates.apply") : undefined}
+          >
+            <Zap aria-hidden="true" />
+            {!iconOnly && t("templates.apply")}
+          </Button>
+        </DropdownMenuTrigger>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-76">
+        <DropdownMenuLabel>{t("templates.title")}</DropdownMenuLabel>
           {TEMPLATE_KEYS.map((k) => (
-            <Dropdown.Item
+          <DropdownMenuItem
               key={k}
               onClick={() => {
                 if (!profileId) return;
@@ -36,14 +55,9 @@ export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
                 title={t(`templates.${k}`)}
                 desc={t(`templates.${k}Desc`)}
               />
-            </Dropdown.Item>
+          </DropdownMenuItem>
           ))}
-        </Dropdown.Menu>
-      }
-    >
-      <Button size={size} icon={<IconBolt />} disabled={!profileId}>
-        {iconOnly ? null : t("templates.apply")}
-      </Button>
-    </Dropdown>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

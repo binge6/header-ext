@@ -1,8 +1,4 @@
-import { Button, Dropdown, Empty, Typography } from "@douyinfe/semi-ui";
-import {
-  IconFilterStroked as IconFilter,
-  IconPlusStroked as IconPlus,
-} from "@douyinfe/semi-icons";
+import { Layers3, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { HeaderRuleList } from "./HeaderRuleList";
@@ -10,7 +6,8 @@ import { TabFilterList } from "./TabFilterList";
 import { FilterRowList } from "./FilterRowList";
 import { MethodFilterPicker } from "./MethodFilterPicker";
 import { NoFilterBanner } from "./NoFilterBanner";
-import { MenuItemLabel } from "./MenuItemLabel";
+import { FilterMenu, ModificationMenu } from "./RuleActionMenus";
+import { Button } from "./ui";
 import type {
   HeaderRule,
   RuleKind,
@@ -22,8 +19,6 @@ import type {
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
 }
-
-const { Text, Title } = Typography;
 
 export function RuleTable() {
   const { t } = useTranslation();
@@ -58,7 +53,14 @@ export function RuleTable() {
   const profile = profiles.find((p) => p.id === activeId);
 
   if (!profile) {
-    return <Empty title={t("options.noProfiles")} />;
+    return (
+      <div className="he-empty-state">
+        <Layers3 aria-hidden="true" className="h-9 w-9 text-muted-foreground" />
+        <div className="text-sm font-semibold text-foreground">
+          {t("options.noProfiles")}
+        </div>
+      </div>
+    );
   }
 
   const requestRules = profile.rules.filter(
@@ -106,71 +108,28 @@ export function RuleTable() {
     }
   };
 
-  const modMenu = (
-    <Dropdown.Menu>
-      <Dropdown.Item onClick={() => handleAddHeader("request")}>
-        {t("popup.addRequestHeader")}
-      </Dropdown.Item>
-      <Dropdown.Item onClick={() => handleAddHeader("response")}>
-        {t("popup.addResponseHeader")}
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        onClick={() => addRule(profile.id, "cookie-request-append")}
-      >
-        {t("popup.addCookieRequest")}
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => addRule(profile.id, "cookie-response-append")}
-      >
-        {t("popup.addCookieResponse")}
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item onClick={() => addRule(profile.id, "redirect")}>
-        {t("popup.addRedirect")}
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  );
-
-  const filterMenu = (
-    <Dropdown.Menu>
-      <Dropdown.Item onClick={() => addTabFilter(profile.id)}>
-        <MenuItemLabel title={t("filters.tab")} desc={t("filters.tabDesc")} />
-      </Dropdown.Item>
-      <Dropdown.Item onClick={() => addDomainFilter(profile.id)}>
-        <MenuItemLabel
-          title={t("filters.domain")}
-          desc={t("filters.domainDesc")}
-        />
-      </Dropdown.Item>
-      <Dropdown.Item onClick={() => addUrlFilter(profile.id)}>
-        <MenuItemLabel title={t("filters.url")} desc={t("filters.urlDesc")} />
-      </Dropdown.Item>
-      <Dropdown.Item onClick={() => addExcludeUrlFilter(profile.id)}>
-        <MenuItemLabel
-          title={t("filters.excludeUrl")}
-          desc={t("filters.excludeUrlDesc")}
-        />
-      </Dropdown.Item>
-      <Dropdown.Item onClick={handleAddMethodFilter}>
-        <MenuItemLabel
-          title={t("filters.method")}
-          desc={t("filters.methodDesc")}
-        />
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  );
-
   const actionBar = (
     <div className="flex flex-wrap items-center gap-2">
-      <Dropdown trigger="click" position="bottomRight" render={modMenu}>
-        <Button theme="solid" type="primary" icon={<IconPlus />}>
-          {t("popup.addMod")}
-        </Button>
-      </Dropdown>
-      <Dropdown trigger="click" position="bottomRight" render={filterMenu}>
-        <Button icon={<IconFilter />}>{t("filters.title")}</Button>
-      </Dropdown>
+      <ModificationMenu
+        align="end"
+        onAddRequestHeader={() => handleAddHeader("request")}
+        onAddResponseHeader={() => handleAddHeader("response")}
+        onAddRequestCookie={() =>
+          addRule(profile.id, "cookie-request-append")
+        }
+        onAddResponseCookie={() =>
+          addRule(profile.id, "cookie-response-append")
+        }
+        onAddRedirect={() => addRule(profile.id, "redirect")}
+      />
+      <FilterMenu
+        align="end"
+        onAddTab={() => addTabFilter(profile.id)}
+        onAddDomain={() => addDomainFilter(profile.id)}
+        onAddUrl={() => addUrlFilter(profile.id)}
+        onAddExcludeUrl={() => addExcludeUrlFilter(profile.id)}
+        onAddMethod={handleAddMethodFilter}
+      />
     </div>
   );
 
@@ -178,12 +137,17 @@ export function RuleTable() {
     <div className="he-options-editor flex w-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <Title heading={3} className="m-0">
+          <div className="flex items-center gap-2">
+            <h1 className="m-0 truncate text-2xl font-bold tracking-tight text-foreground">
             {profile.name}
-          </Title>
-          <Text type="tertiary" size="small">
-            {t("options.rules")}
-          </Text>
+            </h1>
+            <span className="he-badge he-badge-secondary">
+              {t("options.ruleCount", { count: profile.rules.length })}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("options.editorHint")}
+          </p>
         </div>
         {actionBar}
       </div>
@@ -191,10 +155,35 @@ export function RuleTable() {
       <NoFilterBanner />
 
       {!hasEditorContent && (
-        <div className="rounded-xl border border-semi-color-border bg-semi-color-bg-1 px-6 py-10">
-          <Empty
-            title={t("popup.noRules")}
-            description={t("popup.emptyModHint")}
+        <div className="he-empty-state">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+            <Layers3 aria-hidden="true" className="h-7 w-7" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-foreground">
+              {t("popup.noRules")}
+            </div>
+            <div className="mt-1 max-w-96 text-xs leading-5 text-muted-foreground">
+              {t("popup.emptyModHint")}
+            </div>
+          </div>
+          <ModificationMenu
+            align="center"
+            trigger={
+              <Button size="sm">
+                <Plus aria-hidden="true" />
+                {t("popup.addMod")}
+              </Button>
+            }
+            onAddRequestHeader={() => handleAddHeader("request")}
+            onAddResponseHeader={() => handleAddHeader("response")}
+            onAddRequestCookie={() =>
+              addRule(profile.id, "cookie-request-append")
+            }
+            onAddResponseCookie={() =>
+              addRule(profile.id, "cookie-response-append")
+            }
+            onAddRedirect={() => addRule(profile.id, "redirect")}
           />
         </div>
       )}

@@ -1,31 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Button,
-  ConfigProvider,
-  Dropdown,
-  Input,
-  Modal,
-  Nav,
-  Spin,
-  Tooltip,
-  Typography,
-} from "@douyinfe/semi-ui";
-import {
-  IconConfigStroked as IconConfig,
-  IconCopyStroked as IconCopy,
-  IconDeleteStroked as IconDelete,
-  IconEditStroked as IconEdit,
-  IconFilterStroked as IconFilter,
-  IconLockStroked as IconLock,
-  IconMoreStroked as IconMore,
-  IconPause,
-  IconPlay,
-  IconPlusStroked as IconPlus,
-  IconSettingStroked as IconSetting,
-  IconUnlockStroked as IconUnlock,
-} from "@douyinfe/semi-icons";
-import zh_CN from "@douyinfe/semi-ui/lib/es/locale/source/zh_CN";
-import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
+  Copy,
+  Edit3,
+  Filter,
+  Layers3,
+  Lock,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Plus,
+  Settings2,
+  Trash2,
+  Unlock,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { initI18n } from "@/src/i18n";
@@ -39,7 +26,25 @@ import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
 import { ImportExportButtons } from "@/src/components/ImportExportButtons";
 import { NoFilterBanner } from "@/src/components/NoFilterBanner";
-import { MenuItemLabel } from "@/src/components/MenuItemLabel";
+import {
+  FilterMenu,
+  ModificationMenu,
+} from "@/src/components/RuleActionMenus";
+import {
+  AppToaster,
+  Button,
+  ConfirmDialog,
+  Dialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Input,
+  Spinner,
+  Tooltip,
+  UIProvider,
+} from "@/src/components/ui";
 import { openOptionsPage } from "@/src/core/browserApi";
 import type {
   HeaderRule,
@@ -63,11 +68,8 @@ function getProfileBadgeText(name?: string): string {
   return edgeNumber ?? (trimmed.charAt(0).toUpperCase() || "H");
 }
 
-const { Text } = Typography;
-
 function App() {
-  const { t, i18n } = useTranslation();
-  // 触发主题副作用（同步 body theme-mode 等）
+  const { t } = useTranslation();
   useThemeMode();
   const hydrated = useProfileStore((s) => s.hydrated);
   const profiles = useProfileStore((s) => s.profiles);
@@ -124,6 +126,7 @@ function App() {
     name: string;
   } | null>(null);
   const [profileMenuVisible, setProfileMenuVisible] = useState(false);
+  const [deleteProfileOpen, setDeleteProfileOpen] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -156,11 +159,6 @@ function App() {
     })();
   }, [hydrate]);
 
-  const semiLocale = useMemo(
-    () => (i18n.language === "zh-CN" ? zh_CN : en_US),
-    [i18n.language],
-  );
-
   const active = profiles.find((p) => p.id === meta.activeProfileId);
 
   const requestRules =
@@ -182,20 +180,6 @@ function App() {
   const urlFilters = active?.urlFilters ?? [];
   const excludeUrlFilters = active?.excludeUrlFilters ?? [];
   const methodFilters = active?.methodFilters ?? [];
-  const profileNavItems = useMemo(
-    () =>
-      profiles.map((profile) => ({
-        itemKey: profile.id,
-        text: profile.name,
-        icon: (
-          <span className="he-profile-rail-number" aria-hidden="true">
-            {getProfileBadgeText(profile.name)}
-          </span>
-        ),
-      })),
-    [profiles],
-  );
-
   const handleAddHeader = (target: "request" | "response") => {
     if (!active) return;
     addRule(active.id, "header", target);
@@ -232,109 +216,29 @@ function App() {
   const handleDeleteActiveProfile = () => {
     if (!active) return;
     setProfileMenuVisible(false);
-    const profileId = active.id;
-
-    Modal.confirm({
-      title: t("options.deleteProfile"),
-      content: t("options.deleteProfileConfirm"),
-      okText: t("common.confirm"),
-      cancelText: t("common.cancel"),
-      okButtonProps: { type: "danger" },
-      onOk: () => deleteProfile(profileId),
-    });
+    setDeleteProfileOpen(true);
   };
 
   const isLocked = meta.lockedTabId != null;
   const lockedHere =
     isLocked && currentTabId != null && meta.lockedTabId === currentTabId;
 
-  const filterMenu = (
-    <Dropdown.Menu>
-      <Dropdown.Item
-        onClick={() => active && addTabFilter(active.id, currentTabUrlPattern)}
-      >
-        <MenuItemLabel title={t("filters.tab")} desc={t("filters.tabDesc")} />
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => active && addDomainFilter(active.id, currentTabDomain)}
-      >
-        <MenuItemLabel
-          title={t("filters.domain")}
-          desc={t("filters.domainDesc")}
-        />
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => active && addUrlFilter(active.id, currentTabRegex)}
-      >
-        <MenuItemLabel title={t("filters.url")} desc={t("filters.urlDesc")} />
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => active && addExcludeUrlFilter(active.id, currentTabUrl)}
-      >
-        <MenuItemLabel
-          title={t("filters.excludeUrl")}
-          desc={t("filters.excludeUrlDesc")}
-        />
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => {
-          if (!active) return;
-          if ((active.methodFilters ?? []).length === 0) {
-            addMethodFilter(active.id, "GET");
-          }
-        }}
-      >
-        <MenuItemLabel
-          title={t("filters.method")}
-          desc={t("filters.methodDesc")}
-        />
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  );
-
-  const modMenu = (
-    <Dropdown.Menu>
-      <Dropdown.Item onClick={() => handleAddHeader("request")}>
-        {t("popup.addRequestHeader")}
-      </Dropdown.Item>
-      <Dropdown.Item onClick={() => handleAddHeader("response")}>
-        {t("popup.addResponseHeader")}
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        onClick={() => active && addRule(active.id, "cookie-request-append")}
-      >
-        {t("popup.addCookieRequest")}
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => active && addRule(active.id, "cookie-response-append")}
-      >
-        {t("popup.addCookieResponse")}
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item onClick={() => active && addRule(active.id, "redirect")}>
-        {t("popup.addRedirect")}
-      </Dropdown.Item>
-    </Dropdown.Menu>
-  );
-
   const profileMenu = (
-    <Dropdown.Menu>
-      <Dropdown.Item icon={<IconEdit />} onClick={handleOpenRenameProfile}>
+    <DropdownMenuContent align="start">
+      <DropdownMenuItem onClick={handleOpenRenameProfile}>
+        <Edit3 aria-hidden="true" />
         {t("options.renameProfile")}
-      </Dropdown.Item>
-      <Dropdown.Item icon={<IconCopy />} onClick={handleDuplicateActiveProfile}>
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={handleDuplicateActiveProfile}>
+        <Copy aria-hidden="true" />
         {t("options.copyProfile")}
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        type="danger"
-        icon={<IconDelete />}
-        onClick={handleDeleteActiveProfile}
-      >
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem destructive onClick={handleDeleteActiveProfile}>
+        <Trash2 aria-hidden="true" />
         {t("options.deleteProfile")}
-      </Dropdown.Item>
-    </Dropdown.Menu>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
   );
 
   const handleToggleTabLock = () => {
@@ -410,150 +314,223 @@ function App() {
 
   if (!hydrated) {
     return (
-      <div className="w-155 p-10 text-center">
-        <Spin />
+      <div className="flex min-h-68 w-140 items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground">
+          <Spinner />
+          {t("common.loading")}
+        </div>
       </div>
     );
   }
 
+  const addMethodFilterIfNeeded = () => {
+    if (!active || (active.methodFilters ?? []).length > 0) return;
+    addMethodFilter(active.id, "GET");
+  };
+
+  const modificationMenuProps = {
+    disabled: !active,
+    compact: true,
+    side: "top" as const,
+    onAddRequestHeader: () => handleAddHeader("request"),
+    onAddResponseHeader: () => handleAddHeader("response"),
+    onAddRequestCookie: () =>
+      active && addRule(active.id, "cookie-request-append"),
+    onAddResponseCookie: () =>
+      active && addRule(active.id, "cookie-response-append"),
+    onAddRedirect: () => active && addRule(active.id, "redirect"),
+  };
+
+  const filterMenuProps = {
+    disabled: !active,
+    compact: true,
+    side: "top" as const,
+    onAddTab: () =>
+      active && addTabFilter(active.id, currentTabUrlPattern),
+    onAddDomain: () =>
+      active && addDomainFilter(active.id, currentTabDomain),
+    onAddUrl: () => active && addUrlFilter(active.id, currentTabRegex),
+    onAddExcludeUrl: () =>
+      active && addExcludeUrlFilter(active.id, currentTabUrl),
+    onAddMethod: addMethodFilterIfNeeded,
+  };
+
   return (
-    <ConfigProvider locale={semiLocale}>
-      <div className="he-editor-panel flex w-155 min-h-76 text-semi-color-text-0">
-        <Nav
-          className="he-profile-rail w-12 shrink-0"
-          mode="vertical"
-          isCollapsed
-          header={
-            <img className="he-rail-logo" src={logoUrl} alt="Header Ext" />
-          }
-          selectedKeys={meta.activeProfileId ? [meta.activeProfileId] : []}
-          items={profileNavItems}
-          tooltipShowDelay={0.24}
-          onSelect={({ itemKey }) => setActive(String(itemKey))}
-          footer={
-            <Tooltip content={t("options.newProfile")} position="right">
+    <UIProvider delayDuration={250}>
+      <div className="he-popup-shell flex w-140 min-h-68 text-foreground">
+        <aside className="he-profile-rail">
+          <img className="he-rail-logo" src={logoUrl} alt="Header Ext" />
+          <div className="he-profile-rail-list">
+            {profiles.map((profile) => {
+              const selected = profile.id === meta.activeProfileId;
+              return (
+                <Tooltip key={profile.id} content={profile.name} side="right">
+                  <button
+                    type="button"
+                    className={cn(
+                      "he-profile-rail-item",
+                      selected && "he-profile-rail-item-active",
+                    )}
+                    aria-current={selected ? "page" : undefined}
+                    aria-label={profile.name}
+                    onClick={() => setActive(profile.id)}
+                  >
+                    {getProfileBadgeText(profile.name)}
+                  </button>
+                </Tooltip>
+              );
+            })}
+          </div>
+          <div className="mt-auto">
+            <Tooltip content={t("options.newProfile")} side="right">
               <Button
                 className="he-profile-rail-add"
-                theme="light"
-                type="primary"
-                size="small"
-                icon={<IconPlus />}
+                variant="secondary"
+                size="icon-sm"
                 aria-label={t("options.newProfile")}
                 onClick={() => {
                   const id = addProfile();
                   setActive(id);
                 }}
-              />
+              >
+                <Plus aria-hidden="true" />
+              </Button>
             </Tooltip>
-          }
-        />
+          </div>
+        </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="he-main-header flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="he-profile-mark" aria-hidden="true">
-                {getProfileBadgeText(active?.name)}
-              </span>
-              <Text
-                strong
-                ellipsis={{ showTooltip: true }}
-                className="min-w-0 text-base"
-              >
-                {active?.name ?? t("options.noProfiles")}
-              </Text>
+          <div className="he-main-header flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
               {active && (
                 <span
                   className={cn(
                     "he-profile-status-dot",
                     meta.globalPaused && "he-profile-status-dot-paused",
                   )}
+                  title={
+                    meta.globalPaused
+                      ? t("popup.globalPaused")
+                      : t("common.enabled")
+                  }
                 />
               )}
+              <span
+                className="max-w-36 truncate text-group-title font-bold"
+                title={active?.name}
+              >
+                {active?.name ?? t("options.noProfiles")}
+              </span>
+              {currentTabDomain && (
+                <>
+                  <span className="he-header-context-separator" />
+                  <span
+                    className="min-w-0 max-w-36 truncate text-xs text-muted-foreground"
+                    title={currentTabDomain}
+                  >
+                    {currentTabDomain}
+                  </span>
+                </>
+              )}
               {active && (
-                <Dropdown
-                  trigger="click"
-                  position="bottomLeft"
-                  render={profileMenu}
-                  visible={profileMenuVisible}
-                  onVisibleChange={setProfileMenuVisible}
+                <DropdownMenu
+                  open={profileMenuVisible}
+                  onOpenChange={setProfileMenuVisible}
                 >
-                  <Button
-                    className="h-6 w-6 min-w-0 p-0"
-                    theme="borderless"
-                    type="tertiary"
-                    size="small"
-                    icon={<IconMore />}
-                    aria-label={t("popup.profileActions")}
-                  />
-                </Dropdown>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="he-popup-icon-button"
+                      aria-label={t("popup.profileActions")}
+                    >
+                      <MoreHorizontal aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  {profileMenu}
+                </DropdownMenu>
               )}
             </div>
 
-            <div className="flex shrink-0 items-center gap-4">
-              <div className="he-header-action-group he-header-action-group-primary flex items-center">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="he-header-control-group">
                 <Tooltip
-                  position="bottom"
+                  side="bottom"
                   content={
-                    meta.globalPaused
-                      ? t("popup.resumeAll")
-                      : t("popup.pauseAll")
+                    meta.globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")
                   }
                 >
                   <Button
-                    theme="borderless"
-                    type="tertiary"
-                    size="small"
-                    icon={
-                      meta.globalPaused ? (
-                        <IconPlay className="text-semi-color-warning" />
-                      ) : (
-                        <IconPause />
-                      )
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(meta.globalPaused && "he-warning-text")}
+                    aria-label={
+                      meta.globalPaused
+                        ? t("popup.resumeAll")
+                        : t("popup.pauseAll")
                     }
                     onClick={() => togglePause()}
-                  />
+                  >
+                    {meta.globalPaused ? (
+                      <Play aria-hidden="true" />
+                    ) : (
+                      <Pause aria-hidden="true" />
+                    )}
+                  </Button>
                 </Tooltip>
-                <Tooltip content={lockLabel} position="bottom">
+                <Tooltip content={lockLabel} side="bottom">
                   <Button
-                    theme="borderless"
-                    type="tertiary"
-                    size="small"
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(isLocked && "text-primary")}
                     disabled={currentTabId == null && !lockedHere}
-                    icon={
-                      lockedHere ? (
-                        <IconUnlock className="text-semi-color-primary" />
-                      ) : (
-                        <IconLock
-                          className={
-                            isLocked ? "text-semi-color-primary" : undefined
-                          }
-                        />
-                      )
-                    }
+                    aria-label={lockLabel}
                     onClick={handleToggleTabLock}
-                  />
+                  >
+                    {lockedHere ? (
+                      <Unlock aria-hidden="true" />
+                    ) : (
+                      <Lock aria-hidden="true" />
+                    )}
+                  </Button>
                 </Tooltip>
               </div>
-              <span className="he-header-divider" />
-              <div className="he-header-action-group he-header-action-group-secondary flex items-center">
+              <div className="he-header-secondary-actions">
                 <LanguageSwitcher variant="icon" />
                 <ThemeSwitcher variant="icon" />
-                <Tooltip content={t("popup.openOptions")} position="bottom">
+                <Tooltip content={t("popup.openOptions")} side="bottom">
                   <Button
-                    theme="borderless"
-                    type="tertiary"
-                    size="small"
-                    icon={<IconSetting />}
+                    variant="ghost"
+                    size="icon-sm"
+                    className="he-popup-icon-button"
+                    aria-label={t("popup.openOptions")}
                     onClick={() => void openOptionsPage()}
-                  />
+                  >
+                    <Settings2 aria-hidden="true" />
+                  </Button>
                 </Tooltip>
               </div>
             </div>
           </div>
 
           {!active ? (
-            <div className="flex flex-1 items-center justify-center py-8 text-semi-color-text-2">
-              {t("options.noProfiles")}
+            <div className="he-empty-mod-state flex-1">
+              <div className="he-empty-mod-visual">
+                <Layers3 aria-hidden="true" />
+              </div>
+              <div className="text-sm font-semibold text-foreground">
+                {t("options.noProfiles")}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const id = addProfile();
+                  setActive(id);
+                }}
+              >
+                <Plus aria-hidden="true" />
+                {t("options.newProfile")}
+              </Button>
             </div>
           ) : (
             <div className="he-main-content relative flex-1 px-3 py-3">
@@ -565,35 +542,33 @@ function App() {
               />
               <div
                 ref={scrollAreaRef}
-                className="max-h-110 overflow-y-auto"
+                className="max-h-100 overflow-y-auto"
                 onScroll={updateScrollShadow}
               >
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {!hasEditorContent && (
                     <div className="he-empty-mod-state">
                       <div className="he-empty-mod-visual" aria-hidden="true">
-                        <IconConfig />
+                        <Layers3 />
                       </div>
                       <div className="flex flex-col items-center gap-1 text-center">
-                        <Text strong>{t("popup.noRules")}</Text>
-                        <Text type="tertiary" size="small">
+                        <span className="text-sm font-semibold text-foreground">
+                          {t("popup.noRules")}
+                        </span>
+                        <span className="max-w-80 text-xs leading-5 text-muted-foreground">
                           {t("popup.emptyModHint")}
-                        </Text>
+                        </span>
                       </div>
-                      <Dropdown
-                        trigger="click"
-                        position="bottom"
-                        render={modMenu}
-                      >
-                        <Button
-                          theme="solid"
-                          type="primary"
-                          size="small"
-                          icon={<IconPlus />}
-                        >
-                          {t("popup.addMod")}
-                        </Button>
-                      </Dropdown>
+                      <ModificationMenu
+                        {...modificationMenuProps}
+                        align="center"
+                        trigger={
+                          <Button size="sm">
+                            <Plus aria-hidden="true" />
+                            {t("popup.addMod")}
+                          </Button>
+                        }
+                      />
                     </div>
                   )}
                   {hasEditorContent && (
@@ -748,51 +723,82 @@ function App() {
             </div>
           )}
 
-          <div className="px-3">
+          <div className="px-2">
             <NoFilterBanner compact />
           </div>
 
           <div className="he-bottom-bar flex items-center gap-2">
-            <Dropdown trigger="click" position="bottomLeft" render={modMenu}>
-              <Button
-                className="he-mod-button"
-                theme="solid"
-                type="primary"
-                size="small"
-                icon={<IconPlus />}
-                disabled={!active}
-              >
-                {t("popup.mod")}
-              </Button>
-            </Dropdown>
-            <TemplateMenu profileId={active?.id ?? null} />
-            <Dropdown trigger="click" position="bottomLeft" render={filterMenu}>
-              <Button size="small" icon={<IconFilter />} disabled={!active}>
-                {t("filters.title")}
-              </Button>
-            </Dropdown>
+            <ModificationMenu
+              {...modificationMenuProps}
+              trigger={
+                <Button size="sm" disabled={!active}>
+                  <Plus aria-hidden="true" />
+                  {t("popup.mod")}
+                </Button>
+              }
+            />
+            <FilterMenu
+              {...filterMenuProps}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  title={t("filters.title")}
+                  aria-label={t("filters.title")}
+                  disabled={!active}
+                >
+                  <Filter aria-hidden="true" />
+                </Button>
+              }
+            />
+            <TemplateMenu profileId={active?.id ?? null} iconOnly />
             <div className="flex-1" />
             <ImportExportButtons iconOnly />
           </div>
         </main>
       </div>
-      <Modal
-        visible={!!renamingProfile}
+
+      <Dialog
+        open={!!renamingProfile}
+        onOpenChange={(open) => {
+          if (!open) setRenamingProfile(null);
+        }}
         title={t("options.renameProfile")}
-        okText={t("common.save")}
-        cancelText={t("common.cancel")}
-        onOk={handleRenameProfile}
-        onCancel={() => setRenamingProfile(null)}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setRenamingProfile(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleRenameProfile}>{t("common.save")}</Button>
+          </>
+        }
       >
         <Input
           value={renamingProfile?.name ?? ""}
           autoFocus
-          onChange={(name) =>
-            setRenamingProfile((prev) => (prev ? { ...prev, name } : prev))
+          onChange={(event) =>
+            setRenamingProfile((prev) =>
+              prev ? { ...prev, name: event.target.value } : prev,
+            )
           }
         />
-      </Modal>
-    </ConfigProvider>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleteProfileOpen}
+        onOpenChange={setDeleteProfileOpen}
+        title={t("options.deleteProfile")}
+        description={t("options.deleteProfileConfirm")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        destructive
+        onConfirm={() => {
+          if (active) deleteProfile(active.id);
+          setDeleteProfileOpen(false);
+        }}
+      />
+      <AppToaster />
+    </UIProvider>
   );
 }
 

@@ -22,7 +22,8 @@ A browser extension for modifying HTTP request/response headers, appending cooki
 ## Tech Stack
 
 - [WXT](https://wxt.dev/) + React 19 + TypeScript
-- Semi Design
+- Radix UI primitives + shadcn/ui-style local components
+- Tailwind CSS v4 + Lucide icons
 - Zustand for state management
 - `declarativeNetRequest` + Service Worker (no content script)
 

@@ -1,11 +1,18 @@
-import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import {
-  IconGlobeStrokeStroked as IconLanguage,
-  IconTick,
-} from "@douyinfe/semi-icons";
+import { useRef } from "react";
+import { Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { setLanguage, SUPPORTED_LANGS, type Lang } from "@/src/i18n";
-import { cn } from "@/src/utils/cn";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  SelectControl,
+  Tooltip,
+} from "./ui";
 
 interface Props {
   /** icon: 仅图标按钮（适合空间紧凑的顶栏/底栏）；select: 下拉选择 */
@@ -18,57 +25,53 @@ export function LanguageSwitcher({
   size = "small",
 }: Props = {}) {
   const { i18n, t } = useTranslation();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   if (variant === "icon") {
     return (
-      <Dropdown
-        trigger="hover"
-        position="bottomRight"
-        render={
-          <Dropdown.Menu>
-            {SUPPORTED_LANGS.map((l) => {
-              const selected = i18n.language === l;
-              return (
-                <Dropdown.Item
-                  key={l}
-                  selected={selected}
-                  className={cn(
-                    selected &&
-                      "bg-semi-color-primary-light-default text-semi-color-primary",
-                  )}
-                  onClick={() => void setLanguage(l)}
-                >
-                  <span className="flex min-w-24 items-center justify-between gap-4">
-                    <span>{t(`language.${l}`)}</span>
-                    {selected && (
-                      <IconTick className="text-semi-color-primary" />
-                    )}
-                  </span>
-                </Dropdown.Item>
-              );
-            })}
-          </Dropdown.Menu>
-        }
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (!open) triggerRef.current?.blur();
+        }}
       >
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size={size}
-          icon={<IconLanguage />}
-        />
-      </Dropdown>
+        <Tooltip content={t("language.label")}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              ref={triggerRef}
+              variant="ghost"
+              size={size === "small" ? "icon-sm" : "icon"}
+              aria-label={t("language.label")}
+            >
+              <Languages aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        </Tooltip>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{t("language.label")}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={i18n.language}
+            onValueChange={(value) => void setLanguage(value as Lang)}
+          >
+            {SUPPORTED_LANGS.map((language) => (
+              <DropdownMenuRadioItem key={language} value={language}>
+                {t(`language.${language}`)}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 
   return (
-    <Select
-      size={size}
+    <SelectControl
       value={i18n.language as Lang}
       className="w-select"
-      onChange={(v) => void setLanguage(v as Lang)}
-      optionList={SUPPORTED_LANGS.map((l) => ({
-        value: l,
-        label: t(`language.${l}`),
+      aria-label={t("language.label")}
+      onValueChange={(value) => void setLanguage(value as Lang)}
+      options={SUPPORTED_LANGS.map((language) => ({
+        value: language,
+        label: t(`language.${language}`),
       }))}
     />
   );

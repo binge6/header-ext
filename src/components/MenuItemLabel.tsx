@@ -1,6 +1,3 @@
-// 下拉菜单项的「标题 + 描述」两行布局，供 filter / 模板等菜单复用
-import { Typography } from "@douyinfe/semi-ui";
-
 interface Props {
   title: string;
   desc: string;
@@ -8,11 +5,11 @@ interface Props {
 
 export function MenuItemLabel({ title, desc }: Props) {
   return (
-    <div className="min-w-55">
-      <div className="text-group-title font-medium">{title}</div>
-      <Typography.Text type="tertiary" size="small">
+    <div className="min-w-55 py-0.5">
+      <div className="text-group-title font-semibold">{title}</div>
+      <div className="mt-0.5 text-xs leading-4 text-muted-foreground">
         {desc}
-      </Typography.Text>
+      </div>
     </div>
   );
 }

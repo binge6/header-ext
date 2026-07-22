@@ -2,16 +2,12 @@
 // 多条 OR 关系；启用任一项 = 仅匹配 Tab 生效。
 // 没有任何启用项时规则作用于全部 Tab。
 
-import { Button, Input, Switch, Tooltip, Typography } from "@douyinfe/semi-ui";
-import {
-  IconDeleteStroked as IconDelete,
-  IconFilterStroked as IconFilter,
-  IconPlusStroked as IconPlus,
-} from "@douyinfe/semi-icons";
+import { Filter, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
+import { Button, Input, Switch, Tooltip } from "./ui";
 
 interface Props {
   filters: TabFilter[];
@@ -42,13 +38,14 @@ export function TabFilterList({
 
   const rows =
     filters.length === 0 ? (
-      <Typography.Text
-        type="tertiary"
-        size="small"
-        className={cn("block", isEditor ? "px-3 py-2" : "py-1")}
+      <div
+        className={cn(
+          "he-muted-text",
+          isEditor ? "px-3 py-2" : "py-1",
+        )}
       >
         {t("tabFilters.empty")}
-      </Typography.Text>
+      </div>
     ) : (
       filters.map((f) => (
         <div
@@ -61,33 +58,33 @@ export function TabFilterList({
         >
           {!isEditor && (
             <Switch
-              size="small"
               checked={f.enabled}
-              onChange={() => onToggle(f.id)}
+              onCheckedChange={() => onToggle(f.id)}
             />
           )}
           <Input
-            size="small"
             placeholder={t("tabFilters.urlPlaceholder")}
             className={cn("min-w-0 flex-1", isEditor && "he-editor-field")}
             value={f.urlFilter}
-            onChange={(v) => onUpdate({ ...f, urlFilter: v })}
+            onChange={(event) =>
+              onUpdate({ ...f, urlFilter: event.target.value })
+            }
           />
           {isEditor && (
             <Switch
-              size="small"
               checked={f.enabled}
-              onChange={() => onToggle(f.id)}
+              onCheckedChange={() => onToggle(f.id)}
             />
           )}
-          <Tooltip content={t("tabFilters.deleteItem")} position="topRight">
+          <Tooltip content={t("tabFilters.deleteItem")}>
             <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconDelete />}
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("tabFilters.deleteItem")}
               onClick={() => onDelete(f.id)}
-            />
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
           </Tooltip>
         </div>
       ))
@@ -97,33 +94,33 @@ export function TabFilterList({
     if (filters.length === 0) return null;
 
     return (
-      <section className="he-editor-section rounded-xl border border-semi-color-border">
+      <section className="he-editor-section">
         <div className="he-editor-section-header flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="he-editor-section-icon he-editor-section-icon-filter">
-              <IconFilter />
+              <Filter aria-hidden="true" />
             </span>
-            <Typography.Text strong className="text-group-title">
+            <span className="he-section-title">
               {t("tabFilters.title")}
-            </Typography.Text>
+            </span>
             <span className="he-editor-section-count">{filters.length}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content={t("tabFilters.addItem")} position="topRight">
+            <Tooltip content={t("tabFilters.addItem")}>
               <Button
-                theme="borderless"
-                type="tertiary"
-                size="small"
-                icon={<IconPlus />}
+                variant="ghost"
+                size="icon-sm"
                 aria-label={t("tabFilters.addItem")}
                 onClick={onAdd}
-              />
+              >
+                <Plus aria-hidden="true" />
+              </Button>
             </Tooltip>
             <Switch
-              size="small"
               checked={groupEnabled}
               disabled={filters.length === 0}
-              onChange={(checked) => handleToggleGroup(Boolean(checked))}
+              aria-label={t("tabFilters.title")}
+              onCheckedChange={handleToggleGroup}
             />
           </div>
         </div>

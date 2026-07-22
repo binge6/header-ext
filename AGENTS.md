@@ -6,7 +6,7 @@
 
 Header Ext 是一款浏览器扩展（Chrome / Firefox，MV3），用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL。核心思路：**用户在 UI 编辑规则 → 编译成 `declarativeNetRequest`(DNR) 规则 → 由 Service Worker 下发**，全程无 content script。
 
-技术栈：WXT 0.20 + React 19 + TypeScript + Semi Design + Zustand + Tailwind CSS v4。
+技术栈：WXT 0.20 + React 19 + TypeScript + Radix UI + Lucide + Zustand + Tailwind CSS v4。
 
 ## 命令
 
@@ -52,21 +52,22 @@ src/
   components/  # 通用 UI 组件（见下方约定）
   store/       # profileStore（Zustand）
   i18n/        # index / detector + locales/{zh-CN,en-US}.json
-  styles/      # tailwind.css（唯一样式入口）
+  styles/      # app.css（唯一样式入口）
 public/_locales/  # 扩展 manifest 的 i18n 文案（__MSG_*__）
 ```
 
 ## 样式约定（重要）
 
-本项目样式**优先使用 Tailwind v4 原子类**，已从内联 `style={{}}` 全量迁移。
+本项目样式**优先使用 Tailwind v4 原子类**，通用交互组件使用本地 shadcn/ui 风格封装。
 
-- **入口**：[src/styles/tailwind.css](./src/styles/tailwind.css) 是唯一样式入口，两个 `main.tsx` **在最顶部**引入它（必须早于 Semi 组件，以确立 `@layer` 顺序）。
-- **CSS Layer 顺序**：`@layer theme, base, semi, components, utilities`。Semi 的 CSS 由 [@douyinfe/semi-vite-plugin](https://github.com/DouyinFE/semi-design/tree/main/packages/semi-vite)（`wxt.config.ts` 中 `cssLayer: true`）包进 `@layer semi{}`。于是优先级为 **base(Preflight) < semi < utilities** —— Preflight 不会破坏 Semi 组件，而项目原子类能覆盖 Semi。改这块要保证层序不变。
-- **颜色 token**：直接使用 Semi 官方 token 映射的原子类，如 `bg-semi-color-bg-2`、`text-semi-color-text-0`、`text-semi-color-primary`、`border-semi-color-border`。这些在 `tailwind.css` 的 `@theme` 块定义、并在 `body` 处覆写为真实 `--semi-color-*`（Semi 把变量注入到 `body`，故必须用 `body` 而非 `:root`）。**不要**再引入 `--he-*` 之类的中间语义层，已移除。暗色由 Semi 的 `<body theme-mode="dark">` 自动切换。
+- **入口**：[src/styles/app.css](./src/styles/app.css) 是唯一样式入口，两个 `main.tsx` 在最顶部引入。
+- **基础组件**：[src/components/ui.tsx](./src/components/ui.tsx) 基于 Radix UI primitives 封装 Button、Input、Select、DropdownMenu、Dialog、Popover、Tooltip、Switch、Checkbox、MultiSelect 等。业务组件优先复用此文件，不要直接复制 Radix 组合结构。
+- **颜色 token**：使用 shadcn 风格语义 token 与对应原子类，如 `bg-background`、`bg-card`、`text-foreground`、`text-muted-foreground`、`border-border`、`text-primary`。浅色变量定义在 `:root`，深色变量定义在 `:root[data-theme="dark"]`。
+- **图标**：统一使用 `lucide-react`，默认尺寸由基础组件 CSS 控制；无文字图标按钮必须提供 `aria-label`。
 - **禁止**在原子类中使用 px / 颜色的 arbitrary value（如 `w-[600px]`、`text-[#333]`）。
   - 尺寸走 4px 栅格：`w-155`=620px、`w-70`=280px、`max-w-360`=1440px、`gap-1.5`=6px。
   - 非栅格值在 `@theme` 里定义 token 后使用：目前有 `--text-group-title: 13px`（→ `text-group-title`）、`--spacing-select: 130px`（→ `w-select`）。需要新非栅格值时同样加 token，不要用 arbitrary。
-- **能用 Semi 组件的场景优先用 Semi 组件**，而不是用原生标签 + 原子类手写。例如次要小字用 `<Typography.Text type="tertiary" size="small">`（等价于 `text-semi-color-text-2` + 12px），而不是 `<span className="text-xs text-semi-color-text-2">`；有对应 Semi 组件（`Typography` / `Button` / `Tag` / `Divider` 等）时优先复用，Tailwind 原子类主要用于布局与间距微调。
+- **可访问性**：菜单、弹窗、Popover、Tooltip、Switch、Checkbox、Select 必须使用基础组件或 Radix 原语，保留键盘导航、焦点环、Portal 和碰撞检测。
 - **复用优先**：重复的结构抽成组件而非复制。现有公共小组件：`GroupHeader`（分组标题+新增按钮）、`MenuItemLabel`（菜单项标题+描述两行）。
 
 代码风格：缩进 2 空格；组件精简，复杂逻辑拆分为独立组件；及时清理冗余；充分利用 SCSS/Tailwind 特性。

@@ -1,28 +1,15 @@
-// 紧凑规则列表，每行内联编辑
-// 同时承担 header 模式 与 cookie-* 模式（kind 决定样式与字段）
-
-import {
-  AutoComplete,
-  Button,
-  Checkbox,
-  Input,
-  Popover,
-  Select,
-  Switch,
-  Tooltip,
-  Typography,
-} from "@douyinfe/semi-ui";
-import {
-  IconChainStroked as IconLink,
-  IconCodeStroked as IconCode,
-  IconDeleteStroked as IconDelete,
-  IconFilterStroked as IconFilter,
-  IconHandle,
-  IconPlusStroked as IconPlus,
-  IconReplyStroked as IconReply,
-  IconSendStroked as IconSend,
-} from "@douyinfe/semi-icons";
 import { useState, type DragEvent, type ReactNode } from "react";
+import {
+  Cookie,
+  Filter,
+  GripVertical,
+  Plus,
+  Reply,
+  Route,
+  Send,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type {
   HeaderAction,
@@ -33,6 +20,19 @@ import type {
 import { useHistorySuggestions } from "@/src/hooks/useHistorySuggestions";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
+import {
+  AutoCompleteInput,
+  Button,
+  Checkbox,
+  Input,
+  MultiSelect,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  SelectControl,
+  Switch,
+  Tooltip,
+} from "./ui";
 
 interface Props {
   // 用 kind 决定标题和行字段：
@@ -94,10 +94,6 @@ export function HeaderRuleList({
     kind === "cookie-request-append" || kind === "cookie-response-append";
   const isRedirect = kind === "redirect";
   const { names, valuesByName } = useHistorySuggestions();
-  // 当前打开过滤 Popover 的规则 id，用于和 Tooltip 互斥
-  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
-  // 当前 hover 的过滤按钮规则 id（受控 Tooltip 显隐）
-  const [hoverFilterId, setHoverFilterId] = useState<string | null>(null);
   const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
   const [dragOverRuleId, setDragOverRuleId] = useState<string | null>(null);
 
@@ -133,9 +129,13 @@ export function HeaderRuleList({
   };
 
   const renderSectionIcon = (): ReactNode => {
-    if (kind === "redirect") return <IconLink />;
-    if (isCookie) return <IconCode />;
-    return headerTarget === "request" ? <IconSend /> : <IconReply />;
+    if (kind === "redirect") return <Route aria-hidden="true" />;
+    if (isCookie) return <Cookie aria-hidden="true" />;
+    return headerTarget === "request" ? (
+      <Send aria-hidden="true" />
+    ) : (
+      <Reply aria-hidden="true" />
+    );
   };
 
   const sectionIconClassName = cn(
@@ -198,60 +198,66 @@ export function HeaderRuleList({
 
   const renderFilterPopover = (rule: HeaderRule) => {
     const cond = rule.condition;
-    // 各字段小标题统一样式
     const label = (text: string) => (
-      <Typography.Text type="tertiary" size="small" className="mb-1 block">
-        {text}
-      </Typography.Text>
+      <div className="mb-1.5 text-xs font-semibold text-foreground">{text}</div>
     );
+
     return (
-      <div className="max-h-80 w-65 overflow-y-auto px-1 py-2">
-        <div className="flex w-full flex-col gap-3">
+      <div className="max-h-80 w-70 overflow-y-auto">
+        <div className="mb-3 flex items-center gap-2 border-b border-border pb-3">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+            <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="text-group-title font-semibold text-foreground">
+              {t("rule.advancedConditions")}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("rule.advancedConditionsDesc")}
+            </div>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-4">
           <div>
             {label(t("rule.filter"))}
             <Input
-              size="small"
               placeholder={
                 cond.useRegex
                   ? t("rule.regexPlaceholder")
                   : t("rule.filterPlaceholder")
               }
               value={cond.urlFilter ?? ""}
-              onChange={(v) =>
+              onChange={(event) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, urlFilter: v },
+                  condition: { ...cond, urlFilter: event.target.value },
                 })
               }
             />
             <Checkbox
-              className="mt-1"
               checked={!!cond.useRegex}
-              onChange={(e) =>
+              className="mt-2"
+              label={t("rule.useRegex")}
+              onCheckedChange={(checked) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, useRegex: !!e.target.checked },
+                  condition: { ...cond, useRegex: checked },
                 })
               }
-            >
-              <span className="text-xs">{t("rule.useRegex")}</span>
-            </Checkbox>
+            />
           </div>
 
           <div>
             {label(t("rule.excludeDomains"))}
-            <Select
-              size="small"
-              multiple
-              allowCreate
-              filter
-              className="w-full"
-              placeholder={t("rule.excludeDomainsPlaceholder")}
+            <MultiSelect
               value={cond.excludedDomains ?? []}
-              onChange={(v) =>
+              options={[]}
+              allowCreate
+              placeholder={t("rule.excludeDomainsPlaceholder")}
+              onValueChange={(excludedDomains) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, excludedDomains: v as string[] },
+                  condition: { ...cond, excludedDomains },
                 })
               }
             />
@@ -259,47 +265,40 @@ export function HeaderRuleList({
 
           <div>
             {label(t("rule.resourceTypes"))}
-            <Select
-              size="small"
-              multiple
-              showClear
-              className="w-full"
-              placeholder={t("rule.resourceTypesPlaceholder")}
+            <MultiSelect
               value={cond.resourceTypes ?? []}
-              onChange={(v) =>
+              options={RESOURCE_TYPES.map((resourceType) => ({
+                value: resourceType,
+                label: resourceType,
+              }))}
+              placeholder={t("rule.resourceTypesPlaceholder")}
+              onValueChange={(resourceTypes) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, resourceTypes: v as ResourceType[] },
+                  condition: {
+                    ...cond,
+                    resourceTypes: resourceTypes as ResourceType[],
+                  },
                 })
               }
-              optionList={RESOURCE_TYPES.map((rt) => ({
-                value: rt,
-                label: rt,
-              }))}
-              maxTagCount={3}
             />
           </div>
 
           <div>
             {label(t("rule.requestMethods"))}
-            <Select
-              size="small"
-              multiple
-              showClear
-              className="w-full"
-              placeholder={t("rule.requestMethodsPlaceholder")}
+            <MultiSelect
               value={cond.requestMethods ?? []}
-              onChange={(v) =>
+              options={REQUEST_METHODS.map((method) => ({
+                value: method,
+                label: method.toUpperCase(),
+              }))}
+              placeholder={t("rule.requestMethodsPlaceholder")}
+              onValueChange={(requestMethods) =>
                 onUpdate({
                   ...rule,
-                  condition: { ...cond, requestMethods: v as string[] },
+                  condition: { ...cond, requestMethods },
                 })
               }
-              optionList={REQUEST_METHODS.map((m) => ({
-                value: m,
-                label: m.toUpperCase(),
-              }))}
-              maxTagCount={3}
             />
           </div>
         </div>
@@ -323,7 +322,7 @@ export function HeaderRuleList({
               !rule.name || n.toLowerCase().includes(rule.name.toLowerCase()),
           )
           .slice(0, 20)
-          .map((n) => ({ value: n, label: n }));
+          .slice(0, 20);
     // 当前 name 对应的历史值
     const valueOptions = isCookie
       ? []
@@ -333,7 +332,7 @@ export function HeaderRuleList({
               !rule.value || v.toLowerCase().includes(rule.value.toLowerCase()),
           )
           .slice(0, 20)
-          .map((v) => ({ value: v, label: v }));
+          .slice(0, 20);
 
     const fieldClassName = cn("min-w-0 flex-1", isEditor && "he-editor-field");
     const actionClassName = cn(
@@ -357,38 +356,37 @@ export function HeaderRuleList({
           <span
             draggable={canDrag}
             className={cn(
-              "inline-flex shrink-0 text-semi-color-text-3",
+              "inline-flex shrink-0 text-muted-foreground",
               canDrag && "cursor-grab active:cursor-grabbing",
             )}
             onDragStart={(event) => handleDragStart(event, rule.id)}
             onDragEnd={handleDragEnd}
           >
-            <IconHandle />
+            <GripVertical aria-hidden="true" className="h-4 w-4" />
           </span>
         ) : (
           <Switch
-            size="small"
             checked={rule.enabled}
-            onChange={() => onToggle(rule.id)}
+            aria-label={t("rule.enabled")}
+            onCheckedChange={() => onToggle(rule.id)}
           />
         )}
-        {/* header 模式才有 action 选择器；redirect / cookie 不需要 */}
         {!isCookie && !isRedirect && (
-          <Select
-            size="small"
+          <SelectControl
             className={actionClassName}
             value={rule.action}
-            onChange={(v) => onUpdate({ ...rule, action: v as HeaderAction })}
-            optionList={ACTION_OPTIONS.map((a) => ({
-              value: a,
-              label: t(`rule.actionOption.${a}`),
+            aria-label={t("rule.action")}
+            onValueChange={(action) =>
+              onUpdate({ ...rule, action: action as HeaderAction })
+            }
+            options={ACTION_OPTIONS.map((action) => ({
+              value: action,
+              label: t(`rule.actionOption.${action}`),
             }))}
           />
         )}
         {isRedirect ? (
-          // redirect 模式：源 URL（写入 condition.urlFilter） + 目标 URL（写入 value）
           <Input
-            size="small"
             placeholder={
               cond.useRegex
                 ? t("rule.redirectFromRegexPlaceholder")
@@ -396,34 +394,35 @@ export function HeaderRuleList({
             }
             className={fieldClassName}
             value={cond.urlFilter ?? ""}
-            onChange={(v) =>
+            onChange={(event) =>
               onUpdate({
                 ...rule,
-                condition: { ...cond, urlFilter: v },
+                condition: { ...cond, urlFilter: event.target.value },
               })
             }
           />
         ) : isCookie ? (
           <Input
-            size="small"
             placeholder={t("rule.cookieNamePlaceholder")}
             className={fieldClassName}
             value={rule.name}
-            onChange={(v) => onUpdate({ ...rule, name: v })}
+            onChange={(event) =>
+              onUpdate({ ...rule, name: event.target.value })
+            }
           />
         ) : (
-          <AutoComplete
-            size="small"
+          <AutoCompleteInput
             className={fieldClassName}
             value={rule.name}
-            data={nameOptions}
+            options={nameOptions}
             placeholder={t("rule.namePlaceholder")}
-            onChange={(v) => onUpdate({ ...rule, name: String(v ?? "") })}
+            onChange={(event) =>
+              onUpdate({ ...rule, name: event.target.value })
+            }
           />
         )}
         {isRedirect ? (
           <Input
-            size="small"
             placeholder={
               cond.useRegex
                 ? t("rule.redirectToRegexPlaceholder")
@@ -431,99 +430,65 @@ export function HeaderRuleList({
             }
             className={fieldClassName}
             value={rule.value}
-            onChange={(v) => onUpdate({ ...rule, value: v })}
+            onChange={(event) =>
+              onUpdate({ ...rule, value: event.target.value })
+            }
           />
         ) : isCookie ? (
           <Input
-            size="small"
             placeholder={t("rule.cookieValuePlaceholder")}
             className={fieldClassName}
             value={rule.value}
-            onChange={(v) => onUpdate({ ...rule, value: v })}
+            onChange={(event) =>
+              onUpdate({ ...rule, value: event.target.value })
+            }
           />
         ) : rule.action === "remove" ? null : (
-          <AutoComplete
-            size="small"
+          <AutoCompleteInput
             className={fieldClassName}
             value={rule.value}
-            data={valueOptions}
+            options={valueOptions}
             placeholder={t("rule.valuePlaceholder")}
-            onChange={(v) => onUpdate({ ...rule, value: String(v ?? "") })}
+            onChange={(event) =>
+              onUpdate({ ...rule, value: event.target.value })
+            }
           />
         )}
         {isEditor && (
           <Switch
-            size="small"
             checked={rule.enabled}
-            onChange={() => onToggle(rule.id)}
+            aria-label={t("rule.enabled")}
+            onCheckedChange={() => onToggle(rule.id)}
           />
         )}
-        <div className={cn("flex items-center", isEditor ? "gap-0" : "gap-1")}>
-          {isEditor ? (
-            <Tooltip
-              trigger="hover"
-              content={t("common.delete")}
-              position="top"
-            >
-              <Button
-                theme="borderless"
-                type="tertiary"
-                size="small"
-                icon={<IconDelete />}
-                onClick={() => onDelete(rule.id)}
-              />
-            </Tooltip>
-          ) : (
-            <>
-              <Popover
-                trigger="click"
-                position="left"
-                autoAdjustOverflow
-                content={renderFilterPopover(rule)}
-                onVisibleChange={(v) => setOpenFilterId(v ? rule.id : null)}
-              >
-                <span className="inline-flex">
-                  <Tooltip
-                    trigger="custom"
-                    visible={
-                      hoverFilterId === rule.id && openFilterId !== rule.id
-                    }
-                    content={t("rule.filter")}
-                    position="top"
-                  >
-                    <Button
-                      theme="borderless"
-                      type="tertiary"
-                      size="small"
-                      icon={
-                        <IconFilter
-                          className={
-                            filterActive ? "text-semi-color-primary" : undefined
-                          }
-                        />
-                      }
-                      onMouseEnter={() => setHoverFilterId(rule.id)}
-                      onMouseLeave={() => setHoverFilterId(null)}
-                      onClick={() => setHoverFilterId(null)}
-                    />
-                  </Tooltip>
-                </span>
-              </Popover>
-              <Tooltip
-                trigger="hover"
-                content={t("common.delete")}
-                position="top"
-              >
+        <div className="flex items-center">
+          <Popover>
+            <Tooltip content={t("rule.advancedConditions")}>
+              <PopoverTrigger asChild>
                 <Button
-                  theme="borderless"
-                  type="tertiary"
-                  size="small"
-                  icon={<IconDelete />}
-                  onClick={() => onDelete(rule.id)}
-                />
-              </Tooltip>
-            </>
-          )}
+                  variant="ghost"
+                  size="icon-sm"
+                  className={cn(filterActive && "text-primary")}
+                  aria-label={t("rule.advancedConditions")}
+                >
+                  <Filter aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+            </Tooltip>
+            <PopoverContent side="left" align="center" className="p-3">
+              {renderFilterPopover(rule)}
+            </PopoverContent>
+          </Popover>
+          <Tooltip content={t("common.delete")}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("common.delete")}
+              onClick={() => onDelete(rule.id)}
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </Tooltip>
         </div>
       </div>
     );
@@ -545,31 +510,31 @@ export function HeaderRuleList({
   if (rules.length === 0) return null;
 
   return (
-    <section className="he-editor-section rounded-xl border border-semi-color-border">
+    <section className="he-editor-section">
       <div className="he-editor-section-header flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className={sectionIconClassName}>{renderSectionIcon()}</span>
-          <Typography.Text strong className="text-group-title">
+          <span className="he-section-title">
             {t(groupTitleKey)}
-          </Typography.Text>
+          </span>
           <span className="he-editor-section-count">{rules.length}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content={t(addLabelKey)} position="topRight">
+          <Tooltip content={t(addLabelKey)}>
             <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconPlus />}
+              variant="ghost"
+              size="icon-sm"
               aria-label={t(addLabelKey)}
               onClick={onAdd}
-            />
+            >
+              <Plus aria-hidden="true" />
+            </Button>
           </Tooltip>
           <Switch
-            size="small"
             checked={groupEnabled}
             disabled={rules.length === 0}
-            onChange={(checked) => handleToggleGroup(Boolean(checked))}
+            aria-label={t(groupTitleKey)}
+            onCheckedChange={handleToggleGroup}
           />
         </div>
       </div>

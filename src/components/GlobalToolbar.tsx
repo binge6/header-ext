@@ -1,45 +1,8 @@
-import { Switch, Space, Tag } from "@douyinfe/semi-ui";
-import type { TagColor } from "@douyinfe/semi-ui/lib/es/tag";
+import { PauseCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { ImportExportButtons } from "@/src/components/ImportExportButtons";
-
-const TAG_COLORS: ReadonlySet<TagColor> = new Set<TagColor>([
-  "amber",
-  "blue",
-  "cyan",
-  "green",
-  "grey",
-  "indigo",
-  "light-blue",
-  "light-green",
-  "lime",
-  "orange",
-  "pink",
-  "purple",
-  "red",
-  "teal",
-  "violet",
-  "yellow",
-  "white",
-]);
-
-function mapTagColor(input?: string): TagColor {
-  if (!input) return "grey";
-  switch (input) {
-    case "warning":
-      return "amber";
-    case "success":
-      return "green";
-    case "processing":
-      return "blue";
-    case "error":
-      return "red";
-    case "default":
-      return "grey";
-  }
-  return TAG_COLORS.has(input as TagColor) ? (input as TagColor) : "grey";
-}
+import { Badge, Switch } from "./ui";
 
 export function GlobalToolbar() {
   const { t } = useTranslation();
@@ -47,17 +10,22 @@ export function GlobalToolbar() {
   const { togglePause } = useProfileActions();
 
   return (
-    <Space align="center">
+    <div className="flex items-center gap-2">
       <ImportExportButtons />
       {paused && (
-        <Tag color={mapTagColor("warning")} type="solid">
+        <Badge variant="warning" className="gap-1">
+          <PauseCircle aria-hidden="true" className="h-3 w-3" />
           {t("popup.globalPaused")}
-        </Tag>
+        </Badge>
       )}
-      <span className="inline-flex items-center gap-1.5 leading-none">
+      <label className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium leading-none">
         {t("options.globalPaused")}
-        <Switch size="small" checked={paused} onChange={() => togglePause()} />
-      </span>
-    </Space>
+        <Switch
+          checked={paused}
+          aria-label={t("options.globalPaused")}
+          onCheckedChange={() => togglePause()}
+        />
+      </label>
+    </div>
   );
 }

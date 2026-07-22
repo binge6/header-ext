@@ -36,8 +36,6 @@ export function useThemeMode(): {
     if (typeof document === "undefined") return;
     document.documentElement.dataset.theme = isDark ? "dark" : "light";
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-    if (isDark) document.body.setAttribute("theme-mode", "dark");
-    else document.body.removeAttribute("theme-mode");
   }, [isDark]);
 
   const setMode = (m: ThemeMode) => setMeta({ theme: m });

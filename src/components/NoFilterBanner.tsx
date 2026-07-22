@@ -1,9 +1,6 @@
-import { Banner, Typography } from "@douyinfe/semi-ui";
-import { IconIssueStroked as IconAlertTriangle } from "@douyinfe/semi-icons";
+import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
-
-const { Text } = Typography;
 
 interface Props {
   /** compact: 紧凑单行模式（用于 popup 底部空间受限场景） */
@@ -37,30 +34,35 @@ export function NoFilterBanner({ compact }: Props) {
   const fullText = t("filters.noFilterHint");
 
   if (compact) {
-    // 紧凑提示：使用 Semi Text ellipsis 单行省略 + 自动 Tooltip
     return (
-      <div className="flex items-center gap-1.5 rounded bg-semi-color-warning-light-default px-2 py-1">
-        <IconAlertTriangle
-          size="small"
-          className="shrink-0 text-semi-color-warning"
+      <div
+        className="he-filter-warning-compact"
+        title={fullText}
+      >
+        <AlertTriangle
+          aria-hidden="true"
+          className="h-3.5 w-3.5 shrink-0"
         />
-        <Text
-          size="small"
-          ellipsis={{ showTooltip: { opts: { content: fullText } } }}
-          className="min-w-0 flex-1"
-        >
+        <span className="min-w-0 flex-1 truncate text-xs text-foreground">
           {fullText}
-        </Text>
+        </span>
       </div>
     );
   }
 
   return (
-    <Banner
-      type="info"
-      fullMode={false}
-      closeIcon={null}
-      description={fullText}
-    />
+    <div className="he-filter-info-banner">
+      <div className="he-filter-info-icon">
+        <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+      </div>
+      <div>
+        <div className="text-group-title font-semibold text-foreground">
+          {t("filters.noFilterTitle")}
+        </div>
+        <div className="mt-0.5 text-xs leading-5 text-muted-foreground">
+          {fullText}
+        </div>
+      </div>
+    </div>
   );
 }
