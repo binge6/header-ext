@@ -29,7 +29,7 @@ export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
       <Tooltip content={t("templates.apply")} disabled={!iconOnly}>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
+            variant={iconOnly ? "ghost" : "outline"}
             size={
               iconOnly ? (size === "small" ? "icon-sm" : "icon") : "sm"
             }

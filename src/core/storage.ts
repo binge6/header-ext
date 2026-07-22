@@ -10,6 +10,7 @@ const KEY_STATE = 'app:state:v1';
 
 const DEFAULT_META: AppMeta = {
   activeProfileId: null,
+  enabledProfileIds: [],
   globalPaused: false,
   lockedTabId: null,
   language: null,
@@ -27,7 +28,35 @@ export function createDefaultState(): AppState {
   };
   return {
     profiles: [defaultProfile],
-    meta: { ...DEFAULT_META, activeProfileId: defaultProfile.id },
+    meta: {
+      ...DEFAULT_META,
+      activeProfileId: defaultProfile.id,
+      enabledProfileIds: [defaultProfile.id],
+    },
+  };
+}
+
+function normalizeMeta(meta: Partial<AppMeta> | undefined, profiles: Profile[]): AppMeta {
+  const profileIds = new Set(profiles.map((profile) => profile.id));
+  const activeProfileId =
+    meta?.activeProfileId && profileIds.has(meta.activeProfileId)
+      ? meta.activeProfileId
+      : (profiles[0]?.id ?? null);
+
+  const rawEnabled = Array.isArray(meta?.enabledProfileIds)
+    ? meta.enabledProfileIds
+    : activeProfileId
+      ? [activeProfileId]
+      : [];
+  const enabledProfileIds = Array.from(
+    new Set(rawEnabled.filter((id): id is string => profileIds.has(id))),
+  );
+
+  return {
+    ...DEFAULT_META,
+    ...meta,
+    activeProfileId,
+    enabledProfileIds,
   };
 }
 
@@ -41,7 +70,7 @@ export async function loadState(): Promise<AppState> {
   // 兼容性补全
   return {
     profiles: raw.profiles,
-    meta: { ...DEFAULT_META, ...raw.meta },
+    meta: normalizeMeta(raw.meta, raw.profiles),
   };
 }
 
