@@ -1,16 +1,18 @@
-// 主题切换：浅色 / 深色 / 跟随系统
-// 与 LanguageSwitcher 风格保持一致：icon 模式 hover 出菜单，select 模式下拉
-
-import { Button, Dropdown, Select } from "@douyinfe/semi-ui";
-import {
-  IconMonitorStroked as IconBulb,
-  IconMoonStroked as IconMoon,
-  IconSunStroked as IconSun,
-  IconTick,
-} from "@douyinfe/semi-icons";
+import { useRef } from "react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useThemeMode, type ThemeMode } from "@/src/hooks/useThemeMode";
-import { cn } from "@/src/utils/cn";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  SelectControl,
+  Tooltip,
+} from "./ui";
 
 interface Props {
   variant?: "icon" | "select";
@@ -25,60 +27,63 @@ export function ThemeSwitcher({
 }: Props = {}) {
   const { t } = useTranslation();
   const { mode, isDark, setMode } = useThemeMode();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const renderIcon = () => {
-    if (mode === "system") return <IconBulb />;
-    return isDark ? <IconMoon /> : <IconSun />;
+    if (mode === "system") return <Monitor aria-hidden="true" />;
+    return isDark ? (
+      <Moon aria-hidden="true" />
+    ) : (
+      <Sun aria-hidden="true" />
+    );
   };
 
   if (variant === "icon") {
     return (
-      <Dropdown
-        trigger="hover"
-        position="bottomRight"
-        render={
-          <Dropdown.Menu>
-            {MODES.map((m) => {
-              const selected = m === mode;
-              return (
-                <Dropdown.Item
-                  key={m}
-                  selected={selected}
-                  className={cn(
-                    selected &&
-                      "bg-semi-color-primary-light-default text-semi-color-primary",
-                  )}
-                  onClick={() => setMode(m)}
-                >
-                  <span className="flex min-w-20 items-center justify-between gap-4">
-                    <span>{t(`theme.${m}`)}</span>
-                    {selected && (
-                      <IconTick className="text-semi-color-primary" />
-                    )}
-                  </span>
-                </Dropdown.Item>
-              );
-            })}
-          </Dropdown.Menu>
-        }
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (!open) triggerRef.current?.blur();
+        }}
       >
-        <Button
-          theme="borderless"
-          type="tertiary"
-          size={size}
-          icon={renderIcon()}
-        />
-      </Dropdown>
+        <Tooltip content={t("theme.label")}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              ref={triggerRef}
+              variant="ghost"
+              size={size === "small" ? "icon-sm" : "icon"}
+              aria-label={t("theme.label")}
+            >
+              {renderIcon()}
+            </Button>
+          </DropdownMenuTrigger>
+        </Tooltip>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{t("theme.label")}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={mode}
+            onValueChange={(value) => setMode(value as ThemeMode)}
+          >
+            {MODES.map((themeMode) => (
+              <DropdownMenuRadioItem key={themeMode} value={themeMode}>
+                {t(`theme.${themeMode}`)}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 
   return (
-    <Select
-      size={size}
+    <SelectControl
       value={mode}
       className="w-select"
-      onChange={(v) => setMode(v as ThemeMode)}
-      optionList={MODES.map((m) => ({ value: m, label: t(`theme.${m}`) }))}
+      aria-label={t("theme.label")}
+      onValueChange={(value) => setMode(value as ThemeMode)}
+      options={MODES.map((themeMode) => ({
+        value: themeMode,
+        label: t(`theme.${themeMode}`),
+      }))}
     />
   );
 }

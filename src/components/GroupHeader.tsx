@@ -1,5 +1,5 @@
-import { Button } from "@douyinfe/semi-ui";
-import { IconPlusStroked as IconPlus } from "@douyinfe/semi-icons";
+import { Plus } from "lucide-react";
+import { Button } from "./ui";
 
 interface Props {
   title: string;
@@ -11,14 +11,13 @@ interface Props {
 export function GroupHeader({ title, addLabel, onAdd }: Props) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-group-title font-semibold">{title}</span>
+      <span className="he-section-title">{title}</span>
       <Button
-        theme="borderless"
-        type="tertiary"
-        size="small"
-        icon={<IconPlus />}
+        variant="ghost"
+        size="sm"
         onClick={onAdd}
       >
+        <Plus aria-hidden="true" />
         {addLabel}
       </Button>
     </div>

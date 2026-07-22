@@ -2,15 +2,11 @@
 // 用于：请求域名 / 排除域名 / URL 正则等同构结构。
 // items 内部字段名通过 valueField 指定，存取从 i18n key 注入。
 
-import { Button, Input, Switch, Tooltip, Typography } from "@douyinfe/semi-ui";
-import {
-  IconDeleteStroked as IconDelete,
-  IconFilterStroked as IconFilter,
-  IconPlusStroked as IconPlus,
-} from "@douyinfe/semi-icons";
+import { Filter, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
+import { Button, Input, Switch, Tooltip } from "./ui";
 
 export interface FilterRowItem {
   id: string;
@@ -52,13 +48,14 @@ export function FilterRowList<T extends FilterRowItem>({
 
   const rows =
     filters.length === 0 ? (
-      <Typography.Text
-        type="tertiary"
-        size="small"
-        className={cn("block", isEditor ? "px-3 py-2" : "py-1")}
+      <div
+        className={cn(
+          "he-muted-text",
+          isEditor ? "px-3 py-2" : "py-1",
+        )}
       >
         {t(`${i18nKey}.empty`)}
-      </Typography.Text>
+      </div>
     ) : (
       filters.map((f) => (
         <div
@@ -71,33 +68,33 @@ export function FilterRowList<T extends FilterRowItem>({
         >
           {!isEditor && (
             <Switch
-              size="small"
               checked={f.enabled}
-              onChange={() => onToggle(f.id)}
+              onCheckedChange={() => onToggle(f.id)}
             />
           )}
           <Input
-            size="small"
             placeholder={t(`${i18nKey}.placeholder`)}
             className={cn("min-w-0 flex-1", isEditor && "he-editor-field")}
             value={(f[valueField] as unknown as string) ?? ""}
-            onChange={(v) => onUpdate({ ...f, [valueField]: v } as T)}
+            onChange={(event) =>
+              onUpdate({ ...f, [valueField]: event.target.value } as T)
+            }
           />
           {isEditor && (
             <Switch
-              size="small"
               checked={f.enabled}
-              onChange={() => onToggle(f.id)}
+              onCheckedChange={() => onToggle(f.id)}
             />
           )}
-          <Tooltip content={t(`${i18nKey}.deleteItem`)} position="topRight">
+          <Tooltip content={t(`${i18nKey}.deleteItem`)}>
             <Button
-              theme="borderless"
-              type="tertiary"
-              size="small"
-              icon={<IconDelete />}
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t(`${i18nKey}.deleteItem`)}
               onClick={() => onDelete(f.id)}
-            />
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
           </Tooltip>
         </div>
       ))
@@ -107,33 +104,33 @@ export function FilterRowList<T extends FilterRowItem>({
     if (filters.length === 0) return null;
 
     return (
-      <section className="he-editor-section rounded-xl border border-semi-color-border">
+      <section className="he-editor-section">
         <div className="he-editor-section-header flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="he-editor-section-icon he-editor-section-icon-filter">
-              <IconFilter />
+              <Filter aria-hidden="true" />
             </span>
-            <Typography.Text strong className="text-group-title">
+            <span className="he-section-title">
               {t(`${i18nKey}.title`)}
-            </Typography.Text>
+            </span>
             <span className="he-editor-section-count">{filters.length}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Tooltip content={t(`${i18nKey}.addItem`)} position="topRight">
+            <Tooltip content={t(`${i18nKey}.addItem`)}>
               <Button
-                theme="borderless"
-                type="tertiary"
-                size="small"
-                icon={<IconPlus />}
+                variant="ghost"
+                size="icon-sm"
                 aria-label={t(`${i18nKey}.addItem`)}
                 onClick={onAdd}
-              />
+              >
+                <Plus aria-hidden="true" />
+              </Button>
             </Tooltip>
             <Switch
-              size="small"
               checked={groupEnabled}
               disabled={filters.length === 0}
-              onChange={(checked) => handleToggleGroup(Boolean(checked))}
+              aria-label={t(`${i18nKey}.title`)}
+              onCheckedChange={handleToggleGroup}
             />
           </div>
         </div>

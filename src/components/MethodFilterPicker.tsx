@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Button, Divider, Select, Space, Typography } from "@douyinfe/semi-ui";
-import { IconFilterStroked as IconFilter } from "@douyinfe/semi-icons";
+import { Filter } from "lucide-react";
 import type { MethodFilter } from "../core/types";
+import { Button, MultiSelect } from "./ui";
 
 interface Props {
   filters: MethodFilter[];
@@ -38,41 +38,34 @@ export function MethodFilterPicker({
 
   const content = (
     <>
-      <Select
-        size="small"
-        multiple
-        showClear
+      <MultiSelect
         className="w-full"
         value={value}
         placeholder={t("methodFilters.placeholder")}
-        optionList={HTTP_METHODS.map((m) => ({ value: m, label: m }))}
-        onChange={(next) =>
-          onChange((next as string[]).map((m) => m.toUpperCase()))
-        }
-        maxTagCount={3}
-        outerBottomSlot={
-          <>
-            <Divider margin="4px" />
-            <Space className="px-2 py-1">
-              <Button
-                size="small"
-                theme="borderless"
-                type="primary"
-                onClick={() => onChange(allSelected ? [] : [...HTTP_METHODS])}
-              >
-                {allSelected
-                  ? t("methodFilters.clearAll")
-                  : t("methodFilters.selectAll")}
-              </Button>
-            </Space>
-          </>
+        options={HTTP_METHODS.map((method) => ({
+          value: method,
+          label: method,
+        }))}
+        onValueChange={(next) =>
+          onChange(next.map((method) => method.toUpperCase()))
         }
       />
-      <Typography.Text type="secondary" className="text-xs">
-        {value.length === 0
-          ? t("methodFilters.empty")
-          : t("methodFilters.hint")}
-      </Typography.Text>
+      <div className="flex items-center justify-between gap-3">
+        <span className="he-muted-text">
+          {value.length === 0
+            ? t("methodFilters.empty")
+            : t("methodFilters.hint")}
+        </span>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onChange(allSelected ? [] : [...HTTP_METHODS])}
+        >
+          {allSelected
+            ? t("methodFilters.clearAll")
+            : t("methodFilters.selectAll")}
+        </Button>
+      </div>
     </>
   );
 
@@ -80,15 +73,15 @@ export function MethodFilterPicker({
     if (filters.length === 0) return null;
 
     return (
-      <section className="he-editor-section rounded-xl border border-semi-color-border">
+      <section className="he-editor-section">
         <div className="he-editor-section-header flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="he-editor-section-icon he-editor-section-icon-filter">
-              <IconFilter />
+              <Filter aria-hidden="true" />
             </span>
-            <Typography.Text strong className="text-group-title">
+            <span className="he-section-title">
               {t("methodFilters.title")}
-            </Typography.Text>
+            </span>
             <span className="he-editor-section-count">{value.length}</span>
           </div>
         </div>
@@ -101,9 +94,9 @@ export function MethodFilterPicker({
 
   return (
     <div>
-      <Typography.Text strong className="text-group-title mb-1.5 block">
+      <div className="he-section-title mb-1.5">
         {t("methodFilters.title")}
-      </Typography.Text>
+      </div>
       {content}
     </div>
   );

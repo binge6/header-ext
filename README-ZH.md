@@ -22,7 +22,8 @@
 ## 技术栈
 
 - [WXT](https://wxt.dev/) + React 19 + TypeScript
-- Semi Design
+- Radix UI 原语 + shadcn/ui 风格本地组件
+- Tailwind CSS v4 + Lucide 图标
 - Zustand 状态管理
 - `declarativeNetRequest` + Service Worker（无需 content script）
 
