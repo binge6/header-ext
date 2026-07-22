@@ -5,7 +5,7 @@ export interface ExportPayload {
   schema: "header-ext.v1";
   exportedAt: number;
   profiles: Profile[];
-  meta?: Pick<AppMeta, "activeProfileId" | "globalPaused">;
+  meta?: Pick<AppMeta, "activeProfileId" | "enabledProfileIds" | "globalPaused">;
 }
 
 // selectedIds 为空数组时导出全部；提供时仅导出包含的 profiles
@@ -24,6 +24,9 @@ export function buildExport(
     profiles: filtered,
     meta: {
       activeProfileId: meta.activeProfileId,
+      enabledProfileIds: (meta.enabledProfileIds ?? []).filter((id) =>
+        filtered.some((profile) => profile.id === id),
+      ),
       globalPaused: meta.globalPaused,
     },
   };

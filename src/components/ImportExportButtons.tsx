@@ -21,6 +21,9 @@ import {
 interface Props {
   /** iconOnly: 仅显示图标按钮（无文字），用于紧凑场景如 popup */
   iconOnly?: boolean;
+  /** menuItem: 渲染为下拉菜单项，用于更多菜单内 */
+  menuItem?: boolean;
+  onImportRequest?: () => void;
 }
 
 /**
@@ -29,7 +32,11 @@ interface Props {
  * - 导出：Popover 多选选择要导出的 Profile
  * 在 options 顶栏与 popup footer 共用
  */
-export function ImportExportButtons({ iconOnly }: Props) {
+export function ImportExportButtons({
+  iconOnly,
+  menuItem,
+  onImportRequest,
+}: Props) {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
@@ -62,7 +69,13 @@ export function ImportExportButtons({ iconOnly }: Props) {
     setSelectedIds(Array.from(current));
   };
 
-  const handleImportClick = () => fileRef.current?.click();
+  const handleImportClick = () => {
+    if (onImportRequest) {
+      onImportRequest();
+      return;
+    }
+    fileRef.current?.click();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,8 +83,8 @@ export function ImportExportButtons({ iconOnly }: Props) {
     if (!file) return;
     try {
       const text = await readFileAsText(file);
-      const { profiles: incoming } = parseImport(text);
-      mergeProfiles(incoming);
+      const { profiles: incoming, meta: incomingMeta } = parseImport(text);
+      mergeProfiles(incoming, incomingMeta);
       toast.success(t("options.importSuccess", { count: incoming.length }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "unknown";
@@ -125,7 +138,19 @@ export function ImportExportButtons({ iconOnly }: Props) {
     </div>
   );
 
-  const importBtn = iconOnly ? (
+  const importBtn = menuItem ? (
+    <button
+      type="button"
+      className="he-menu-item"
+      onClick={(event) => {
+        event.preventDefault();
+        handleImportClick();
+      }}
+    >
+      <Upload aria-hidden="true" />
+      {t("options.import")}
+    </button>
+  ) : iconOnly ? (
     <Tooltip content={t("options.import")}>
       <Button
         variant="ghost"
@@ -143,7 +168,18 @@ export function ImportExportButtons({ iconOnly }: Props) {
     </Button>
   );
 
-  const exportTrigger = iconOnly ? (
+  const exportTrigger = menuItem ? (
+    <PopoverTrigger asChild>
+      <button
+        type="button"
+        className="he-menu-item"
+        disabled={profiles.length === 0}
+      >
+        <Download aria-hidden="true" />
+        {t("options.export")}
+      </button>
+    </PopoverTrigger>
+  ) : iconOnly ? (
     <Tooltip content={t("options.export")} disabled={exportOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -170,7 +206,7 @@ export function ImportExportButtons({ iconOnly }: Props) {
   );
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className={menuItem ? "block" : "inline-flex items-center gap-1"}>
       {importBtn}
       <Popover open={exportOpen} onOpenChange={setExportOpen}>
         {exportTrigger}
@@ -182,13 +218,15 @@ export function ImportExportButtons({ iconOnly }: Props) {
           {exportPanel}
         </PopoverContent>
       </Popover>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+      {!onImportRequest && (
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      )}
     </div>
   );
 }

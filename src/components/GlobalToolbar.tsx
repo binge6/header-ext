@@ -1,7 +1,6 @@
 import { PauseCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
-import { ImportExportButtons } from "@/src/components/ImportExportButtons";
 import { Badge, Switch } from "./ui";
 
 export function GlobalToolbar() {
@@ -11,7 +10,6 @@ export function GlobalToolbar() {
 
   return (
     <div className="flex items-center gap-2">
-      <ImportExportButtons />
       {paused && (
         <Badge variant="warning" className="gap-1">
           <PauseCircle aria-hidden="true" className="h-3 w-3" />

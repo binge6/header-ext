@@ -345,6 +345,10 @@
     opacity: 0.78;
   }
 
+  .he-input::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+
   .he-input:hover,
   .he-select-trigger:hover,
   .he-multi-select-trigger:hover {
@@ -643,6 +647,38 @@
   .he-multi-select-content {
     width: max(var(--radix-popover-trigger-width), 220px);
     padding: 5px;
+  }
+
+  .he-autocomplete-content {
+    width: var(--radix-popover-trigger-width);
+    min-width: 180px;
+    max-height: min(240px, var(--radix-popover-content-available-height));
+    overflow-y: auto;
+  }
+
+  .he-autocomplete-item {
+    display: block;
+    width: 100%;
+    min-height: 30px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 7px;
+    padding: 6px 8px;
+    background: transparent;
+    color: var(--popover-foreground);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .he-autocomplete-item:hover,
+  .he-autocomplete-item-active {
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .he-command-search {

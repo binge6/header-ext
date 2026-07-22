@@ -47,17 +47,15 @@ async function clearAll(): Promise<void> {
 }
 
 export async function applyState(state: AppState): Promise<void> {
-  // 暂停或无激活 profile：仅清空两类规则
-  if (state.meta.globalPaused || !state.meta.activeProfileId) {
-    await clearAll();
-    clearIdMap();
-    return;
-  }
+  const profileIds = new Set(state.profiles.map((profile) => profile.id));
+  const enabledProfileIds =
+    state.meta.enabledProfileIds?.filter((id) => profileIds.has(id)) ??
+    (state.meta.activeProfileId && profileIds.has(state.meta.activeProfileId)
+      ? [state.meta.activeProfileId]
+      : []);
 
-  const profile = state.profiles.find(
-    (p) => p.id === state.meta.activeProfileId
-  );
-  if (!profile) {
+  // 暂停或无开启 profile：仅清空两类规则
+  if (state.meta.globalPaused || !enabledProfileIds.length) {
     await clearAll();
     clearIdMap();
     return;
@@ -65,10 +63,24 @@ export async function applyState(state: AppState): Promise<void> {
 
   // 重新生成 DNR id，避免与已有 id 冲突
   clearIdMap();
-  const { rules, errors } = compileRules(profile.rules, {
-    lockedTabId: state.meta.lockedTabId,
-    profile,
-  });
+  const rules: DnrRule[] = [];
+  const errors: Array<{ ruleId: string; message: string }> = [];
+
+  for (const profileId of enabledProfileIds) {
+    const profile = state.profiles.find((p) => p.id === profileId);
+    if (!profile) continue;
+    const compiled = compileRules(profile.rules, {
+      lockedTabId: state.meta.lockedTabId,
+      profile,
+    });
+    rules.push(...compiled.rules);
+    errors.push(
+      ...compiled.errors.map((error) => ({
+        ...error,
+        ruleId: `${profile.name}/${error.ruleId}`,
+      })),
+    );
+  }
 
   if (errors.length) {
     console.warn("[header-ext] compile errors:", errors);

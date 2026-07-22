@@ -1,0 +1,245 @@
+import type {
+  AppMeta,
+  AppState,
+  HeaderRule,
+  Profile,
+  RuleKind,
+} from "./types";
+
+export interface ProfileStats {
+  totalRules: number;
+  enabledRules: number;
+  filters: number;
+  enabledFilters: number;
+  advancedRules: number;
+  hasEnabledRule: boolean;
+  hasEnabledFilter: boolean;
+  hasGlobalRisk: boolean;
+}
+
+export interface ProfileStatus {
+  profile: Profile;
+  enabled: boolean;
+  pausedByGlobal: boolean;
+  editing: boolean;
+  stats: ProfileStats;
+  scopeParts: ScopeParts;
+  affectsDomain: boolean;
+  conflictKeys: string[];
+}
+
+export interface WorkspaceStatus {
+  activeProfile: Profile | null;
+  enabledProfiles: Profile[];
+  statuses: ProfileStatus[];
+  enabledRuleCount: number;
+  totalRuleCount: number;
+  riskyProfiles: ProfileStatus[];
+  currentDomainProfiles: ProfileStatus[];
+  conflictGroups: Array<{
+    key: string;
+    profiles: Profile[];
+  }>;
+}
+
+function trimValue(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
+function ruleKind(rule: HeaderRule): RuleKind {
+  return rule.kind ?? "header";
+}
+
+function hasAdvancedCondition(rule: HeaderRule): boolean {
+  const condition = rule.condition ?? {};
+  return Boolean(
+    trimValue(condition.urlFilter) ||
+      condition.useRegex ||
+      condition.excludedDomains?.length ||
+      condition.resourceTypes?.length ||
+      condition.requestMethods?.length,
+  );
+}
+
+function ruleConflictKey(rule: HeaderRule): string | null {
+  if (!rule.enabled) return null;
+  const kind = ruleKind(rule);
+  if (kind === "redirect") {
+    return `redirect:${trimValue(rule.condition.urlFilter) || "*"}`;
+  }
+  if (kind === "cookie-request-append") {
+    return `request:cookie:${rule.name.trim()}`;
+  }
+  if (kind === "cookie-response-append") {
+    return `response:set-cookie:${rule.name.trim()}`;
+  }
+  if (!rule.name.trim()) return null;
+  return `${rule.target}:${rule.name.trim().toLowerCase()}`;
+}
+
+export function getEnabledProfileIds(
+  meta: AppMeta,
+  profiles: Profile[],
+): string[] {
+  const validIds = new Set(profiles.map((profile) => profile.id));
+  const source = Array.isArray(meta.enabledProfileIds)
+    ? meta.enabledProfileIds
+    : meta.activeProfileId
+      ? [meta.activeProfileId]
+      : [];
+  return Array.from(new Set(source.filter((id) => validIds.has(id))));
+}
+
+export function getProfileStats(profile: Profile): ProfileStats {
+  const filterEntries = [
+    ...(profile.tabFilters ?? []).map((filter) => ({
+      enabled: filter.enabled,
+      value: filter.urlFilter,
+    })),
+    ...(profile.domainFilters ?? []).map((filter) => ({
+      enabled: filter.enabled,
+      value: filter.domain,
+    })),
+    ...(profile.urlFilters ?? []).map((filter) => ({
+      enabled: filter.enabled,
+      value: filter.regex,
+    })),
+    ...(profile.excludeUrlFilters ?? []).map((filter) => ({
+      enabled: filter.enabled,
+      value: filter.url,
+    })),
+    ...(profile.methodFilters ?? []).map((filter) => ({
+      enabled: filter.enabled,
+      value: filter.method,
+    })),
+  ];
+  const enabledFilters = filterEntries.filter(
+    (filter) => filter.enabled && trimValue(filter.value),
+  ).length;
+  const enabledRules = profile.rules.filter((rule) => rule.enabled).length;
+
+  return {
+    totalRules: profile.rules.length,
+    enabledRules,
+    filters: filterEntries.length,
+    enabledFilters,
+    advancedRules: profile.rules.filter(hasAdvancedCondition).length,
+    hasEnabledRule: enabledRules > 0,
+    hasEnabledFilter: enabledFilters > 0,
+    hasGlobalRisk: enabledRules > 0 && enabledFilters === 0,
+  };
+}
+
+export interface ScopeParts {
+  domains: string[];
+  methods: string[];
+  tabCount: number;
+  urlRegexCount: number;
+  excludeCount: number;
+}
+
+export function getScopeParts(profile: Profile): ScopeParts {
+  return {
+    domains: (profile.domainFilters ?? [])
+      .filter((filter) => filter.enabled && trimValue(filter.domain))
+      .map((filter) => filter.domain.trim()),
+    methods: (profile.methodFilters ?? [])
+      .filter((filter) => filter.enabled && trimValue(filter.method))
+      .map((filter) => filter.method.trim().toUpperCase()),
+    tabCount: (profile.tabFilters ?? []).filter(
+      (filter) => filter.enabled && trimValue(filter.urlFilter),
+    ).length,
+    urlRegexCount: (profile.urlFilters ?? []).filter(
+      (filter) => filter.enabled && trimValue(filter.regex),
+    ).length,
+    excludeCount: (profile.excludeUrlFilters ?? []).filter(
+      (filter) => filter.enabled && trimValue(filter.url),
+    ).length,
+  };
+}
+
+export function profileMayAffectDomain(
+  profile: Profile,
+  currentDomain: string,
+): boolean {
+  if (!currentDomain) return false;
+  const domain = currentDomain.toLowerCase();
+  const domainFilters = (profile.domainFilters ?? []).filter(
+    (filter) => filter.enabled && trimValue(filter.domain),
+  );
+  if (!domainFilters.length) return true;
+
+  return domainFilters.some((filter) => {
+    const filterDomain = filter.domain.trim().toLowerCase();
+    return domain === filterDomain || domain.endsWith(`.${filterDomain}`);
+  });
+}
+
+export function buildWorkspaceStatus(
+  state: AppState,
+  currentDomain = "",
+): WorkspaceStatus {
+  const enabledIds = getEnabledProfileIds(state.meta, state.profiles);
+  const activeProfile =
+    state.profiles.find((profile) => profile.id === state.meta.activeProfileId) ??
+    null;
+  const conflictMap = new Map<string, Set<string>>();
+  const statuses: ProfileStatus[] = state.profiles.map((profile) => {
+    const stats = getProfileStats(profile);
+    const conflictKeys = profile.rules
+      .map(ruleConflictKey)
+      .filter((key): key is string => Boolean(key));
+    conflictKeys.forEach((key) => {
+      const current = conflictMap.get(key) ?? new Set<string>();
+      current.add(profile.id);
+      conflictMap.set(key, current);
+    });
+
+    return {
+      profile,
+      enabled: enabledIds.includes(profile.id),
+      pausedByGlobal: state.meta.globalPaused && enabledIds.includes(profile.id),
+      editing: profile.id === state.meta.activeProfileId,
+      stats,
+      scopeParts: getScopeParts(profile),
+      affectsDomain: profileMayAffectDomain(profile, currentDomain),
+      conflictKeys,
+    };
+  });
+  const enabledProfiles = statuses
+    .filter((status) => status.enabled)
+    .map((status) => status.profile);
+  const activeEnabledStatuses = statuses.filter((status) => status.enabled);
+  const conflictGroups = Array.from(conflictMap.entries())
+    .map(([key, ids]) => ({
+      key,
+      profiles: Array.from(ids)
+        .map((id) => state.profiles.find((profile) => profile.id === id))
+        .filter((profile): profile is Profile => Boolean(profile)),
+    }))
+    .filter((group) => {
+      const enabledCount = group.profiles.filter((profile) =>
+        enabledIds.includes(profile.id),
+      ).length;
+      return enabledCount > 1;
+    });
+
+  return {
+    activeProfile,
+    enabledProfiles,
+    statuses,
+    enabledRuleCount: activeEnabledStatuses.reduce(
+      (sum, status) => sum + status.stats.enabledRules,
+      0,
+    ),
+    totalRuleCount: state.profiles.reduce(
+      (sum, profile) => sum + profile.rules.length,
+      0,
+    ),
+    riskyProfiles: activeEnabledStatuses.filter((status) => status.stats.hasGlobalRisk),
+    currentDomainProfiles: activeEnabledStatuses.filter(
+      (status) => status.affectsDomain && status.stats.hasEnabledRule,
+    ),
+    conflictGroups,
+  };
+}

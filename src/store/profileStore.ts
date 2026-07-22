@@ -27,6 +27,8 @@ interface ProfileActions {
   duplicateProfile: (profileId: string, name?: string) => string | null;
   deleteProfile: (profileId: string) => void;
   setActiveProfile: (profileId: string) => void;
+  setProfileEnabled: (profileId: string, enabled: boolean) => void;
+  toggleProfileEnabled: (profileId: string) => void;
 
   // rule
   addRule: (
@@ -80,7 +82,7 @@ interface ProfileActions {
   setLockedTabId: (tabId: number | null) => void;
 
   // 合并导入：将外部 profiles 追加到现有列表（重新分配 id + 名称去重）
-  mergeProfiles: (incoming: Profile[]) => void;
+  mergeProfiles: (incoming: Profile[], incomingMeta?: Partial<AppMeta>) => void;
 }
 
 interface ProfileStore extends AppState {
@@ -122,6 +124,20 @@ function emptyProfile(name: string): Profile {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function normalizeEnabledProfileIds(
+  ids: string[] | undefined,
+  profiles: Profile[],
+  fallbackId?: string | null,
+): string[] {
+  const validIds = new Set(profiles.map((profile) => profile.id));
+  const source = Array.isArray(ids)
+    ? ids
+    : fallbackId
+      ? [fallbackId]
+      : [];
+  return Array.from(new Set(source.filter((id) => validIds.has(id))));
 }
 
 // 在已有 profile 列表中，给 base 名称生成一个唯一名称
@@ -256,6 +272,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   profiles: [],
   meta: {
     activeProfileId: null,
+    enabledProfileIds: [],
     globalPaused: false,
     lockedTabId: null,
     language: null,
@@ -287,8 +304,17 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         ...get(),
         profiles: [...profiles, profile],
       };
-      set({ profiles: next.profiles });
-      void persist({ profiles: next.profiles, meta: get().meta });
+      const meta = {
+        ...get().meta,
+        activeProfileId: profile.id,
+        enabledProfileIds: normalizeEnabledProfileIds(
+          [...(get().meta.enabledProfileIds ?? []), profile.id],
+          next.profiles,
+          profile.id,
+        ),
+      };
+      set({ profiles: next.profiles, meta });
+      void persist({ profiles: next.profiles, meta });
       return profile.id;
     },
 
@@ -313,9 +339,17 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const finalName = uniqueProfileName(base, profiles);
       const profile = cloneProfile(source, finalName);
       const next = [...profiles, profile];
+      const meta = {
+        ...get().meta,
+        enabledProfileIds: normalizeEnabledProfileIds(
+          [...(get().meta.enabledProfileIds ?? []), profile.id],
+          next,
+          profile.id,
+        ),
+      };
 
-      set({ profiles: next });
-      void persist({ profiles: next, meta: get().meta });
+      set({ profiles: next, meta });
+      void persist({ profiles: next, meta });
       return profile.id;
     },
 
@@ -326,10 +360,22 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       if (profiles.length === 0) {
         const fallback = emptyProfile("Profile 1");
         profiles = [fallback];
-        meta = { ...meta, activeProfileId: fallback.id };
+        meta = {
+          ...meta,
+          activeProfileId: fallback.id,
+          enabledProfileIds: [fallback.id],
+        };
       } else if (meta.activeProfileId === profileId) {
         meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
       }
+      meta = {
+        ...meta,
+        enabledProfileIds: normalizeEnabledProfileIds(
+          meta.enabledProfileIds,
+          profiles,
+          meta.activeProfileId,
+        ),
+      };
       set({ profiles, meta });
       void persist({ profiles, meta });
     },
@@ -338,6 +384,40 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const meta = { ...get().meta, activeProfileId: profileId };
       set({ meta });
       void persist({ profiles: get().profiles, meta });
+    },
+
+    setProfileEnabled: (profileId, enabled) => {
+      const profiles = get().profiles;
+      const validIds = new Set(profiles.map((profile) => profile.id));
+      if (!validIds.has(profileId)) return;
+      const current = new Set(
+        normalizeEnabledProfileIds(
+          get().meta.enabledProfileIds,
+          profiles,
+          get().meta.activeProfileId,
+        ),
+      );
+      if (enabled) current.add(profileId);
+      else current.delete(profileId);
+      const meta = {
+        ...get().meta,
+        enabledProfileIds: Array.from(current),
+      };
+      set({ meta });
+      void persist({ profiles, meta });
+    },
+
+    toggleProfileEnabled: (profileId) => {
+      const profiles = get().profiles;
+      const enabledProfileIds = normalizeEnabledProfileIds(
+        get().meta.enabledProfileIds,
+        profiles,
+        get().meta.activeProfileId,
+      );
+      get().actions.setProfileEnabled(
+        profileId,
+        !enabledProfileIds.includes(profileId),
+      );
     },
 
     addRule: (profileId, kind = "header", target) => {
@@ -784,10 +864,17 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       void persist({ profiles, meta: get().meta });
     },
 
-    mergeProfiles: (incoming) => {
+    mergeProfiles: (incoming, incomingMeta) => {
       if (!incoming.length) return;
       const profiles = get().profiles;
       const now = Date.now();
+      const incomingEnabledIds = new Set(
+        normalizeEnabledProfileIds(
+          incomingMeta?.enabledProfileIds,
+          incoming,
+          incomingMeta?.activeProfileId ?? null,
+        ),
+      );
       // 维护一个动态扩展的命名池，确保新增项之间也不重名
       const pool: Profile[] = [...profiles];
       const merged: Profile[] = incoming.map((p) => {
@@ -809,6 +896,21 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       if (!meta.activeProfileId && next.length > 0) {
         meta = { ...meta, activeProfileId: next[0]?.id ?? null };
       }
+      meta = {
+        ...meta,
+        enabledProfileIds: normalizeEnabledProfileIds(
+          [
+            ...(meta.enabledProfileIds ?? []),
+            ...merged
+              .filter((profile, index) =>
+                incomingEnabledIds.has(incoming[index]?.id ?? ""),
+              )
+              .map((profile) => profile.id),
+          ],
+          next,
+          meta.activeProfileId,
+        ),
+      };
       set({ profiles: next, meta });
       void persist({ profiles: next, meta });
     },
