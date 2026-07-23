@@ -1,11 +1,5 @@
 import type { ScopeParts } from "@/src/core/profileStatus";
 
-export function getProfileBadgeText(name?: string): string {
-  const trimmed = name?.trim() ?? "";
-  const edgeNumber = trimmed.match(/^\d+/)?.[0] ?? trimmed.match(/\d+$/)?.[0];
-  return edgeNumber ?? (trimmed.charAt(0).toUpperCase() || "H");
-}
-
 export function formatScopeSummary(
   scopeParts: ScopeParts,
   t: (key: string, options?: Record<string, unknown>) => string,

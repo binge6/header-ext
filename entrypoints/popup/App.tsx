@@ -43,12 +43,25 @@ function App() {
     duplicateProfile,
     deleteProfile,
     setLockedTabId,
-    setProfileEnabled,
+    setProfileAlwaysEnabled,
     addTabFilter,
+    updateTabFilter,
+    deleteTabFilter,
+    toggleTabFilter,
     addDomainFilter,
+    updateDomainFilter,
+    deleteDomainFilter,
+    toggleDomainFilter,
     addUrlFilter,
+    updateUrlFilter,
+    deleteUrlFilter,
+    toggleUrlFilter,
     addExcludeUrlFilter,
+    updateExcludeUrlFilter,
+    deleteExcludeUrlFilter,
+    toggleExcludeUrlFilter,
     addMethodFilter,
+    setMethodFilters,
   } = useProfileActions();
 
   const [currentTabId, setCurrentTabId] = useState<number | null>(null);
@@ -128,12 +141,37 @@ function App() {
     };
   }, [active?.rules]);
 
+  const filterGroups = useMemo(
+    () => ({
+      tabFilters: active?.tabFilters ?? [],
+      domainFilters: active?.domainFilters ?? [],
+      urlFilters: active?.urlFilters ?? [],
+      excludeUrlFilters: active?.excludeUrlFilters ?? [],
+      methodFilters: active?.methodFilters ?? [],
+    }),
+    [
+      active?.domainFilters,
+      active?.excludeUrlFilters,
+      active?.methodFilters,
+      active?.tabFilters,
+      active?.urlFilters,
+    ],
+  );
+
   const hasRuleContent =
     ruleGroups.requestRules.length +
       ruleGroups.responseRules.length +
       ruleGroups.cookieRequestRules.length +
       ruleGroups.cookieResponseRules.length +
       ruleGroups.redirectRules.length >
+    0;
+
+  const hasFilterContent =
+    filterGroups.tabFilters.length +
+      filterGroups.domainFilters.length +
+      filterGroups.urlFilters.length +
+      filterGroups.excludeUrlFilters.length +
+      filterGroups.methodFilters.length >
     0;
 
   const isLocked = meta.lockedTabId != null;
@@ -240,7 +278,7 @@ function App() {
     if (element.firstElementChild) observer.observe(element.firstElementChild);
 
     return () => observer.disconnect();
-  }, [active?.id, ruleGroups, updateScrollShadow]);
+  }, [active?.id, filterGroups, ruleGroups, updateScrollShadow]);
 
   if (!hydrated) {
     return (
@@ -318,14 +356,16 @@ function App() {
               onContextProfileChange={setContextProfileId}
               onAddProfile={addProfileAndActivate}
               onSelectProfile={setActive}
-              onToggleProfile={setProfileEnabled}
+              onToggleAlwaysEnabled={setProfileAlwaysEnabled}
             />
 
             <ProfileEditor
               active={active}
               activeStatus={activeStatus}
               ruleGroups={ruleGroups}
+              filterGroups={filterGroups}
               hasRuleContent={hasRuleContent}
+              hasFilterContent={hasFilterContent}
               globalPaused={meta.globalPaused}
               riskyProfilesCount={workspace.riskyProfiles.length}
               riskyProfileNames={riskyProfileNames}
@@ -341,13 +381,52 @@ function App() {
               onProfileMenuVisibleChange={setProfileMenuVisible}
               onAddProfile={addProfileAndActivate}
               onToggleTabLock={handleToggleTabLock}
-              onToggleProfile={(enabled) => {
-                if (active) setProfileEnabled(active.id, enabled);
+              onToggleAlwaysEnabled={(enabled) => {
+                if (active) setProfileAlwaysEnabled(active.id, enabled);
               }}
               onUpdateRule={handleUpdateRule}
               onDeleteRule={(ruleId) => active && deleteRule(active.id, ruleId)}
               onToggleRule={(ruleId) => active && toggleRule(active.id, ruleId)}
               onReorderRules={(ruleIds) => active && reorderRules(active.id, ruleIds)}
+              onUpdateTabFilter={(filter) =>
+                active && updateTabFilter(active.id, filter)
+              }
+              onDeleteTabFilter={(filterId) =>
+                active && deleteTabFilter(active.id, filterId)
+              }
+              onToggleTabFilter={(filterId) =>
+                active && toggleTabFilter(active.id, filterId)
+              }
+              onUpdateDomainFilter={(filter) =>
+                active && updateDomainFilter(active.id, filter)
+              }
+              onDeleteDomainFilter={(filterId) =>
+                active && deleteDomainFilter(active.id, filterId)
+              }
+              onToggleDomainFilter={(filterId) =>
+                active && toggleDomainFilter(active.id, filterId)
+              }
+              onUpdateUrlFilter={(filter) =>
+                active && updateUrlFilter(active.id, filter)
+              }
+              onDeleteUrlFilter={(filterId) =>
+                active && deleteUrlFilter(active.id, filterId)
+              }
+              onToggleUrlFilter={(filterId) =>
+                active && toggleUrlFilter(active.id, filterId)
+              }
+              onUpdateExcludeUrlFilter={(filter) =>
+                active && updateExcludeUrlFilter(active.id, filter)
+              }
+              onDeleteExcludeUrlFilter={(filterId) =>
+                active && deleteExcludeUrlFilter(active.id, filterId)
+              }
+              onToggleExcludeUrlFilter={(filterId) =>
+                active && toggleExcludeUrlFilter(active.id, filterId)
+              }
+              onSetMethodFilters={(methods) =>
+                active && setMethodFilters(active.id, methods)
+              }
               onAddHeader={handleAddHeader}
               onAddRule={handleAddRule}
               onScroll={updateScrollShadow}

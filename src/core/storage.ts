@@ -1,5 +1,5 @@
 // Storage 双层结构：
-//   meta: { activeProfileId, globalPaused, lockedTabId, language }
+//   meta: { activeProfileId, enabledProfileIds(始终启用), globalPaused, lockedTabId, language }
 //   profiles: Profile[]
 // 全部存放在 storage.local 单 key（P0 简化），后续如规则量大可切分。
 
@@ -31,7 +31,7 @@ export function createDefaultState(): AppState {
     meta: {
       ...DEFAULT_META,
       activeProfileId: defaultProfile.id,
-      enabledProfileIds: [defaultProfile.id],
+      enabledProfileIds: [],
     },
   };
 }
@@ -45,9 +45,7 @@ function normalizeMeta(meta: Partial<AppMeta> | undefined, profiles: Profile[]):
 
   const rawEnabled = Array.isArray(meta?.enabledProfileIds)
     ? meta.enabledProfileIds
-    : activeProfileId
-      ? [activeProfileId]
-      : [];
+    : [];
   const enabledProfileIds = Array.from(
     new Set(rawEnabled.filter((id): id is string => profileIds.has(id))),
   );

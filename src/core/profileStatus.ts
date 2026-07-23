@@ -19,6 +19,7 @@ export interface ProfileStats {
 
 export interface ProfileStatus {
   profile: Profile;
+  alwaysEnabled: boolean;
   enabled: boolean;
   pausedByGlobal: boolean;
   editing: boolean;
@@ -81,12 +82,24 @@ export function getEnabledProfileIds(
   meta: AppMeta,
   profiles: Profile[],
 ): string[] {
+  const alwaysEnabledIds = getAlwaysEnabledProfileIds(meta, profiles);
+  const activeId =
+    meta.activeProfileId && profiles.some((profile) => profile.id === meta.activeProfileId)
+      ? meta.activeProfileId
+      : null;
+  return Array.from(
+    new Set(activeId ? [...alwaysEnabledIds, activeId] : alwaysEnabledIds),
+  );
+}
+
+export function getAlwaysEnabledProfileIds(
+  meta: AppMeta,
+  profiles: Profile[],
+): string[] {
   const validIds = new Set(profiles.map((profile) => profile.id));
   const source = Array.isArray(meta.enabledProfileIds)
     ? meta.enabledProfileIds
-    : meta.activeProfileId
-      ? [meta.activeProfileId]
-      : [];
+    : [];
   return Array.from(new Set(source.filter((id) => validIds.has(id))));
 }
 
@@ -180,6 +193,7 @@ export function buildWorkspaceStatus(
   currentDomain = "",
 ): WorkspaceStatus {
   const enabledIds = getEnabledProfileIds(state.meta, state.profiles);
+  const alwaysEnabledIds = getAlwaysEnabledProfileIds(state.meta, state.profiles);
   const activeProfile =
     state.profiles.find((profile) => profile.id === state.meta.activeProfileId) ??
     null;
@@ -197,6 +211,7 @@ export function buildWorkspaceStatus(
 
     return {
       profile,
+      alwaysEnabled: alwaysEnabledIds.includes(profile.id),
       enabled: enabledIds.includes(profile.id),
       pausedByGlobal: state.meta.globalPaused && enabledIds.includes(profile.id),
       editing: profile.id === state.meta.activeProfileId,
