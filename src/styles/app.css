@@ -38,6 +38,7 @@
   --text-group-title: 13px;
   --spacing-select: 132px;
   --shadow-soft: var(--app-shadow-soft);
+  --shadow-card: var(--app-shadow-card);
   --shadow-panel: var(--app-shadow-panel);
 }
 
@@ -77,6 +78,9 @@
   --app-shadow-soft:
     0 1px 2px oklch(0.18 0.03 255 / 0.04),
     0 8px 24px oklch(0.18 0.03 255 / 0.06);
+  --app-shadow-card:
+    0 1px 2px oklch(0.18 0.03 255 / 0.055),
+    0 10px 26px oklch(0.18 0.03 255 / 0.075);
   --app-shadow-panel:
     0 18px 50px oklch(0.18 0.04 255 / 0.14),
     0 2px 8px oklch(0.18 0.03 255 / 0.08);
@@ -117,6 +121,9 @@
   --app-shadow-soft:
     0 1px 2px oklch(0.04 0.015 255 / 0.3),
     0 10px 28px oklch(0.04 0.015 255 / 0.22);
+  --app-shadow-card:
+    0 1px 2px oklch(0.04 0.015 255 / 0.34),
+    0 12px 30px oklch(0.04 0.015 255 / 0.26);
   --app-shadow-panel:
     0 20px 56px oklch(0.04 0.015 255 / 0.46),
     0 2px 8px oklch(0.04 0.015 255 / 0.32);
@@ -351,6 +358,192 @@
     color: var(--muted-foreground);
     font-size: 12px;
     line-height: 1.5;
+  }
+
+  .he-advanced-popover-content {
+    width: 332px;
+    max-width: min(332px, calc(100vw - 24px));
+    overflow: hidden;
+  }
+
+  .he-advanced-popover-panel {
+    display: flex;
+    max-height: min(388px, var(--radix-popover-content-available-height));
+    flex-direction: column;
+  }
+
+  .he-advanced-popover-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+    padding: 12px 14px 10px;
+    background: color-mix(in oklab, var(--muted) 30%, var(--card));
+  }
+
+  .he-advanced-popover-icon {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: color-mix(in oklab, var(--primary) 11%, transparent);
+    color: var(--primary);
+  }
+
+  .he-advanced-popover-title {
+    color: var(--foreground);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .he-advanced-popover-desc {
+    margin-top: 2px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .he-advanced-popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding: 12px 14px 14px;
+    scrollbar-gutter: stable;
+  }
+
+  .he-advanced-popover-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .he-advanced-popover-label {
+    color: var(--foreground);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .he-advanced-popover-content .he-input,
+  .he-advanced-popover-content .he-select-trigger {
+    height: 32px;
+    font-size: 12px;
+    line-height: 32px;
+  }
+
+  .he-advanced-popover-content .he-multi-select-trigger {
+    min-height: 32px;
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+
+  .he-advanced-popover-content .he-multi-select-value {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .he-advanced-popover-content .he-chip {
+    max-width: 118px;
+    height: 20px;
+    border-radius: 5px;
+  }
+
+  .he-advanced-popover-checkbox {
+    margin-top: 2px;
+  }
+
+  .he-advanced-popover-content-compact {
+    width: 304px;
+    max-width: min(304px, calc(100vw - 18px));
+    border-radius: 8px;
+    box-shadow:
+      0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
+      0 10px 26px color-mix(in oklab, var(--foreground) 10%, transparent);
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-panel {
+    max-height: min(360px, var(--radix-popover-content-available-height));
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-header {
+    gap: 8px;
+    padding: 9px 11px 8px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-title {
+    font-size: 12px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-desc {
+    margin-top: 1px;
+    font-size: 11px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-body {
+    gap: 10px;
+    padding: 10px 11px 11px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-field {
+    gap: 5px;
+  }
+
+  .he-advanced-popover-content-compact .he-advanced-popover-label {
+    font-size: 11px;
+  }
+
+  .he-advanced-popover-content-compact .he-input,
+  .he-advanced-popover-content-compact .he-select-trigger {
+    height: 26px;
+    padding-right: 7px;
+    padding-left: 7px;
+    font-size: 12px;
+    line-height: 26px;
+  }
+
+  .he-advanced-popover-content-compact .he-multi-select-trigger {
+    min-height: 26px;
+    padding: 1px 7px;
+    font-size: 12px;
+  }
+
+  .he-advanced-popover-content-compact .he-multi-select-trigger > svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .he-advanced-popover-content-compact .he-chip {
+    max-width: 96px;
+    height: 18px;
+    padding: 0 5px;
+  }
+
+  .he-advanced-popover-content-compact .he-checkbox-label {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .he-advanced-popover-content-compact .he-checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
   }
 
   .he-empty-state {

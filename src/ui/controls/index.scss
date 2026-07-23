@@ -212,8 +212,8 @@
     cursor: pointer;
   }
 
-  .he-checkbox[data-state="checked"],
-  .he-checkbox[data-state="indeterminate"] {
+  .he-checkbox[data-checkbox-state="checked"],
+  .he-checkbox[data-checkbox-state="indeterminate"] {
     border-color: var(--primary);
     background: var(--primary);
   }

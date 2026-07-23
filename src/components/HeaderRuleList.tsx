@@ -30,7 +30,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   SelectControl,
-  Switch,
   Tooltip,
 } from "@/src/ui";
 
@@ -48,6 +47,7 @@ interface Props {
   onToggle: (ruleId: string) => void;
   onReorder?: (orderedRuleIds: string[]) => void;
   variant?: "compact" | "editor";
+  advancedPopoverDensity?: "default" | "compact";
 }
 
 const ACTION_OPTIONS: HeaderAction[] = ["set", "append", "remove"];
@@ -88,6 +88,7 @@ export function HeaderRuleList({
   onToggle,
   onReorder,
   variant = "compact",
+  advancedPopoverDensity = "default",
 }: Props) {
   const { t } = useTranslation();
   const isCookie =
@@ -121,6 +122,42 @@ export function HeaderRuleList({
   const isEditor = variant === "editor";
   const canDrag = isEditor && !!onReorder && rules.length > 1;
   const groupEnabled = rules.some((rule) => rule.enabled);
+  const groupToggleState =
+    groupEnabled && rules.some((rule) => !rule.enabled)
+      ? "indeterminate"
+      : groupEnabled;
+  const groupPartiallyEnabled = groupToggleState === "indeterminate";
+  const groupToggleLabel =
+    groupEnabled && !groupPartiallyEnabled
+      ? t("rule.disableGroup")
+      : t("rule.enableGroup");
+
+  const renderToggle = (
+    checked: boolean,
+    ariaLabel: string,
+    onCheckedChange: (checked: boolean) => void,
+    disabled = false,
+  ) => (
+    <Tooltip content={ariaLabel}>
+      <Checkbox
+        checked={checked}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        onCheckedChange={onCheckedChange}
+      />
+    </Tooltip>
+  );
+
+  const renderGroupToggle = () => (
+    <Tooltip content={groupToggleLabel}>
+      <Checkbox
+        checked={groupToggleState}
+        disabled={rules.length === 0}
+        aria-label={groupToggleLabel}
+        onCheckedChange={handleToggleGroup}
+      />
+    </Tooltip>
+  );
 
   const handleToggleGroup = (enabled: boolean) => {
     rules.forEach((rule) => {
@@ -199,26 +236,26 @@ export function HeaderRuleList({
   const renderFilterPopover = (rule: HeaderRule) => {
     const cond = rule.condition;
     const label = (text: string) => (
-      <div className="mb-1.5 text-xs font-semibold text-foreground">{text}</div>
+      <div className="he-advanced-popover-label">{text}</div>
     );
 
     return (
-      <div className="max-h-80 w-70 overflow-y-auto">
-        <div className="mb-3 flex items-center gap-2 border-b border-border pb-3">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+      <div className="he-advanced-popover-panel">
+        <div className="he-advanced-popover-header">
+          <span className="he-advanced-popover-icon">
             <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
           </span>
           <div>
-            <div className="text-group-title font-semibold text-foreground">
+            <div className="he-advanced-popover-title">
               {t("rule.advancedConditions")}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="he-advanced-popover-desc">
               {t("rule.advancedConditionsDesc")}
             </div>
           </div>
         </div>
-        <div className="flex w-full flex-col gap-4">
-          <div>
+        <div className="he-advanced-popover-body">
+          <div className="he-advanced-popover-field">
             {label(t("rule.filter"))}
             <Input
               placeholder={
@@ -236,7 +273,7 @@ export function HeaderRuleList({
             />
             <Checkbox
               checked={!!cond.useRegex}
-              className="mt-2"
+              className="he-advanced-popover-checkbox"
               label={t("rule.useRegex")}
               onCheckedChange={(checked) =>
                 onUpdate({
@@ -247,7 +284,7 @@ export function HeaderRuleList({
             />
           </div>
 
-          <div>
+          <div className="he-advanced-popover-field">
             {label(t("rule.excludeDomains"))}
             <MultiSelect
               value={cond.excludedDomains ?? []}
@@ -263,7 +300,7 @@ export function HeaderRuleList({
             />
           </div>
 
-          <div>
+          <div className="he-advanced-popover-field">
             {label(t("rule.resourceTypes"))}
             <MultiSelect
               value={cond.resourceTypes ?? []}
@@ -284,7 +321,7 @@ export function HeaderRuleList({
             />
           </div>
 
-          <div>
+          <div className="he-advanced-popover-field">
             {label(t("rule.requestMethods"))}
             <MultiSelect
               value={cond.requestMethods ?? []}
@@ -365,11 +402,11 @@ export function HeaderRuleList({
             <GripVertical aria-hidden="true" className="h-4 w-4" />
           </span>
         ) : (
-          <Switch
-            checked={rule.enabled}
-            aria-label={t("rule.enabled")}
-            onCheckedChange={() => onToggle(rule.id)}
-          />
+          renderToggle(
+            rule.enabled,
+            rule.enabled ? t("rule.disableRule") : t("rule.enableRule"),
+            () => onToggle(rule.id),
+          )
         )}
         {!isCookie && !isRedirect && (
           <SelectControl
@@ -455,11 +492,11 @@ export function HeaderRuleList({
           />
         )}
         {isEditor && (
-          <Switch
-            checked={rule.enabled}
-            aria-label={t("rule.enabled")}
-            onCheckedChange={() => onToggle(rule.id)}
-          />
+          renderToggle(
+            rule.enabled,
+            rule.enabled ? t("rule.disableRule") : t("rule.enableRule"),
+            () => onToggle(rule.id),
+          )
         )}
         <div className="flex items-center">
           <Popover>
@@ -475,7 +512,15 @@ export function HeaderRuleList({
                 </Button>
               </PopoverTrigger>
             </Tooltip>
-            <PopoverContent side="left" align="center" className="p-3">
+            <PopoverContent
+              side="left"
+              align="center"
+              className={cn(
+                "he-advanced-popover-content p-0",
+                advancedPopoverDensity === "compact" &&
+                  "he-advanced-popover-content-compact",
+              )}
+            >
               {renderFilterPopover(rule)}
             </PopoverContent>
           </Popover>
@@ -530,12 +575,7 @@ export function HeaderRuleList({
               <Plus aria-hidden="true" />
             </Button>
           </Tooltip>
-          <Switch
-            checked={groupEnabled}
-            disabled={rules.length === 0}
-            aria-label={t(groupTitleKey)}
-            onCheckedChange={handleToggleGroup}
-          />
+          {renderGroupToggle()}
         </div>
       </div>
 

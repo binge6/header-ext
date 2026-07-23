@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
-import { Button, Input, Switch, Tooltip } from "@/src/ui";
+import { Button, Checkbox, Input, Tooltip } from "@/src/ui";
 
 interface Props {
   filters: TabFilter[];
@@ -29,12 +29,48 @@ export function TabFilterList({
   const { t } = useTranslation();
   const isEditor = variant === "editor";
   const groupEnabled = filters.some((filter) => filter.enabled);
+  const groupToggleState =
+    groupEnabled && filters.some((filter) => !filter.enabled)
+      ? "indeterminate"
+      : groupEnabled;
+  const groupPartiallyEnabled = groupToggleState === "indeterminate";
+  const groupToggleLabel =
+    groupEnabled && !groupPartiallyEnabled
+      ? t("filters.disableGroup")
+      : t("filters.enableGroup");
 
   const handleToggleGroup = (enabled: boolean) => {
     filters.forEach((filter) => {
       if (filter.enabled !== enabled) onToggle(filter.id);
     });
   };
+
+  const renderToggle = (
+    checked: boolean,
+    ariaLabel: string,
+    onCheckedChange: (checked: boolean) => void,
+    disabled = false,
+  ) => (
+    <Tooltip content={ariaLabel}>
+      <Checkbox
+        checked={checked}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        onCheckedChange={onCheckedChange}
+      />
+    </Tooltip>
+  );
+
+  const renderGroupToggle = () => (
+    <Tooltip content={groupToggleLabel}>
+      <Checkbox
+        checked={groupToggleState}
+        disabled={filters.length === 0}
+        aria-label={groupToggleLabel}
+        onCheckedChange={handleToggleGroup}
+      />
+    </Tooltip>
+  );
 
   const rows =
     filters.length === 0 ? (
@@ -57,10 +93,11 @@ export function TabFilterList({
           )}
         >
           {!isEditor && (
-            <Switch
-              checked={f.enabled}
-              onCheckedChange={() => onToggle(f.id)}
-            />
+            renderToggle(
+              f.enabled,
+              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
+              () => onToggle(f.id),
+            )
           )}
           <Input
             placeholder={t("tabFilters.urlPlaceholder")}
@@ -71,10 +108,11 @@ export function TabFilterList({
             }
           />
           {isEditor && (
-            <Switch
-              checked={f.enabled}
-              onCheckedChange={() => onToggle(f.id)}
-            />
+            renderToggle(
+              f.enabled,
+              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
+              () => onToggle(f.id),
+            )
           )}
           <Tooltip content={t("tabFilters.deleteItem")}>
             <Button
@@ -116,12 +154,7 @@ export function TabFilterList({
                 <Plus aria-hidden="true" />
               </Button>
             </Tooltip>
-            <Switch
-              checked={groupEnabled}
-              disabled={filters.length === 0}
-              aria-label={t("tabFilters.title")}
-              onCheckedChange={handleToggleGroup}
-            />
+            {renderGroupToggle()}
           </div>
         </div>
         <div className="flex flex-col">{rows}</div>
