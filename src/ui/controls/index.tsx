@@ -228,6 +228,7 @@ interface CheckboxProps {
   label?: ReactNode;
   disabled?: boolean;
   className?: string;
+  "aria-label"?: string;
 }
 
 export function Checkbox({
@@ -236,11 +237,13 @@ export function Checkbox({
   label,
   disabled,
   className,
+  "aria-label": ariaLabel,
 }: CheckboxProps) {
   const control = (
     <CheckboxPrimitive.Root
       checked={checked}
       disabled={disabled}
+      aria-label={ariaLabel}
       className="he-checkbox"
       onCheckedChange={(next) => onCheckedChange(next === true)}
     >

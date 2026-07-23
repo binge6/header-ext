@@ -7,11 +7,12 @@ import {
   Workflow,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
 import type { ProfileStatus } from "@/src/core/profileStatus";
-import { Button, Switch } from "@/src/ui/controls";
+import { Button } from "@/src/ui/controls";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
 import { cn } from "@/src/utils/cn";
-import { getProfileBadgeText } from "./utils";
+import { getProfileBadgeText } from "@/src/utils/profile";
 
 interface ProfileRailProps {
   statuses: ProfileStatus[];
@@ -22,7 +23,7 @@ interface ProfileRailProps {
   onContextProfileChange: (profileId: string | null) => void;
   onAddProfile: () => void;
   onSelectProfile: (profileId: string) => void;
-  onToggleProfile: (profileId: string, enabled: boolean) => void;
+  onToggleAlwaysEnabled: (profileId: string, enabled: boolean) => void;
 }
 
 export function ProfileRail({
@@ -34,7 +35,7 @@ export function ProfileRail({
   onContextProfileChange,
   onAddProfile,
   onSelectProfile,
-  onToggleProfile,
+  onToggleAlwaysEnabled,
 }: ProfileRailProps) {
   const { t } = useTranslation();
 
@@ -82,7 +83,9 @@ export function ProfileRail({
               onContextProfileChange(open ? status.profile.id : null)
             }
             onSelect={() => onSelectProfile(status.profile.id)}
-            onToggle={(enabled) => onToggleProfile(status.profile.id, enabled)}
+            onToggle={(enabled) =>
+              onToggleAlwaysEnabled(status.profile.id, enabled)
+            }
           />
         ))}
       </div>
@@ -156,7 +159,7 @@ function ProfileRailItem({
             className={cn(
               "he-popup-profile-pill",
               status.editing && "he-popup-profile-pill-editing",
-              status.enabled && "he-popup-profile-pill-enabled",
+              status.alwaysEnabled && "he-popup-profile-pill-enabled",
               status.stats.hasGlobalRisk && "he-popup-profile-pill-risk",
             )}
             aria-current={status.editing ? "page" : undefined}
@@ -168,7 +171,7 @@ function ProfileRailItem({
             }}
           >
             <span>{getProfileBadgeText(status.profile.name)}</span>
-            {status.enabled && <i aria-hidden="true" />}
+            {status.alwaysEnabled && <i aria-hidden="true" />}
           </button>
         </Tooltip>
         {menu}
@@ -230,9 +233,8 @@ function ProfileRailItem({
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-2">
-          <Switch
-            checked={status.enabled}
-            aria-label={t("popup.toggleProfile")}
+          <AlwaysEnableProfileButton
+            checked={status.alwaysEnabled}
             onCheckedChange={onToggle}
           />
         </div>

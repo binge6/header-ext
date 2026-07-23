@@ -1,9 +1,10 @@
-// RuleRegistry：把当前激活 profile 的规则编译并注册到 DNR
+// RuleRegistry：把当前 active profile 与始终启用 profile 编译并注册到 DNR
 // 含 tabIds 的规则只能注册到 session rules（Chrome MV3 限制），
 // 其他规则继续注册到 dynamic rules
 
 import { dnr } from "./browserApi";
 import { compileRules, clearIdMap } from "./compiler";
+import { getEnabledProfileIds } from "./profileStatus";
 import type { DnrRule } from "./browserApi";
 import type { AppState } from "./types";
 
@@ -47,12 +48,7 @@ async function clearAll(): Promise<void> {
 }
 
 export async function applyState(state: AppState): Promise<void> {
-  const profileIds = new Set(state.profiles.map((profile) => profile.id));
-  const enabledProfileIds =
-    state.meta.enabledProfileIds?.filter((id) => profileIds.has(id)) ??
-    (state.meta.activeProfileId && profileIds.has(state.meta.activeProfileId)
-      ? [state.meta.activeProfileId]
-      : []);
+  const enabledProfileIds = getEnabledProfileIds(state.meta, state.profiles);
 
   // 暂停或无开启 profile：仅清空两类规则
   if (state.meta.globalPaused || !enabledProfileIds.length) {

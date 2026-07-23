@@ -194,12 +194,11 @@
     transition:
       color 140ms ease,
       border-color 140ms ease,
-      background-color 140ms ease,
-      box-shadow 140ms ease;
+      background-color 140ms ease;
   }
 
   .he-profile-list-item:focus-within {
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent);
+    border-color: color-mix(in oklab, var(--ring) 42%, var(--border));
   }
 
   .he-profile-list-select {
@@ -219,12 +218,6 @@
 
   .he-profile-list-select:focus-visible {
     outline: none;
-  }
-
-  .he-profile-list-item-active {
-    border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
-    background: var(--accent);
-    color: var(--accent-foreground);
   }
 
   .he-profile-list-item-idle {

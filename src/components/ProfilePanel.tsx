@@ -1,22 +1,18 @@
 import { useState } from "react";
 import { Copy, Edit3, Plus, ShieldAlert, Trash2, Workflow } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { buildWorkspaceStatus } from "@/src/core/profileStatus";
-import { cn } from "@/src/utils/cn";
+import { getProfileBadgeText } from "@/src/utils/profile";
 import {
   Button,
   Badge,
   ConfirmDialog,
   Dialog,
   Input,
-  Switch,
   Tooltip,
 } from "@/src/ui";
-
-function getProfileInitial(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "H";
-}
 
 export function ProfilePanel() {
   const { t } = useTranslation();
@@ -29,7 +25,7 @@ export function ProfilePanel() {
     renameProfile,
     deleteProfile,
     setActiveProfile: setActive,
-    setProfileEnabled,
+    setProfileAlwaysEnabled,
   } = useProfileActions();
 
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(
@@ -86,29 +82,18 @@ export function ProfilePanel() {
             return (
               <div
                 key={profile.id}
-                className={cn(
-                  "he-profile-list-item group flex-col items-stretch",
-                  status.editing
-                    ? "he-profile-list-item-active"
-                    : "he-profile-list-item-idle",
-                )}
+                className="he-profile-list-item he-profile-list-item-idle group flex-col items-stretch"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <button
                     type="button"
                     className="he-profile-list-select"
-                    aria-current={status.editing ? "page" : undefined}
                     onClick={() => setActive(profile.id)}
                   >
                     <span
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
-                        status.editing
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground",
-                      )}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-secondary-foreground"
                     >
-                      {getProfileInitial(profile.name)}
+                      {getProfileBadgeText(profile.name)}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex min-w-0 items-center gap-1.5">
@@ -135,22 +120,17 @@ export function ProfilePanel() {
                       </span>
                     </span>
                   </button>
-                  <Switch
-                    checked={status.enabled}
-                    aria-label={t("popup.toggleProfile")}
+                  <AlwaysEnableProfileButton
+                    checked={status.alwaysEnabled}
+                    label
                     onCheckedChange={(enabled) =>
-                      setProfileEnabled(profile.id, enabled)
+                      setProfileAlwaysEnabled(profile.id, enabled)
                     }
                   />
                 </div>
 
                 <div className="flex items-center justify-between gap-2 px-2 pb-1">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    {status.editing && (
-                      <Badge variant="secondary">
-                        {t("popup.editing")}
-                      </Badge>
-                    )}
                     {status.pausedByGlobal && (
                       <Badge variant="warning">
                         {t("popup.globalPaused")}

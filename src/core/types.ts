@@ -117,7 +117,7 @@ export interface Profile {
 
 export interface AppMeta {
   activeProfileId: string | null;
-  // 实际参与 DNR 编译并生效的 Profile，可多选。老数据缺省时回退为当前编辑 Profile。
+  // 始终启用的 Profile；实际 DNR 下发时会额外合并当前 activeProfileId。
   enabledProfileIds?: string[];
   globalPaused: boolean;
   lockedTabId: number | null;

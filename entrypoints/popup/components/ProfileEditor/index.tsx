@@ -8,13 +8,24 @@ import {
   Unlock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
+import { FilterRowList } from "@/src/components/FilterRowList";
 import { HeaderRuleList } from "@/src/components/HeaderRuleList";
+import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { FilterMenu, ModificationMenu } from "@/src/components/RuleActionMenus";
+import { TabFilterList } from "@/src/components/TabFilterList";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
-import { Button, Switch } from "@/src/ui/controls";
+import { Button } from "@/src/ui/controls";
 import { Badge } from "@/src/ui/feedback";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
-import type { HeaderRule, Profile } from "@/src/core/types";
+import type {
+  DomainFilter,
+  ExcludeUrlFilter,
+  HeaderRule,
+  Profile,
+  TabFilter,
+  UrlFilter,
+} from "@/src/core/types";
 import type { ProfileStatus, ScopeParts } from "@/src/core/profileStatus";
 import { cn } from "@/src/utils/cn";
 import { formatScopeSummary } from "../utils";
@@ -28,11 +39,21 @@ interface RuleGroups {
   redirectRules: HeaderRule[];
 }
 
+interface FilterGroups {
+  tabFilters: TabFilter[];
+  domainFilters: DomainFilter[];
+  urlFilters: UrlFilter[];
+  excludeUrlFilters: ExcludeUrlFilter[];
+  methodFilters: Profile["methodFilters"];
+}
+
 interface Props {
   active: Profile | undefined;
   activeStatus: ProfileStatus | null;
   ruleGroups: RuleGroups;
+  filterGroups: FilterGroups;
   hasRuleContent: boolean;
+  hasFilterContent: boolean;
   globalPaused: boolean;
   riskyProfilesCount: number;
   riskyProfileNames: string;
@@ -48,11 +69,24 @@ interface Props {
   onProfileMenuVisibleChange: (open: boolean) => void;
   onAddProfile: () => void;
   onToggleTabLock: () => void;
-  onToggleProfile: (enabled: boolean) => void;
+  onToggleAlwaysEnabled: (enabled: boolean) => void;
   onUpdateRule: (rule: HeaderRule) => void;
   onDeleteRule: (ruleId: string) => void;
   onToggleRule: (ruleId: string) => void;
   onReorderRules: (ruleIds: string[]) => void;
+  onUpdateTabFilter: (filter: TabFilter) => void;
+  onDeleteTabFilter: (filterId: string) => void;
+  onToggleTabFilter: (filterId: string) => void;
+  onUpdateDomainFilter: (filter: DomainFilter) => void;
+  onDeleteDomainFilter: (filterId: string) => void;
+  onToggleDomainFilter: (filterId: string) => void;
+  onUpdateUrlFilter: (filter: UrlFilter) => void;
+  onDeleteUrlFilter: (filterId: string) => void;
+  onToggleUrlFilter: (filterId: string) => void;
+  onUpdateExcludeUrlFilter: (filter: ExcludeUrlFilter) => void;
+  onDeleteExcludeUrlFilter: (filterId: string) => void;
+  onToggleExcludeUrlFilter: (filterId: string) => void;
+  onSetMethodFilters: (methods: string[]) => void;
   onAddHeader: (target: "request" | "response") => void;
   onAddRule: (kind: HeaderRule["kind"]) => void;
   onScroll: () => void;
@@ -62,7 +96,9 @@ export function ProfileEditor({
   active,
   activeStatus,
   ruleGroups,
+  filterGroups,
   hasRuleContent,
+  hasFilterContent,
   globalPaused,
   riskyProfilesCount,
   riskyProfileNames,
@@ -78,11 +114,24 @@ export function ProfileEditor({
   onProfileMenuVisibleChange,
   onAddProfile,
   onToggleTabLock,
-  onToggleProfile,
+  onToggleAlwaysEnabled,
   onUpdateRule,
   onDeleteRule,
   onToggleRule,
   onReorderRules,
+  onUpdateTabFilter,
+  onDeleteTabFilter,
+  onToggleTabFilter,
+  onUpdateDomainFilter,
+  onDeleteDomainFilter,
+  onToggleDomainFilter,
+  onUpdateUrlFilter,
+  onDeleteUrlFilter,
+  onToggleUrlFilter,
+  onUpdateExcludeUrlFilter,
+  onDeleteExcludeUrlFilter,
+  onToggleExcludeUrlFilter,
+  onSetMethodFilters,
   onAddHeader,
   onAddRule,
   onScroll,
@@ -188,10 +237,10 @@ export function ProfileEditor({
               )}
             </Button>
           </Tooltip>
-          <Switch
-            checked={!!activeStatus?.enabled}
-            aria-label={t("popup.toggleProfile")}
-            onCheckedChange={onToggleProfile}
+          <AlwaysEnableProfileButton
+            checked={!!activeStatus?.alwaysEnabled}
+            side="bottom"
+            onCheckedChange={onToggleAlwaysEnabled}
           />
           <DropdownMenu
             open={profileMenuVisible}
@@ -237,7 +286,7 @@ export function ProfileEditor({
           onScroll={onScroll}
         >
           <div className="flex flex-col gap-2">
-            {!hasRuleContent && (
+            {!hasRuleContent && !hasFilterContent && (
               <div className="flex min-h-54 flex-col items-center justify-center gap-2.5 px-4 py-5.5">
                 <div
                   className={cn(
@@ -328,6 +377,53 @@ export function ProfileEditor({
                     onReorder={onReorderRules}
                   />
                 )}
+              </>
+            )}
+            {hasFilterContent && (
+              <>
+                <TabFilterList
+                  variant="editor"
+                  filters={filterGroups.tabFilters}
+                  onAdd={filterMenuProps.onAddTab}
+                  onUpdate={onUpdateTabFilter}
+                  onDelete={onDeleteTabFilter}
+                  onToggle={onToggleTabFilter}
+                />
+                <FilterRowList<DomainFilter>
+                  variant="editor"
+                  filters={filterGroups.domainFilters}
+                  valueField="domain"
+                  i18nKey="domainFilters"
+                  onAdd={filterMenuProps.onAddDomain}
+                  onUpdate={onUpdateDomainFilter}
+                  onDelete={onDeleteDomainFilter}
+                  onToggle={onToggleDomainFilter}
+                />
+                <FilterRowList<UrlFilter>
+                  variant="editor"
+                  filters={filterGroups.urlFilters}
+                  valueField="regex"
+                  i18nKey="urlFilters"
+                  onAdd={filterMenuProps.onAddUrl}
+                  onUpdate={onUpdateUrlFilter}
+                  onDelete={onDeleteUrlFilter}
+                  onToggle={onToggleUrlFilter}
+                />
+                <FilterRowList<ExcludeUrlFilter>
+                  variant="editor"
+                  filters={filterGroups.excludeUrlFilters}
+                  valueField="url"
+                  i18nKey="excludeUrlFilters"
+                  onAdd={filterMenuProps.onAddExcludeUrl}
+                  onUpdate={onUpdateExcludeUrlFilter}
+                  onDelete={onDeleteExcludeUrlFilter}
+                  onToggle={onToggleExcludeUrlFilter}
+                />
+                <MethodFilterPicker
+                  variant="editor"
+                  filters={filterGroups.methodFilters ?? []}
+                  onChange={onSetMethodFilters}
+                />
               </>
             )}
           </div>

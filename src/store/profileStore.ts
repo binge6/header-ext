@@ -27,8 +27,7 @@ interface ProfileActions {
   duplicateProfile: (profileId: string, name?: string) => string | null;
   deleteProfile: (profileId: string) => void;
   setActiveProfile: (profileId: string) => void;
-  setProfileEnabled: (profileId: string, enabled: boolean) => void;
-  toggleProfileEnabled: (profileId: string) => void;
+  setProfileAlwaysEnabled: (profileId: string, enabled: boolean) => void;
 
   // rule
   addRule: (
@@ -129,14 +128,9 @@ function emptyProfile(name: string): Profile {
 function normalizeEnabledProfileIds(
   ids: string[] | undefined,
   profiles: Profile[],
-  fallbackId?: string | null,
 ): string[] {
   const validIds = new Set(profiles.map((profile) => profile.id));
-  const source = Array.isArray(ids)
-    ? ids
-    : fallbackId
-      ? [fallbackId]
-      : [];
+  const source = Array.isArray(ids) ? ids : [];
   return Array.from(new Set(source.filter((id) => validIds.has(id))));
 }
 
@@ -308,9 +302,8 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         ...get().meta,
         activeProfileId: profile.id,
         enabledProfileIds: normalizeEnabledProfileIds(
-          [...(get().meta.enabledProfileIds ?? []), profile.id],
+          get().meta.enabledProfileIds,
           next.profiles,
-          profile.id,
         ),
       };
       set({ profiles: next.profiles, meta });
@@ -341,10 +334,10 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const next = [...profiles, profile];
       const meta = {
         ...get().meta,
+        activeProfileId: profile.id,
         enabledProfileIds: normalizeEnabledProfileIds(
-          [...(get().meta.enabledProfileIds ?? []), profile.id],
+          get().meta.enabledProfileIds,
           next,
-          profile.id,
         ),
       };
 
@@ -363,7 +356,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         meta = {
           ...meta,
           activeProfileId: fallback.id,
-          enabledProfileIds: [fallback.id],
+          enabledProfileIds: [],
         };
       } else if (meta.activeProfileId === profileId) {
         meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
@@ -373,7 +366,6 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         enabledProfileIds: normalizeEnabledProfileIds(
           meta.enabledProfileIds,
           profiles,
-          meta.activeProfileId,
         ),
       };
       set({ profiles, meta });
@@ -386,7 +378,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       void persist({ profiles: get().profiles, meta });
     },
 
-    setProfileEnabled: (profileId, enabled) => {
+    setProfileAlwaysEnabled: (profileId, enabled) => {
       const profiles = get().profiles;
       const validIds = new Set(profiles.map((profile) => profile.id));
       if (!validIds.has(profileId)) return;
@@ -394,7 +386,6 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         normalizeEnabledProfileIds(
           get().meta.enabledProfileIds,
           profiles,
-          get().meta.activeProfileId,
         ),
       );
       if (enabled) current.add(profileId);
@@ -405,19 +396,6 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       };
       set({ meta });
       void persist({ profiles, meta });
-    },
-
-    toggleProfileEnabled: (profileId) => {
-      const profiles = get().profiles;
-      const enabledProfileIds = normalizeEnabledProfileIds(
-        get().meta.enabledProfileIds,
-        profiles,
-        get().meta.activeProfileId,
-      );
-      get().actions.setProfileEnabled(
-        profileId,
-        !enabledProfileIds.includes(profileId),
-      );
     },
 
     addRule: (profileId, kind = "header", target) => {
@@ -872,7 +850,6 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         normalizeEnabledProfileIds(
           incomingMeta?.enabledProfileIds,
           incoming,
-          incomingMeta?.activeProfileId ?? null,
         ),
       );
       // 维护一个动态扩展的命名池，确保新增项之间也不重名
@@ -908,7 +885,6 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
               .map((profile) => profile.id),
           ],
           next,
-          meta.activeProfileId,
         ),
       };
       set({ profiles: next, meta });

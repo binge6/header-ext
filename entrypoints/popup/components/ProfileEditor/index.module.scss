@@ -1,57 +1,81 @@
 .editorScope {
   :global(.he-popup-shell) & {
-    :global(.he-editor-section) {
-      border-color: color-mix(in oklab, var(--border) 82%, transparent);
-      border-radius: 8px;
-      box-shadow: none;
-    }
-
-    :global(.he-editor-section-header) {
-      min-height: 30px;
-      padding: 4px 7px;
-      background: color-mix(in oklab, var(--muted) 18%, var(--card));
-    }
-
-    :global(.he-editor-section-icon) {
-      width: 19px;
-      height: 19px;
-      border-radius: 6px;
-
-      svg {
-        width: 12px;
-        height: 12px;
+    :global {
+      .he-editor-section {
+        border-color: color-mix(in oklab, var(--border) 82%, transparent);
+        border-radius: 8px;
+        box-shadow: none;
       }
-    }
 
-    :global(.he-editor-section-count) {
-      min-width: 16px;
-      height: 16px;
-      border-radius: 5px;
-      padding: 0 4px;
-      font-size: 10px;
-    }
+      .he-editor-section-header {
+        min-height: 30px;
+        padding: 4px 7px;
+        background: color-mix(in oklab, var(--muted) 18%, var(--card));
+      }
 
-    :global(.he-section-title) {
-      font-size: 12px;
-    }
+      .he-editor-section-icon {
+        width: 19px;
+        height: 19px;
+        border-radius: 6px;
 
-    :global(.he-editor-rule-row) {
-      min-height: 34px;
-      gap: 4px;
-      padding: 3px 6px;
-    }
+        svg {
+          width: 12px;
+          height: 12px;
+        }
+      }
 
-    :global(.he-input),
-    :global(.he-select-trigger) {
-      height: 25px;
-      padding-right: 7px;
-      padding-left: 7px;
-      font-size: 12px;
-      line-height: 25px;
-    }
+      .he-editor-section-count {
+        min-width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        padding: 0 4px;
+        font-size: 10px;
+      }
 
-    :global(.he-multi-select-trigger) {
-      min-height: 26px;
+      .he-section-title {
+        font-size: 12px;
+      }
+
+      .he-editor-rule-row {
+        min-height: 34px;
+        gap: 4px;
+        padding: 3px 6px;
+      }
+
+      .he-input,
+      .he-select-trigger {
+        height: 25px;
+        padding-right: 7px;
+        padding-left: 7px;
+        font-size: 12px;
+        line-height: 25px;
+      }
+
+      .he-multi-select-trigger {
+        height: 25px;
+        min-height: 25px;
+        padding: 0 7px;
+        font-size: 12px;
+      }
+
+      .he-multi-select-trigger > svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .he-multi-select-value {
+        flex-wrap: nowrap;
+        gap: 3px;
+        overflow: hidden;
+        font-size: 12px;
+      }
+
+      .he-chip {
+        max-width: 74px;
+        height: 18px;
+        border-radius: 5px;
+        padding: 0 5px;
+      }
     }
   }
 }
