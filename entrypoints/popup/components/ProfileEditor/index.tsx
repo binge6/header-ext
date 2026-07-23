@@ -2,10 +2,8 @@ import {
   AlertTriangle,
   Filter,
   Layers3,
-  Lock,
   MoreHorizontal,
   Plus,
-  Unlock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
@@ -26,9 +24,8 @@ import type {
   TabFilter,
   UrlFilter,
 } from "@/src/core/types";
-import type { ProfileStatus, ScopeParts } from "@/src/core/profileStatus";
+import type { ProfileStatus } from "@/src/core/profileStatus";
 import { cn } from "@/src/utils/cn";
-import { formatScopeSummary } from "../utils";
 import styles from "./index.module.scss";
 
 interface RuleGroups {
@@ -57,9 +54,6 @@ interface Props {
   globalPaused: boolean;
   riskyProfilesCount: number;
   riskyProfileNames: string;
-  lockLabel: string;
-  lockedHere: boolean;
-  canToggleLock: boolean;
   profileMenu: React.ReactNode;
   profileMenuVisible: boolean;
   scrollShadow: { top: boolean; bottom: boolean };
@@ -68,7 +62,6 @@ interface Props {
   filterMenuProps: React.ComponentProps<typeof FilterMenu>;
   onProfileMenuVisibleChange: (open: boolean) => void;
   onAddProfile: () => void;
-  onToggleTabLock: () => void;
   onToggleAlwaysEnabled: (enabled: boolean) => void;
   onUpdateRule: (rule: HeaderRule) => void;
   onDeleteRule: (ruleId: string) => void;
@@ -102,9 +95,6 @@ export function ProfileEditor({
   globalPaused,
   riskyProfilesCount,
   riskyProfileNames,
-  lockLabel,
-  lockedHere,
-  canToggleLock,
   profileMenu,
   profileMenuVisible,
   scrollShadow,
@@ -113,7 +103,6 @@ export function ProfileEditor({
   filterMenuProps,
   onProfileMenuVisibleChange,
   onAddProfile,
-  onToggleTabLock,
   onToggleAlwaysEnabled,
   onUpdateRule,
   onDeleteRule,
@@ -160,14 +149,6 @@ export function ProfileEditor({
     );
   }
 
-  const scopeParts: ScopeParts = activeStatus?.scopeParts ?? {
-    domains: [],
-    methods: [],
-    tabCount: 0,
-    urlRegexCount: 0,
-    excludeCount: 0,
-  };
-
   return (
     <section className={cn("he-popup-editor-card", styles.editorScope)}>
       <div className="he-popup-editor-head">
@@ -188,9 +169,6 @@ export function ProfileEditor({
                 ? t("common.enabled")
                 : t("common.disabled")}
             </Badge>
-          </div>
-          <div className="mt-0.5 truncate text-xs text-muted-foreground">
-            {formatScopeSummary(scopeParts, t)}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -225,21 +203,6 @@ export function ProfileEditor({
             }
           />
           <TemplateMenu profileId={active?.id ?? null} iconOnly />
-          <Tooltip content={lockLabel}>
-            <Button
-              variant={lockedHere ? "secondary" : "ghost"}
-              size="icon-sm"
-              disabled={!canToggleLock}
-              aria-label={lockLabel}
-              onClick={onToggleTabLock}
-            >
-              {lockedHere ? (
-                <Unlock aria-hidden="true" />
-              ) : (
-                <Lock aria-hidden="true" />
-              )}
-            </Button>
-          </Tooltip>
           <AlwaysEnableProfileButton
             checked={!!activeStatus?.alwaysEnabled}
             side="bottom"
@@ -324,6 +287,7 @@ export function ProfileEditor({
               <>
                 <HeaderRuleList
                   variant="editor"
+                  advancedPopoverDensity="compact"
                   kind="header"
                   target="request"
                   rules={ruleGroups.requestRules}
@@ -335,6 +299,7 @@ export function ProfileEditor({
                 />
                 <HeaderRuleList
                   variant="editor"
+                  advancedPopoverDensity="compact"
                   kind="header"
                   target="response"
                   rules={ruleGroups.responseRules}
@@ -347,6 +312,7 @@ export function ProfileEditor({
                 {ruleGroups.cookieRequestRules.length > 0 && (
                   <HeaderRuleList
                     variant="editor"
+                    advancedPopoverDensity="compact"
                     kind="cookie-request-append"
                     rules={ruleGroups.cookieRequestRules}
                     onAdd={() => onAddRule("cookie-request-append")}
@@ -359,6 +325,7 @@ export function ProfileEditor({
                 {ruleGroups.cookieResponseRules.length > 0 && (
                   <HeaderRuleList
                     variant="editor"
+                    advancedPopoverDensity="compact"
                     kind="cookie-response-append"
                     rules={ruleGroups.cookieResponseRules}
                     onAdd={() => onAddRule("cookie-response-append")}
@@ -371,6 +338,7 @@ export function ProfileEditor({
                 {ruleGroups.redirectRules.length > 0 && (
                   <HeaderRuleList
                     variant="editor"
+                    advancedPopoverDensity="compact"
                     kind="redirect"
                     rules={ruleGroups.redirectRules}
                     onAdd={() => onAddRule("redirect")}

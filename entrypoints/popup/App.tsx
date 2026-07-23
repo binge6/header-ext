@@ -369,9 +369,6 @@ function App() {
               globalPaused={meta.globalPaused}
               riskyProfilesCount={workspace.riskyProfiles.length}
               riskyProfileNames={riskyProfileNames}
-              lockLabel={lockLabel}
-              lockedHere={lockedHere}
-              canToggleLock={currentTabId != null || lockedHere}
               profileMenu={renderProfileMenu(activeStatus)}
               profileMenuVisible={profileMenuVisible}
               scrollShadow={scrollShadow}
@@ -380,7 +377,6 @@ function App() {
               filterMenuProps={filterMenuProps}
               onProfileMenuVisibleChange={setProfileMenuVisible}
               onAddProfile={addProfileAndActivate}
-              onToggleTabLock={handleToggleTabLock}
               onToggleAlwaysEnabled={(enabled) => {
                 if (active) setProfileAlwaysEnabled(active.id, enabled);
               }}

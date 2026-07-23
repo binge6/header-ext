@@ -13,7 +13,7 @@ import {
 import "./index.scss";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { cn } from "@/src/utils/cn";
 import { Popover, PopoverAnchor, PopoverContent } from "../overlays";
 
@@ -222,43 +222,61 @@ export function Switch({
   );
 }
 
-interface CheckboxProps {
+interface CheckboxProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onChange"
+> {
   checked: boolean | "indeterminate";
   onCheckedChange: (checked: boolean) => void;
   label?: ReactNode;
-  disabled?: boolean;
-  className?: string;
-  "aria-label"?: string;
 }
 
-export function Checkbox({
-  checked,
-  onCheckedChange,
-  label,
-  disabled,
-  className,
-  "aria-label": ariaLabel,
-}: CheckboxProps) {
-  const control = (
-    <CheckboxPrimitive.Root
-      checked={checked}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      className="he-checkbox"
-      onCheckedChange={(next) => onCheckedChange(next === true)}
-    >
-      <CheckboxPrimitive.Indicator>
-        <Check aria-hidden="true" />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  );
+export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
+  (
+    {
+      checked,
+      onCheckedChange,
+      label,
+      disabled,
+      className,
+      type = "button",
+      "aria-label": ariaLabel,
+      ...props
+    },
+    ref,
+  ) => {
+    const control = (
+      <CheckboxPrimitive.Root
+        ref={ref}
+        type={type}
+        checked={checked}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        className={cn("he-checkbox", !label && className)}
+        onCheckedChange={(next) => onCheckedChange(next === true)}
+        {...props}
+        data-checkbox-state={
+          checked === true ? "checked" : checked || "unchecked"
+        }
+      >
+        <CheckboxPrimitive.Indicator>
+          {checked === "indeterminate" ? (
+            <Minus aria-hidden="true" />
+          ) : (
+            <Check aria-hidden="true" />
+          )}
+        </CheckboxPrimitive.Indicator>
+      </CheckboxPrimitive.Root>
+    );
 
-  if (!label) return control;
+    if (!label) return control;
 
-  return (
-    <label className={cn("he-checkbox-label", className)}>
-      {control}
-      <span>{label}</span>
-    </label>
-  );
-}
+    return (
+      <label className={cn("he-checkbox-label", className)}>
+        {control}
+        <span>{label}</span>
+      </label>
+    );
+  },
+);
+Checkbox.displayName = "Checkbox";
