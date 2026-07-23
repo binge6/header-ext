@@ -23,7 +23,7 @@ import {
   Badge,
   Spinner,
   UIProvider,
-} from "@/src/components/ui";
+} from "@/src/ui";
 
 const logoUrl = new URL("../../assets/logo.svg", import.meta.url).href;
 

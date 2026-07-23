@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/core/types";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
-import { Button, Input, Switch, Tooltip } from "./ui";
+import { Button, Input, Switch, Tooltip } from "@/src/ui";
 
 interface Props {
   filters: TabFilter[];

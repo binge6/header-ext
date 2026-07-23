@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from "react";
+import "./index.scss";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronsUpDown, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
-import { Popover, PopoverContent, PopoverTrigger } from "./overlays";
+import { Popover, PopoverContent, PopoverTrigger } from "../overlays";
 
 interface SelectOption {
   value: string;

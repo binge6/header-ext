@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   SelectControl,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 interface Props {
   variant?: "icon" | "select";

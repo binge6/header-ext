@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { Button } from "./ui";
+import { Button } from "@/src/ui";
 
 interface Props {
   title: string;

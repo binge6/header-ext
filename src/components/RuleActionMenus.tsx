@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui";
+} from "@/src/ui";
 
 interface ModificationMenuProps {
   disabled?: boolean;

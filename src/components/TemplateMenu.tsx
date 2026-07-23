@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 interface Props {
   profileId: string | null;

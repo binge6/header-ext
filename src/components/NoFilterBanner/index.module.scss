@@ -1,0 +1,13 @@
+.warningCompact {
+  // popup 紧凑场景下的尺寸覆盖（原 .he-popup-shell .he-filter-warning-compact）。
+  // :global 让 he-popup-shell 不被 CSS Module 哈希，维持原后代选择器行为。
+  :global(.he-popup-shell) & {
+    gap: 5px;
+    border-radius: 7px;
+    padding: 4px 8px;
+  }
+}
+
+.infoBanner {
+  border: 1px solid color-mix(in oklab, var(--info) 24%, var(--border));
+}

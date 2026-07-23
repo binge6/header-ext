@@ -80,7 +80,7 @@ export function PopupHeader({
           <div className="truncate text-group-title font-bold text-foreground">
             {t("app.name")}
           </div>
-          <div className="truncate text-[11px] leading-4 text-muted-foreground">
+          <div className="truncate text-micro leading-4 text-muted-foreground">
             {globalPaused
               ? t("popup.globalPaused")
               : t("popup.enabledSummary", {

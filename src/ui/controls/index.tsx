@@ -10,11 +10,12 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import "./index.scss";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Check } from "lucide-react";
 import { cn } from "@/src/utils/cn";
-import { Popover, PopoverAnchor, PopoverContent } from "./overlays";
+import { Popover, PopoverAnchor, PopoverContent } from "../overlays";
 
 type ButtonVariant =
   | "default"
@@ -68,8 +69,10 @@ export const Input = forwardRef<
 ));
 Input.displayName = "Input";
 
-interface AutoCompleteInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "list"> {
+interface AutoCompleteInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "list"
+> {
   options: string[];
 }
 

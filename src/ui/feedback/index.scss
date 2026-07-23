@@ -1,0 +1,124 @@
+@keyframes he-overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes he-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes he-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer components {
+  .he-dialog-overlay {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    background: oklch(0.08 0.02 255 / 0.5);
+    backdrop-filter: blur(4px);
+    animation: he-overlay-enter 140ms ease-out;
+  }
+
+  .he-dialog-content {
+    position: fixed;
+    z-index: 1001;
+    inset: 50% auto auto 50%;
+    width: min(360px, calc(100vw - 28px));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--app-shadow-panel);
+    animation: he-dialog-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translate(-50%, -50%);
+  }
+
+  .he-dialog-header {
+    padding: 16px 16px 0;
+  }
+
+  .he-dialog-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .he-dialog-description {
+    margin: 7px 0 0;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .he-dialog-body {
+    padding: 14px 16px;
+  }
+
+  .he-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 16px 16px;
+  }
+
+  .he-dialog-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .he-spinner {
+    width: 22px;
+    height: 22px;
+    color: var(--primary);
+    animation: he-spin 800ms linear infinite;
+  }
+
+  .he-badge {
+    display: inline-flex;
+    min-height: 20px;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .he-badge-secondary {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+
+  .he-badge-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+
+  .he-badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+
+  .he-toast {
+    border-color: var(--border) !important;
+    background: var(--popover) !important;
+    color: var(--popover-foreground) !important;
+  }
+}

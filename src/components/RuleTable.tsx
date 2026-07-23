@@ -19,7 +19,7 @@ import { FilterRowList } from "./FilterRowList";
 import { MethodFilterPicker } from "./MethodFilterPicker";
 import { NoFilterBanner } from "./NoFilterBanner";
 import { FilterMenu, ModificationMenu } from "./RuleActionMenus";
-import { Button } from "./ui";
+import { Badge, Button } from "@/src/ui";
 import type {
   HeaderRule,
   RuleKind,
@@ -36,10 +36,10 @@ function hasRuleAdvancedConditions(rule: HeaderRule): boolean {
   const condition = rule.condition ?? {};
   return Boolean(
     condition.urlFilter?.trim() ||
-      condition.useRegex ||
-      condition.excludedDomains?.length ||
-      condition.resourceTypes?.length ||
-      condition.requestMethods?.length,
+    condition.useRegex ||
+    condition.excludedDomains?.length ||
+    condition.resourceTypes?.length ||
+    condition.requestMethods?.length,
   );
 }
 
@@ -144,9 +144,7 @@ export function RuleTable() {
         align="end"
         onAddRequestHeader={() => handleAddHeader("request")}
         onAddResponseHeader={() => handleAddHeader("response")}
-        onAddRequestCookie={() =>
-          addRule(profile.id, "cookie-request-append")
-        }
+        onAddRequestCookie={() => addRule(profile.id, "cookie-request-append")}
         onAddResponseCookie={() =>
           addRule(profile.id, "cookie-response-append")
         }
@@ -201,20 +199,20 @@ export function RuleTable() {
             <h1 className="m-0 truncate text-2xl font-bold text-foreground">
               {profile.name}
             </h1>
-            <span className="he-badge he-badge-secondary">
+            <Badge>
               {t("options.ruleCount", { count: stats.enabledRules })}
-            </span>
+            </Badge>
             {stats.hasGlobalRisk && (
-              <span className="he-badge he-badge-warning gap-1">
+              <Badge variant="warning" className="gap-1">
                 <ShieldAlert aria-hidden="true" className="h-3 w-3" />
                 {t("options.globalScopeRisk")}
-              </span>
+              </Badge>
             )}
             {advancedRuleCount > 0 && (
-              <span className="he-badge he-badge-secondary gap-1">
+              <Badge className="gap-1">
                 <SlidersHorizontal aria-hidden="true" className="h-3 w-3" />
                 {t("options.advancedRuleCount", { count: advancedRuleCount })}
-              </span>
+              </Badge>
             )}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">

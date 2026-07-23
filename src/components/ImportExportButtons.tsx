@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 interface Props {
   /** iconOnly: 仅显示图标按钮（无文字），用于紧凑场景如 popup */

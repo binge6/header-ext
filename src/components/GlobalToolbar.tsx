@@ -1,7 +1,7 @@
 import { PauseCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
-import { Badge, Switch } from "./ui";
+import { Badge, Switch } from "@/src/ui";
 
 export function GlobalToolbar() {
   const { t } = useTranslation();

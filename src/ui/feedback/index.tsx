@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
+import "./index.scss";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { LoaderCircle, X } from "lucide-react";
 import { Toaster } from "sonner";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
-import { Button } from "./controls";
+import { Button } from "../controls";
 
 interface DialogProps {
   open: boolean;
@@ -32,9 +33,7 @@ export function Dialog({
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="he-dialog-overlay" />
-        <DialogPrimitive.Content
-          className={cn("he-dialog-content", className)}
-        >
+        <DialogPrimitive.Content className={cn("he-dialog-content", className)}>
           <div className="he-dialog-header">
             <DialogPrimitive.Title className="he-dialog-title">
               {title}
