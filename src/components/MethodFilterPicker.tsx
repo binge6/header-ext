@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Filter } from "lucide-react";
 import type { MethodFilter } from "../core/types";
-import { Button, MultiSelect } from "./ui";
+import { Button, MultiSelect } from "@/src/ui";
 
 interface Props {
   filters: MethodFilter[];

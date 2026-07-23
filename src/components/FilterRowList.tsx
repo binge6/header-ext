@@ -6,7 +6,7 @@ import { Filter, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
-import { Button, Input, Switch, Tooltip } from "./ui";
+import { Button, Input, Switch, Tooltip } from "@/src/ui";
 
 export interface FilterRowItem {
   id: string;

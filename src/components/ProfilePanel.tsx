@@ -12,7 +12,7 @@ import {
   Input,
   Switch,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 function getProfileInitial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "H";

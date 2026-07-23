@@ -32,7 +32,7 @@ import {
   SelectControl,
   Switch,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 interface Props {
   // 用 kind 决定标题和行字段：

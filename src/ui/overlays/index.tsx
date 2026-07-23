@@ -1,4 +1,5 @@
 import { forwardRef, type ReactNode } from "react";
+import "./index.scss";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";

@@ -9,10 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { HeaderRuleList } from "@/src/components/HeaderRuleList";
-import {
-  FilterMenu,
-  ModificationMenu,
-} from "@/src/components/RuleActionMenus";
+import { FilterMenu, ModificationMenu } from "@/src/components/RuleActionMenus";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
 import { Button, Switch } from "@/src/ui/controls";
 import { Badge } from "@/src/ui/feedback";
@@ -20,7 +17,8 @@ import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
 import type { HeaderRule, Profile } from "@/src/core/types";
 import type { ProfileStatus, ScopeParts } from "@/src/core/profileStatus";
 import { cn } from "@/src/utils/cn";
-import { formatScopeSummary } from "./utils";
+import { formatScopeSummary } from "../utils";
+import styles from "./index.module.scss";
 
 interface RuleGroups {
   requestRules: HeaderRule[];
@@ -93,8 +91,13 @@ export function ProfileEditor({
 
   if (!active) {
     return (
-      <div className="he-empty-mod-state flex-1">
-        <div className="he-empty-mod-visual">
+      <div className="flex min-h-54 flex-1 flex-col items-center justify-center gap-2.5 px-4 py-5.5">
+        <div
+          className={cn(
+            "inline-flex h-14 w-17 items-center justify-center text-primary",
+            styles.emptyVisual,
+          )}
+        >
           <Layers3 aria-hidden="true" />
         </div>
         <div className="text-sm font-semibold text-foreground">
@@ -117,7 +120,7 @@ export function ProfileEditor({
   };
 
   return (
-    <section className="he-popup-editor-card">
+    <section className={cn("he-popup-editor-card", styles.editorScope)}>
       <div className="he-popup-editor-head">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
@@ -223,8 +226,9 @@ export function ProfileEditor({
       <div className="he-main-content relative flex-1">
         <div
           className={cn(
-            "he-scroll-shadow he-scroll-shadow-top",
-            scrollShadow.top && "he-scroll-shadow-visible",
+            styles.scrollShadow,
+            styles.scrollShadowTop,
+            scrollShadow.top && styles.scrollShadowVisible,
           )}
         />
         <div
@@ -234,8 +238,14 @@ export function ProfileEditor({
         >
           <div className="flex flex-col gap-2">
             {!hasRuleContent && (
-              <div className="he-empty-mod-state">
-                <div className="he-empty-mod-visual" aria-hidden="true">
+              <div className="flex min-h-54 flex-col items-center justify-center gap-2.5 px-4 py-5.5">
+                <div
+                  className={cn(
+                    "inline-flex h-14 w-17 items-center justify-center text-primary",
+                    styles.emptyVisual,
+                  )}
+                  aria-hidden="true"
+                >
                   <Layers3 />
                 </div>
                 <div className="flex flex-col items-center gap-1 text-center">
@@ -324,8 +334,9 @@ export function ProfileEditor({
         </div>
         <div
           className={cn(
-            "he-scroll-shadow he-scroll-shadow-bottom",
-            scrollShadow.bottom && "he-scroll-shadow-visible",
+            styles.scrollShadow,
+            styles.scrollShadowBottom,
+            scrollShadow.bottom && styles.scrollShadowVisible,
           )}
         />
       </div>

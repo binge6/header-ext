@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   SelectControl,
   Tooltip,
-} from "./ui";
+} from "@/src/ui";
 
 interface Props {
   /** icon: 仅图标按钮（适合空间紧凑的顶栏/底栏）；select: 下拉选择 */

@@ -1,0 +1,226 @@
+// `he-enter` keyframes are defined in ../overlays/index.scss.
+// SelectControl/MultiSelect depend on overlays primitives, so the animation is bundled together.
+@layer components {
+  .he-select-trigger,
+  .he-multi-select-trigger {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 4%, transparent);
+    transition:
+      border-color 140ms ease,
+      box-shadow 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .he-select-trigger:focus-visible,
+  .he-multi-select-trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent);
+  }
+
+  .he-control-placeholder {
+    color: var(--muted-foreground);
+    opacity: 0.78;
+  }
+
+  .he-select-trigger:hover,
+  .he-multi-select-trigger:hover {
+    border-color: color-mix(in oklab, var(--primary) 38%, var(--input));
+  }
+
+  .he-select-trigger {
+    display: inline-flex;
+    height: 34px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 9px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .he-select-trigger > svg,
+  .he-select-trigger > span:last-child svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted-foreground);
+  }
+
+  .he-select-content {
+    z-index: 90;
+    min-width: var(--radix-select-trigger-width);
+    max-height: min(320px, var(--radix-select-content-available-height));
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 5px;
+    background: var(--popover);
+    color: var(--popover-foreground);
+    box-shadow: var(--app-shadow-panel);
+    animation: he-enter 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .he-select-item {
+    position: relative;
+    display: flex;
+    min-height: 32px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 7px;
+    padding: 6px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+  }
+
+  .he-select-item[data-highlighted] {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .he-select-item > span:last-child svg {
+    width: 14px;
+    height: 14px;
+    color: var(--primary);
+  }
+
+  .he-multi-select-trigger {
+    display: flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .he-multi-select-trigger > svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--muted-foreground);
+  }
+
+  .he-multi-select-value {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .he-chip {
+    display: inline-flex;
+    max-width: 130px;
+    height: 22px;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 6px;
+    padding: 0 6px;
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .he-multi-select-content {
+    width: max(var(--radix-popover-trigger-width), 220px);
+    padding: 5px;
+  }
+
+  .he-command-search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border-bottom: 1px solid var(--border);
+    padding: 3px 5px 8px;
+  }
+
+  .he-command-search > svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted-foreground);
+  }
+
+  .he-command-search input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--foreground);
+    font-size: 12px;
+  }
+
+  .he-command-search button {
+    display: inline-flex;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+  }
+
+  .he-command-list {
+    max-height: 230px;
+    overflow-y: auto;
+    padding-top: 4px;
+  }
+
+  .he-command-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 6px;
+    background: transparent;
+    color: var(--foreground);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .he-command-item:hover {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .he-command-check {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--input);
+    border-radius: 5px;
+  }
+
+  .he-command-check-selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .he-command-check svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .he-command-empty {
+    padding: 18px 8px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-align: center;
+  }
+}
