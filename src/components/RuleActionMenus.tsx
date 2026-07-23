@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { MenuItemLabel } from "./MenuItemLabel";
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  TooltipDropdownMenu,
+  TooltipDropdownMenuContent,
+  TooltipDropdownMenuTrigger,
+  type TooltipSide,
 } from "@/src/ui";
 
 interface ModificationMenuProps {
@@ -18,6 +19,8 @@ interface ModificationMenuProps {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   trigger?: ReactNode;
+  triggerTooltip?: ReactNode;
+  triggerTooltipSide?: TooltipSide;
   onAddRequestHeader: () => void;
   onAddResponseHeader: () => void;
   onAddRequestCookie: () => void;
@@ -31,6 +34,8 @@ export function ModificationMenu({
   align = "start",
   side,
   trigger,
+  triggerTooltip,
+  triggerTooltipSide = "bottom",
   onAddRequestHeader,
   onAddResponseHeader,
   onAddRequestCookie,
@@ -40,16 +45,20 @@ export function ModificationMenu({
   const { t } = useTranslation();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+    <TooltipDropdownMenu>
+      <TooltipDropdownMenuTrigger
+        disabled={disabled}
+        tooltip={triggerTooltip}
+        tooltipSide={triggerTooltipSide}
+      >
         {trigger ?? (
           <Button disabled={disabled}>
             <Plus aria-hidden="true" />
             {t("popup.addMod")}
           </Button>
         )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
+      </TooltipDropdownMenuTrigger>
+      <TooltipDropdownMenuContent
         align={align}
         side={side}
         className={compact ? "w-56" : "w-72"}
@@ -111,8 +120,8 @@ export function ModificationMenu({
             />
           )}
         </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </TooltipDropdownMenuContent>
+    </TooltipDropdownMenu>
   );
 }
 
@@ -122,6 +131,8 @@ interface FilterMenuProps {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   trigger?: ReactNode;
+  triggerTooltip?: ReactNode;
+  triggerTooltipSide?: TooltipSide;
   onAddTab: () => void;
   onAddDomain: () => void;
   onAddUrl: () => void;
@@ -135,6 +146,8 @@ export function FilterMenu({
   align = "start",
   side,
   trigger,
+  triggerTooltip,
+  triggerTooltipSide = "bottom",
   onAddTab,
   onAddDomain,
   onAddUrl,
@@ -144,16 +157,20 @@ export function FilterMenu({
   const { t } = useTranslation();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+    <TooltipDropdownMenu>
+      <TooltipDropdownMenuTrigger
+        disabled={disabled}
+        tooltip={triggerTooltip}
+        tooltipSide={triggerTooltipSide}
+      >
         {trigger ?? (
           <Button variant="outline" disabled={disabled}>
             <Filter aria-hidden="true" />
             {t("filters.title")}
           </Button>
         )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
+      </TooltipDropdownMenuTrigger>
+      <TooltipDropdownMenuContent
         align={align}
         side={side}
         className={compact ? "w-56" : "w-80"}
@@ -211,7 +228,7 @@ export function FilterMenu({
             />
           )}
         </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </TooltipDropdownMenuContent>
+    </TooltipDropdownMenu>
   );
 }

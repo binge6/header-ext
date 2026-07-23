@@ -139,13 +139,25 @@ body {
 
 .he-popup-context-trigger {
   position: absolute;
-  width: 0;
-  height: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   border: 0;
   padding: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+.he-popup-profile-menu-anchor {
+  position: relative;
+  width: 100%;
+}
+
+.he-popup-profile-sidebar-collapsed .he-popup-profile-menu-anchor {
+  display: flex;
+  width: 31px;
+  justify-content: center;
 }
 
 .he-popup-profile-pill {

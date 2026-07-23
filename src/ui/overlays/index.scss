@@ -52,14 +52,19 @@
   .he-menu-item {
     position: relative;
     display: flex;
+    width: 100%;
     min-height: 34px;
     align-items: center;
     gap: 9px;
+    border: 0;
     border-radius: 7px;
     padding: 7px 9px;
+    background: transparent;
     color: var(--foreground);
+    font: inherit;
     font-size: 13px;
     line-height: 1.35;
+    text-align: left;
     cursor: pointer;
     user-select: none;
     outline: none;
@@ -72,12 +77,14 @@
     color: var(--muted-foreground);
   }
 
+  .he-menu-item:hover:not([data-disabled], :disabled),
   .he-menu-item[data-highlighted] {
     background: var(--accent);
     color: var(--accent-foreground);
   }
 
-  .he-menu-item[data-disabled] {
+  .he-menu-item[data-disabled],
+  .he-menu-item:disabled {
     opacity: 0.45;
     pointer-events: none;
   }
@@ -86,6 +93,7 @@
     color: var(--destructive);
   }
 
+  .he-menu-item-destructive:hover:not([data-disabled], :disabled),
   .he-menu-item-destructive[data-highlighted] {
     background: color-mix(in oklab, var(--destructive) 12%, transparent);
     color: var(--destructive);

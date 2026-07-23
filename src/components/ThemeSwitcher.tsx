@@ -1,17 +1,15 @@
-import { useRef } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useThemeMode, type ThemeMode } from "@/src/hooks/useThemeMode";
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuTrigger,
   SelectControl,
-  Tooltip,
+  TooltipDropdownMenu,
+  TooltipDropdownMenuContent,
+  TooltipDropdownMenuTrigger,
 } from "@/src/ui";
 
 interface Props {
@@ -27,7 +25,6 @@ export function ThemeSwitcher({
 }: Props = {}) {
   const { t } = useTranslation();
   const { mode, isDark, setMode } = useThemeMode();
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const renderIcon = () => {
     if (mode === "system") return <Monitor aria-hidden="true" />;
@@ -40,24 +37,17 @@ export function ThemeSwitcher({
 
   if (variant === "icon") {
     return (
-      <DropdownMenu
-        onOpenChange={(open) => {
-          if (!open) triggerRef.current?.blur();
-        }}
-      >
-        <Tooltip content={t("theme.label")}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              ref={triggerRef}
-              variant="ghost"
-              size={size === "small" ? "icon-sm" : "icon"}
-              aria-label={t("theme.label")}
-            >
-              {renderIcon()}
-            </Button>
-          </DropdownMenuTrigger>
-        </Tooltip>
-        <DropdownMenuContent align="end">
+      <TooltipDropdownMenu>
+        <TooltipDropdownMenuTrigger tooltip={t("theme.label")}>
+          <Button
+            variant="ghost"
+            size={size === "small" ? "icon-sm" : "icon"}
+            aria-label={t("theme.label")}
+          >
+            {renderIcon()}
+          </Button>
+        </TooltipDropdownMenuTrigger>
+        <TooltipDropdownMenuContent align="end">
           <DropdownMenuLabel>{t("theme.label")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={mode}
@@ -69,8 +59,8 @@ export function ThemeSwitcher({
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </TooltipDropdownMenuContent>
+      </TooltipDropdownMenu>
     );
   }
 
