@@ -5,12 +5,11 @@ import { TEMPLATE_KEYS, buildTemplate } from "@/src/core/templates";
 import { MenuItemLabel } from "./MenuItemLabel";
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
-  Tooltip,
+  TooltipDropdownMenu,
+  TooltipDropdownMenuContent,
+  TooltipDropdownMenuTrigger,
 } from "@/src/ui";
 
 interface Props {
@@ -25,39 +24,40 @@ export function TemplateMenu({ profileId, size = "small", iconOnly }: Props) {
   const applyTemplate = useProfileActions().applyTemplate;
 
   return (
-    <DropdownMenu>
-      <Tooltip content={t("templates.apply")} disabled={!iconOnly}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant={iconOnly ? "ghost" : "outline"}
-            size={
-              iconOnly ? (size === "small" ? "icon-sm" : "icon") : "sm"
-            }
-            disabled={!profileId}
-            aria-label={iconOnly ? t("templates.apply") : undefined}
-          >
-            <Zap aria-hidden="true" />
-            {!iconOnly && t("templates.apply")}
-          </Button>
-        </DropdownMenuTrigger>
-      </Tooltip>
-      <DropdownMenuContent align="end" className="w-76">
+    <TooltipDropdownMenu>
+      <TooltipDropdownMenuTrigger
+        disabled={!profileId}
+        tooltip={iconOnly ? t("templates.apply") : undefined}
+      >
+        <Button
+          variant={iconOnly ? "ghost" : "outline"}
+          size={
+            iconOnly ? (size === "small" ? "icon-sm" : "icon") : "sm"
+          }
+          disabled={!profileId}
+          aria-label={iconOnly ? t("templates.apply") : undefined}
+        >
+          <Zap aria-hidden="true" />
+          {!iconOnly && t("templates.apply")}
+        </Button>
+      </TooltipDropdownMenuTrigger>
+      <TooltipDropdownMenuContent align="end" className="w-76">
         <DropdownMenuLabel>{t("templates.title")}</DropdownMenuLabel>
-          {TEMPLATE_KEYS.map((k) => (
+        {TEMPLATE_KEYS.map((k) => (
           <DropdownMenuItem
-              key={k}
-              onClick={() => {
-                if (!profileId) return;
-                applyTemplate(profileId, buildTemplate(k));
-              }}
-            >
-              <MenuItemLabel
-                title={t(`templates.${k}`)}
-                desc={t(`templates.${k}Desc`)}
-              />
+            key={k}
+            onClick={() => {
+              if (!profileId) return;
+              applyTemplate(profileId, buildTemplate(k));
+            }}
+          >
+            <MenuItemLabel
+              title={t(`templates.${k}`)}
+              desc={t(`templates.${k}Desc`)}
+            />
           </DropdownMenuItem>
-          ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        ))}
+      </TooltipDropdownMenuContent>
+    </TooltipDropdownMenu>
   );
 }

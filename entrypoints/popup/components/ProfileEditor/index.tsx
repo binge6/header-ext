@@ -196,12 +196,13 @@ export function ProfileEditor({
         <div className="flex shrink-0 items-center gap-1">
           <ModificationMenu
             {...modificationMenuProps}
+            triggerTooltip={t("popup.addMod")}
+            triggerTooltipSide="bottom"
             trigger={
               <Button
                 variant="secondary"
                 size="icon-sm"
                 disabled={!active}
-                title={t("popup.addMod")}
                 aria-label={t("popup.addMod")}
               >
                 <Plus aria-hidden="true" />
@@ -210,6 +211,8 @@ export function ProfileEditor({
           />
           <FilterMenu
             {...filterMenuProps}
+            triggerTooltip={t("filters.addFilter")}
+            triggerTooltipSide="bottom"
             trigger={
               <Button
                 variant="ghost"

@@ -1,17 +1,15 @@
-import { useRef } from "react";
 import { Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { setLanguage, SUPPORTED_LANGS, type Lang } from "@/src/i18n";
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuTrigger,
   SelectControl,
-  Tooltip,
+  TooltipDropdownMenu,
+  TooltipDropdownMenuContent,
+  TooltipDropdownMenuTrigger,
 } from "@/src/ui";
 
 interface Props {
@@ -25,28 +23,20 @@ export function LanguageSwitcher({
   size = "small",
 }: Props = {}) {
   const { i18n, t } = useTranslation();
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   if (variant === "icon") {
     return (
-      <DropdownMenu
-        onOpenChange={(open) => {
-          if (!open) triggerRef.current?.blur();
-        }}
-      >
-        <Tooltip content={t("language.label")}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              ref={triggerRef}
-              variant="ghost"
-              size={size === "small" ? "icon-sm" : "icon"}
-              aria-label={t("language.label")}
-            >
-              <Languages aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-        </Tooltip>
-        <DropdownMenuContent align="end">
+      <TooltipDropdownMenu>
+        <TooltipDropdownMenuTrigger tooltip={t("language.label")}>
+          <Button
+            variant="ghost"
+            size={size === "small" ? "icon-sm" : "icon"}
+            aria-label={t("language.label")}
+          >
+            <Languages aria-hidden="true" />
+          </Button>
+        </TooltipDropdownMenuTrigger>
+        <TooltipDropdownMenuContent align="end">
           <DropdownMenuLabel>{t("language.label")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={i18n.language}
@@ -58,8 +48,8 @@ export function LanguageSwitcher({
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </TooltipDropdownMenuContent>
+      </TooltipDropdownMenu>
     );
   }
 

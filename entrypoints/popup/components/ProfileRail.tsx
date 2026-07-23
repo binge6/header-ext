@@ -145,6 +145,45 @@ function ProfileRailItem({
 
     return (
       <DropdownMenu open={contextOpen} onOpenChange={onContextOpenChange}>
+        <div className="he-popup-profile-menu-anchor">
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="he-popup-context-trigger"
+              aria-hidden="true"
+              tabIndex={-1}
+            />
+          </DropdownMenuTrigger>
+          <Tooltip content={label} side="right" disabled={contextOpen}>
+            <button
+              type="button"
+              className={cn(
+                "he-popup-profile-pill",
+                status.editing && "he-popup-profile-pill-editing",
+                status.alwaysEnabled && "he-popup-profile-pill-enabled",
+                status.stats.hasGlobalRisk && "he-popup-profile-pill-risk",
+              )}
+              aria-current={status.editing ? "page" : undefined}
+              aria-label={label}
+              onClick={onSelect}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                onContextOpenChange(true);
+              }}
+            >
+              <span>{getProfileBadgeText(status.profile.name)}</span>
+              {status.alwaysEnabled && <i aria-hidden="true" />}
+            </button>
+          </Tooltip>
+        </div>
+        {menu}
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <DropdownMenu open={contextOpen} onOpenChange={onContextOpenChange}>
+      <div className="he-popup-profile-menu-anchor">
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -153,90 +192,55 @@ function ProfileRailItem({
             tabIndex={-1}
           />
         </DropdownMenuTrigger>
-        <Tooltip content={label} side="right" disabled={contextOpen}>
+        <div
+          className={cn(
+            "he-popup-profile-item",
+            status.editing && "he-popup-profile-item-editing",
+            status.pausedByGlobal && "he-popup-profile-item-paused",
+          )}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            onContextOpenChange(true);
+          }}
+        >
           <button
             type="button"
-            className={cn(
-              "he-popup-profile-pill",
-              status.editing && "he-popup-profile-pill-editing",
-              status.alwaysEnabled && "he-popup-profile-pill-enabled",
-              status.stats.hasGlobalRisk && "he-popup-profile-pill-risk",
-            )}
+            className="he-popup-profile-select"
             aria-current={status.editing ? "page" : undefined}
-            aria-label={label}
             onClick={onSelect}
-            onContextMenu={(event) => {
-              event.preventDefault();
-              onContextOpenChange(true);
-            }}
           >
-            <span>{getProfileBadgeText(status.profile.name)}</span>
-            {status.alwaysEnabled && <i aria-hidden="true" />}
-          </button>
-        </Tooltip>
-        {menu}
-      </DropdownMenu>
-    );
-  }
-
-  return (
-    <DropdownMenu open={contextOpen} onOpenChange={onContextOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="he-popup-context-trigger"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-      </DropdownMenuTrigger>
-      <div
-        className={cn(
-          "he-popup-profile-item",
-          status.editing && "he-popup-profile-item-editing",
-          status.pausedByGlobal && "he-popup-profile-item-paused",
-        )}
-        onContextMenu={(event) => {
-          event.preventDefault();
-          onContextOpenChange(true);
-        }}
-      >
-        <button
-          type="button"
-          className="he-popup-profile-select"
-          aria-current={status.editing ? "page" : undefined}
-          onClick={onSelect}
-        >
-          <span className="he-popup-profile-mark">
-            {getProfileBadgeText(status.profile.name)}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-group-title font-semibold">
-                {status.profile.name}
+            <span className="he-popup-profile-mark">
+              {getProfileBadgeText(status.profile.name)}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-group-title font-semibold">
+                  {status.profile.name}
+                </span>
+                {status.stats.hasGlobalRisk && (
+                  <ShieldAlert
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0 text-warning"
+                  />
+                )}
+                {status.stats.advancedRules > 0 && (
+                  <Workflow
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0 text-primary"
+                  />
+                )}
               </span>
-              {status.stats.hasGlobalRisk && (
-                <ShieldAlert
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 shrink-0 text-warning"
-                />
-              )}
-              {status.stats.advancedRules > 0 && (
-                <Workflow
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 shrink-0 text-primary"
-                />
-              )}
+              <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                {t("options.ruleCount", { count: status.stats.enabledRules })}
+              </span>
             </span>
-            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-              {t("options.ruleCount", { count: status.stats.enabledRules })}
-            </span>
-          </span>
-        </button>
-        <div className="flex shrink-0 items-center gap-2">
-          <AlwaysEnableProfileButton
-            checked={status.alwaysEnabled}
-            onCheckedChange={onToggle}
-          />
+          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <AlwaysEnableProfileButton
+              checked={status.alwaysEnabled}
+              onCheckedChange={onToggle}
+            />
+          </div>
         </div>
       </div>
       {menu}
