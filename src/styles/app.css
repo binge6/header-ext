@@ -190,6 +190,7 @@
   }
 
   .he-profile-list-item {
+    position: relative;
     display: flex;
     width: 100%;
     align-items: center;
@@ -201,11 +202,8 @@
     transition:
       color 140ms ease,
       border-color 140ms ease,
-      background-color 140ms ease;
-  }
-
-  .he-profile-list-item:focus-within {
-    border-color: color-mix(in oklab, var(--ring) 42%, var(--border));
+      background-color 140ms ease,
+      box-shadow 140ms ease;
   }
 
   .he-profile-list-select {
@@ -225,15 +223,61 @@
 
   .he-profile-list-select:focus-visible {
     outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent);
   }
 
   .he-profile-list-item-idle {
     color: var(--foreground);
   }
 
-  .he-profile-list-item-idle:hover {
+  .he-profile-list-item-idle:hover,
+  .he-profile-list-item-idle:focus-within {
     border-color: var(--border);
-    background: color-mix(in oklab, var(--muted) 70%, transparent);
+    background: color-mix(in oklab, var(--muted) 60%, var(--card));
+  }
+
+  .he-profile-list-item-active {
+    color: var(--foreground);
+    border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
+    background: color-mix(in oklab, var(--accent) 55%, var(--card));
+    box-shadow: inset 3px 0 0 color-mix(in oklab, var(--primary) 78%, transparent);
+  }
+
+  .he-profile-list-item-active:hover,
+  .he-profile-list-item-active:focus-within {
+    background: color-mix(in oklab, var(--accent) 68%, var(--card));
+  }
+
+  .he-profile-list-actions {
+    position: absolute;
+    inset-block: 4px;
+    right: 38px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-left: 24px;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--muted) 60%, var(--card)) 24px
+    );
+    transition: opacity 140ms ease;
+  }
+
+  .he-profile-list-item-active .he-profile-list-actions {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--accent) 68%, var(--card)) 24px
+    );
+  }
+
+  .he-profile-list-item:hover .he-profile-list-actions,
+  .he-profile-list-item:focus-within .he-profile-list-actions {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .he-warning-text {
