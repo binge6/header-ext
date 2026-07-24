@@ -192,6 +192,17 @@ function compileOne(
     condition.tabIds = [ctx.lockedTabId];
   }
 
+  // regexSubstitution 型重定向必须搭配 regexFilter（DNR 契约）。
+  // 若开启了正则重定向但没有有效的正则 urlFilter，判定为编译错误，
+  // 否则会产出无 regexFilter 的非法规则，导致 updateDynamicRules 整批被拒。
+  if (
+    action.type === "redirect" &&
+    action.redirect?.regexSubstitution &&
+    !condition.regexFilter
+  ) {
+    return { error: "正则重定向需要提供正则匹配条件（URL 正则）" };
+  }
+
   const dnrRule: DnrRule = {
     id: getDnrId(rule.id),
     priority: DNR_BASE_PRIORITY,
@@ -292,14 +303,27 @@ export function compileRules(
         ),
       };
     }
-    // 应用 Profile 级 URL 正则白名单：覆盖 urlFilter，转为 regexFilter
+    // 应用 Profile 级 URL 正则白名单：覆盖 urlFilter，转为 regexFilter。
+    // 但规则自身已有 regexFilter 时不能覆盖：
+    //   - 正则重定向（regexSubstitution）的反向引用依赖自身 regexFilter 的捕获组，
+    //     覆盖会使 \1/$1 指向 mergedRegex 的分组，导致重定向到错误地址；
+    //   - DNR 一条规则只能有一个 regexFilter，无法与 profile 正则做 AND。
+    // 因此对已有 regexFilter 的规则跳过覆盖，并记一条编译错误提示作用域未收窄。
     if (mergedRegex) {
-      const { urlFilter: _omit, ...rest } = rule.condition;
-      void _omit;
-      rule.condition = {
-        ...rest,
-        regexFilter: mergedRegex,
-      };
+      if (rule.condition.regexFilter) {
+        errors.push({
+          ruleId: r.id,
+          message:
+            "规则自身已使用正则匹配，Profile 级 URL 正则过滤未对其生效",
+        });
+      } else {
+        const { urlFilter: _omit, ...rest } = rule.condition;
+        void _omit;
+        rule.condition = {
+          ...rest,
+          regexFilter: mergedRegex,
+        };
+      }
     }
 
     // 应用 Profile 级请求方法白名单（与规则自带的 requestMethods 取交集）
