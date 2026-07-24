@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
 import type { ProfileStatus } from "@/src/core/profileStatus";
 import { Button } from "@/src/ui/controls";
+import { Scroller } from "@/src/ui/scroll";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
 import { cn } from "@/src/utils/cn";
 import { getProfileBadgeText } from "@/src/utils/profile";
@@ -59,7 +60,9 @@ export function ProfileRail({
             variant="ghost"
             size="icon-sm"
             aria-label={
-              collapsed ? t("popup.expandProfiles") : t("popup.collapseProfiles")
+              collapsed
+                ? t("popup.expandProfiles")
+                : t("popup.collapseProfiles")
             }
             onClick={() => onCollapsedChange(!collapsed)}
           >
@@ -71,24 +74,26 @@ export function ProfileRail({
           </Button>
         </Tooltip>
       </div>
-      <div className="he-popup-profile-list">
-        {statuses.map((status) => (
-          <ProfileRailItem
-            key={status.profile.id}
-            status={status}
-            collapsed={collapsed}
-            contextOpen={contextProfileId === status.profile.id}
-            menu={renderMenu(status)}
-            onContextOpenChange={(open) =>
-              onContextProfileChange(open ? status.profile.id : null)
-            }
-            onSelect={() => onSelectProfile(status.profile.id)}
-            onToggle={(enabled) =>
-              onToggleAlwaysEnabled(status.profile.id, enabled)
-            }
-          />
-        ))}
-      </div>
+      <Scroller className="he-popup-profile-list">
+        <div className="he-popup-profile-list-content">
+          {statuses.map((status) => (
+            <ProfileRailItem
+              key={status.profile.id}
+              status={status}
+              collapsed={collapsed}
+              contextOpen={contextProfileId === status.profile.id}
+              menu={renderMenu(status)}
+              onContextOpenChange={(open) =>
+                onContextProfileChange(open ? status.profile.id : null)
+              }
+              onSelect={() => onSelectProfile(status.profile.id)}
+              onToggle={(enabled) =>
+                onToggleAlwaysEnabled(status.profile.id, enabled)
+              }
+            />
+          ))}
+        </div>
+      </Scroller>
       <div className="he-popup-sidebar-footer">
         {collapsed ? (
           <Tooltip content={t("options.newProfile")} side="right">

@@ -6,6 +6,7 @@ import { useThemeMode } from "@/src/hooks/useThemeMode";
 import { Button, Input } from "@/src/ui/controls";
 import { AppToaster, ConfirmDialog, Dialog, Spinner } from "@/src/ui/feedback";
 import { UIProvider } from "@/src/ui/overlays";
+import type { OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
 import {
   buildWorkspaceStatus,
   type ProfileStatus,
@@ -69,7 +70,7 @@ function App() {
   const [currentTabUrl, setCurrentTabUrl] = useState("");
   const [currentTabUrlPattern, setCurrentTabUrlPattern] = useState("");
   const [currentTabRegex, setCurrentTabRegex] = useState("");
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<OverlayScrollbarsComponentRef>(null);
   const [scrollShadow, setScrollShadow] = useState({
     top: false,
     bottom: false,
@@ -100,7 +101,10 @@ function App() {
               setCurrentTabDomain(url.hostname);
               setCurrentTabUrl(tab.url);
               setCurrentTabUrlPattern(`*://${url.hostname}/*`);
-              const escaped = url.hostname.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const escaped = url.hostname.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&",
+              );
               setCurrentTabRegex(`^https?://${escaped}/.*`);
             }
           } catch {
@@ -113,7 +117,9 @@ function App() {
     })();
   }, [hydrate]);
 
-  const active = profiles.find((profile) => profile.id === meta.activeProfileId);
+  const active = profiles.find(
+    (profile) => profile.id === meta.activeProfileId,
+  );
   const workspace = useMemo(
     () => buildWorkspaceStatus({ profiles, meta }, currentTabDomain),
     [currentTabDomain, meta, profiles],
@@ -250,16 +256,16 @@ function App() {
   };
 
   const updateScrollShadow = useCallback(() => {
-    const element = scrollAreaRef.current;
-    if (!element) {
+    const viewport = scrollAreaRef.current?.osInstance()?.elements().viewport;
+    if (!viewport) {
       setScrollShadow({ top: false, bottom: false });
       return;
     }
 
-    const maxScrollTop = element.scrollHeight - element.clientHeight;
+    const maxScrollTop = viewport.scrollHeight - viewport.clientHeight;
     const next = {
-      top: element.scrollTop > 1,
-      bottom: maxScrollTop - element.scrollTop > 1,
+      top: viewport.scrollTop > 1,
+      bottom: maxScrollTop - viewport.scrollTop > 1,
     };
 
     setScrollShadow((prev) =>
@@ -267,17 +273,10 @@ function App() {
     );
   }, []);
 
+  // 内容变化（切换 profile / 增删规则）后重算阴影；滚动与尺寸变化经
+  // OverlayScrollbars 的 scroll / updated 事件驱动（见 ProfileEditor 的 events）。
   useEffect(() => {
     updateScrollShadow();
-
-    const element = scrollAreaRef.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateScrollShadow);
-    observer.observe(element);
-    if (element.firstElementChild) observer.observe(element.firstElementChild);
-
-    return () => observer.disconnect();
   }, [active?.id, filterGroups, ruleGroups, updateScrollShadow]);
 
   if (!hydrated) {
@@ -314,7 +313,8 @@ function App() {
     onAddTab: () => active && addTabFilter(active.id, currentTabUrlPattern),
     onAddDomain: () => active && addDomainFilter(active.id, currentTabDomain),
     onAddUrl: () => active && addUrlFilter(active.id, currentTabRegex),
-    onAddExcludeUrl: () => active && addExcludeUrlFilter(active.id, currentTabUrl),
+    onAddExcludeUrl: () =>
+      active && addExcludeUrlFilter(active.id, currentTabUrl),
     onAddMethod: addMethodFilterIfNeeded,
   };
 
@@ -383,7 +383,9 @@ function App() {
               onUpdateRule={handleUpdateRule}
               onDeleteRule={(ruleId) => active && deleteRule(active.id, ruleId)}
               onToggleRule={(ruleId) => active && toggleRule(active.id, ruleId)}
-              onReorderRules={(ruleIds) => active && reorderRules(active.id, ruleIds)}
+              onReorderRules={(ruleIds) =>
+                active && reorderRules(active.id, ruleIds)
+              }
               onUpdateTabFilter={(filter) =>
                 active && updateTabFilter(active.id, filter)
               }
@@ -425,7 +427,7 @@ function App() {
               }
               onAddHeader={handleAddHeader}
               onAddRule={handleAddRule}
-              onScroll={updateScrollShadow}
+              onScrollUpdate={updateScrollShadow}
             />
           </div>
         </main>

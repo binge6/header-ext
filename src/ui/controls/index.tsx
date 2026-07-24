@@ -15,6 +15,7 @@ import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/src/utils/cn";
+import { Scroller } from "../scroll";
 import { Popover, PopoverAnchor, PopoverContent } from "../overlays";
 
 type ButtonVariant =
@@ -169,25 +170,29 @@ export const AutoCompleteInput = forwardRef<
       </PopoverAnchor>
       <PopoverContent
         align="start"
-        className="he-autocomplete-content p-1"
+        className="he-autocomplete-content"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        {suggestions.map((option, index) => (
-          <button
-            key={option}
-            type="button"
-            className={cn(
-              "he-autocomplete-item",
-              index === activeIndex && "he-autocomplete-item-active",
-            )}
-            onMouseDown={(event) => {
-              event.preventDefault();
-              commitValue(option);
-            }}
-          >
-            {option}
-          </button>
-        ))}
+        <Scroller className="he-autocomplete-scroll" defer={false}>
+          <div className="he-autocomplete-list">
+            {suggestions.map((option, index) => (
+              <button
+                key={option}
+                type="button"
+                className={cn(
+                  "he-autocomplete-item",
+                  index === activeIndex && "he-autocomplete-item-active",
+                )}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  commitValue(option);
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </Scroller>
       </PopoverContent>
     </Popover>
   );

@@ -240,7 +240,8 @@
     color: var(--foreground);
     border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
     background: color-mix(in oklab, var(--accent) 55%, var(--card));
-    box-shadow: inset 3px 0 0 color-mix(in oklab, var(--primary) 78%, transparent);
+    box-shadow: inset 3px 0 0
+      color-mix(in oklab, var(--primary) 78%, transparent);
   }
 
   .he-profile-list-item-active:hover,
@@ -452,12 +453,15 @@
   }
 
   .he-advanced-popover-body {
+    min-height: 0;
+    flex: 1;
+  }
+
+  .he-advanced-popover-body-content {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow-y: auto;
     padding: 12px 14px 14px;
-    scrollbar-gutter: stable;
   }
 
   .he-advanced-popover-field {
@@ -540,7 +544,7 @@
     font-size: 11px;
   }
 
-  .he-advanced-popover-content-compact .he-advanced-popover-body {
+  .he-advanced-popover-content-compact .he-advanced-popover-body-content {
     gap: 10px;
     padding: 10px 11px 11px;
   }

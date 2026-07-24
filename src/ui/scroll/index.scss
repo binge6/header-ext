@@ -1,0 +1,36 @@
+// os-theme-he 必须“无 @layer”：OverlayScrollbars 基础 CSS（.os-scrollbar 默认
+// --os-handle-bg: none）是 unlayered 的，而 unlayered 始终优先于任何 @layer，
+// 若把主题放进 @layer components 会被基础默认值覆盖导致滑块不可见。
+// 与库自带 .os-theme-dark/.os-theme-light 一致：单类、无 layer、在基础 CSS 之后引入即可生效。
+.os-theme-he {
+  --os-size: 10px;
+  --os-padding-perpendicular: 2px;
+  --os-padding-axis: 2px;
+  --os-track-border-radius: 999px;
+  --os-handle-border-radius: 999px;
+  --os-handle-interactive-area-offset: 4px;
+  --os-handle-min-size: 33px;
+  --os-track-bg: none;
+  --os-track-bg-hover: none;
+  --os-track-bg-active: none;
+  --os-handle-bg: color-mix(in oklab, var(--muted-foreground) 34%, transparent);
+  --os-handle-bg-hover: color-mix(
+    in oklab,
+    var(--muted-foreground) 52%,
+    transparent
+  );
+  --os-handle-bg-active: color-mix(
+    in oklab,
+    var(--muted-foreground) 62%,
+    transparent
+  );
+}
+
+@layer components {
+  // 通用滚动容器：默认只约束宽度（块级/弹性交叉轴铺满）；高度/flex 由各调用方
+  // 通过 className（h-full / flex-1 / max-height 等）显式给出。切勿在此强制 height:100%，
+  // 否则会拉伸如 popup 编辑器这类 max-height 容器，导致底部滚动阴影错位。
+  .he-scroller {
+    width: 100%;
+  }
+}

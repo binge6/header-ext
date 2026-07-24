@@ -15,6 +15,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Check } from "lucide-react";
 import { cn } from "@/src/utils/cn";
+import { Scroller } from "../scroll";
 
 export type TooltipSide = "top" | "right" | "bottom" | "left";
 
@@ -206,8 +207,10 @@ export function TooltipDropdownMenu({
   );
 }
 
-interface TooltipDropdownMenuTriggerProps
-  extends Omit<DropdownMenuPrimitive.DropdownMenuTriggerProps, "asChild"> {
+interface TooltipDropdownMenuTriggerProps extends Omit<
+  DropdownMenuPrimitive.DropdownMenuTriggerProps,
+  "asChild"
+> {
   tooltip?: ReactNode;
   tooltipSide?: TooltipSide;
   tooltipDisabled?: boolean;
@@ -231,27 +234,28 @@ export const TooltipDropdownMenuTrigger = forwardRef<
     },
     ref,
   ) => {
-    const context = useTooltipDropdownMenuContext(
-      "TooltipDropdownMenuTrigger",
-    );
+    const context = useTooltipDropdownMenuContext("TooltipDropdownMenuTrigger");
 
     const trigger = (
       <DropdownMenuPrimitive.Trigger
         ref={composeRefs(ref, context.triggerRef)}
         asChild
         onPointerDown={composeEventHandlers(
-          onPointerDown as ((event: PointerEvent<HTMLElement>) => void) |
-            undefined,
+          onPointerDown as
+            | ((event: PointerEvent<HTMLElement>) => void)
+            | undefined,
           context.handleTriggerPointerDown,
         )}
         onPointerEnter={composeEventHandlers(
-          onPointerEnter as ((event: PointerEvent<HTMLElement>) => void) |
-            undefined,
+          onPointerEnter as
+            | ((event: PointerEvent<HTMLElement>) => void)
+            | undefined,
           context.handleTriggerPointerEnter,
         )}
         onPointerLeave={composeEventHandlers(
-          onPointerLeave as ((event: PointerEvent<HTMLElement>) => void) |
-            undefined,
+          onPointerLeave as
+            | ((event: PointerEvent<HTMLElement>) => void)
+            | undefined,
           context.handleTriggerPointerLeave,
         )}
         onFocus={composeEventHandlers(
@@ -284,9 +288,7 @@ export const TooltipDropdownMenuContent = forwardRef<
   HTMLDivElement,
   DropdownMenuPrimitive.DropdownMenuContentProps
 >(({ onCloseAutoFocus, ...props }, ref) => {
-  const context = useTooltipDropdownMenuContext(
-    "TooltipDropdownMenuContent",
-  );
+  const context = useTooltipDropdownMenuContext("TooltipDropdownMenuContent");
 
   return (
     <DropdownMenuContent
@@ -304,7 +306,7 @@ TooltipDropdownMenuContent.displayName = "TooltipDropdownMenuContent";
 export const DropdownMenuContent = forwardRef<
   HTMLDivElement,
   DropdownMenuPrimitive.DropdownMenuContentProps
->(({ className, sideOffset = 6, ...props }, ref) => (
+>(({ className, children, sideOffset = 6, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
@@ -312,7 +314,11 @@ export const DropdownMenuContent = forwardRef<
       collisionPadding={8}
       className={cn("he-menu-content", className)}
       {...props}
-    />
+    >
+      <Scroller className="he-menu-scroll" defer={false}>
+        <div className="he-menu-scroll-content">{children}</div>
+      </Scroller>
+    </DropdownMenuPrimitive.Content>
   </DropdownMenuPrimitive.Portal>
 ));
 DropdownMenuContent.displayName = "DropdownMenuContent";

@@ -46,12 +46,11 @@ body {
   min-height: 0;
   flex: 1;
   padding: 6px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--background) 82%, var(--muted)),
-      color-mix(in oklab, var(--background) 94%, var(--card))
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 82%, var(--muted)),
+    color-mix(in oklab, var(--background) 94%, var(--card))
+  );
 }
 
 .he-popup-workspace {
@@ -124,23 +123,21 @@ body {
 }
 
 .he-popup-profile-list {
-  display: flex;
   min-height: 0;
   max-height: min(408px, calc(100vh - 132px));
   flex: 1;
-  flex-direction: column;
-  gap: 3px;
-  overflow-x: hidden;
-  overflow-y: auto;
   padding: 5px;
 }
 
-.he-popup-profile-sidebar-collapsed .he-popup-profile-list {
+.he-popup-profile-list-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.he-popup-profile-sidebar-collapsed .he-popup-profile-list-content {
   width: 100%;
   align-items: center;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 5px;
 }
 
 .he-popup-context-trigger {
@@ -322,7 +319,7 @@ body {
 }
 
 .he-popup-editor-scroll {
-  max-height: 430px;
+  height: 100%;
   padding: 6px;
 }
 
@@ -496,6 +493,10 @@ body {
 }
 
 .he-main-content {
+  display: flex;
+  min-height: 0;
+  max-height: 450px;
+  flex-direction: column;
   padding: 0 !important;
   background: color-mix(in oklab, var(--background) 90%, var(--muted));
 }
