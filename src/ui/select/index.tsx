@@ -4,6 +4,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronsUpDown, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
+import { Scroller } from "../scroll";
 import { Popover, PopoverContent, PopoverTrigger } from "../overlays";
 
 interface SelectOption {
@@ -184,42 +185,44 @@ export function MultiSelect({
             </button>
           )}
         </div>
-        <div className="he-command-list">
-          {canCreate && (
-            <button
-              type="button"
-              className="he-command-item"
-              onClick={createValue}
-            >
-              <span className="he-command-check" />
-              <span>{query.trim()}</span>
-            </button>
-          )}
-          {visibleOptions.map((option) => {
-            const selected = value.includes(option.value);
-            return (
+        <Scroller className="he-command-list" defer={false}>
+          <div className="he-command-list-content">
+            {canCreate && (
               <button
-                key={option.value}
                 type="button"
                 className="he-command-item"
-                onClick={() => toggleValue(option.value)}
+                onClick={createValue}
               >
-                <span
-                  className={cn(
-                    "he-command-check",
-                    selected && "he-command-check-selected",
-                  )}
-                >
-                  {selected && <Check aria-hidden="true" />}
-                </span>
-                <span>{option.label}</span>
+                <span className="he-command-check" />
+                <span>{query.trim()}</span>
               </button>
-            );
-          })}
-          {!canCreate && visibleOptions.length === 0 && (
-            <div className="he-command-empty">{t("common.noResults")}</div>
-          )}
-        </div>
+            )}
+            {visibleOptions.map((option) => {
+              const selected = value.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="he-command-item"
+                  onClick={() => toggleValue(option.value)}
+                >
+                  <span
+                    className={cn(
+                      "he-command-check",
+                      selected && "he-command-check-selected",
+                    )}
+                  >
+                    {selected && <Check aria-hidden="true" />}
+                  </span>
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
+            {!canCreate && visibleOptions.length === 0 && (
+              <div className="he-command-empty">{t("common.noResults")}</div>
+            )}
+          </div>
+        </Scroller>
       </PopoverContent>
     </Popover>
   );

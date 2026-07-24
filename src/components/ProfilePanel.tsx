@@ -6,7 +6,15 @@ import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
 import { buildWorkspaceStatus } from "@/src/core/profileStatus";
 import { getProfileBadgeText } from "@/src/utils/profile";
 import { cn } from "@/src/utils/cn";
-import { Button, Badge, ConfirmDialog, Dialog, Input, Tooltip } from "@/src/ui";
+import {
+  Button,
+  Badge,
+  ConfirmDialog,
+  Dialog,
+  Input,
+  Scroller,
+  Tooltip,
+} from "@/src/ui";
 
 export function ProfilePanel() {
   const { t } = useTranslation();
@@ -59,121 +67,123 @@ export function ProfilePanel() {
           {t("options.noProfiles")}
         </div>
       ) : (
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-          {workspace.statuses.map((status) => {
-            const profile = status.profile;
-            return (
-              <div
-                key={profile.id}
-                className={cn(
-                  "he-profile-list-item group",
-                  status.editing
-                    ? "he-profile-list-item-active"
-                    : "he-profile-list-item-idle",
-                )}
-              >
-                <button
-                  type="button"
-                  className="he-profile-list-select"
-                  onClick={() => setActive(profile.id)}
+        <Scroller className="-mx-1 min-h-0 flex-1 px-1">
+          <div className="flex flex-col gap-2">
+            {workspace.statuses.map((status) => {
+              const profile = status.profile;
+              return (
+                <div
+                  key={profile.id}
+                  className={cn(
+                    "he-profile-list-item group",
+                    status.editing
+                      ? "he-profile-list-item-active"
+                      : "he-profile-list-item-idle",
+                  )}
                 >
-                  <span
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
-                      status.editing
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground",
-                    )}
+                  <button
+                    type="button"
+                    className="he-profile-list-select"
+                    onClick={() => setActive(profile.id)}
                   >
-                    {getProfileBadgeText(profile.name)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <span className="truncate text-group-title font-semibold">
-                        {profile.name}
-                      </span>
-                      {status.stats.hasGlobalRisk && (
-                        <ShieldAlert
-                          aria-hidden="true"
-                          className="h-3.5 w-3.5 shrink-0 text-warning"
-                        />
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
+                        status.editing
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground",
                       )}
-                      {status.stats.advancedRules > 0 && (
-                        <Workflow
-                          aria-hidden="true"
-                          className="h-3.5 w-3.5 shrink-0 text-primary"
-                        />
-                      )}
+                    >
+                      {getProfileBadgeText(profile.name)}
                     </span>
-                    <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                      <span className="truncate">
-                        {t("options.ruleCount", {
-                          count: status.stats.enabledRules,
-                        })}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate text-group-title font-semibold">
+                          {profile.name}
+                        </span>
+                        {status.stats.hasGlobalRisk && (
+                          <ShieldAlert
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 shrink-0 text-warning"
+                          />
+                        )}
+                        {status.stats.advancedRules > 0 && (
+                          <Workflow
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 shrink-0 text-primary"
+                          />
+                        )}
                       </span>
-                      {status.pausedByGlobal && (
-                        <Badge variant="warning">
-                          {t("popup.globalPaused")}
-                        </Badge>
-                      )}
+                      <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="truncate">
+                          {t("options.ruleCount", {
+                            count: status.stats.enabledRules,
+                          })}
+                        </span>
+                        {status.pausedByGlobal && (
+                          <Badge variant="warning">
+                            {t("popup.globalPaused")}
+                          </Badge>
+                        )}
+                      </span>
                     </span>
+                  </button>
+
+                  <AlwaysEnableProfileButton
+                    checked={status.alwaysEnabled}
+                    className="shrink-0"
+                    onCheckedChange={(enabled) =>
+                      setProfileAlwaysEnabled(profile.id, enabled)
+                    }
+                  />
+
+                  <span className="he-profile-list-actions">
+                    <Tooltip content={t("options.copyProfile")}>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("options.copyProfile")}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDuplicate(profile.id, profile.name);
+                        }}
+                      >
+                        <Copy aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t("options.renameProfile")}>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t("options.renameProfile")}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRenaming({ id: profile.id, name: profile.name });
+                        }}
+                      >
+                        <Edit3 aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={t("options.deleteProfile")}>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="hover:text-destructive"
+                        aria-label={t("options.deleteProfile")}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingId(profile.id);
+                        }}
+                      >
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
                   </span>
-                </button>
-
-                <AlwaysEnableProfileButton
-                  checked={status.alwaysEnabled}
-                  className="shrink-0"
-                  onCheckedChange={(enabled) =>
-                    setProfileAlwaysEnabled(profile.id, enabled)
-                  }
-                />
-
-                <span className="he-profile-list-actions">
-                  <Tooltip content={t("options.copyProfile")}>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={t("options.copyProfile")}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDuplicate(profile.id, profile.name);
-                      }}
-                    >
-                      <Copy aria-hidden="true" />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip content={t("options.renameProfile")}>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={t("options.renameProfile")}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setRenaming({ id: profile.id, name: profile.name });
-                      }}
-                    >
-                      <Edit3 aria-hidden="true" />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip content={t("options.deleteProfile")}>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="hover:text-destructive"
-                      aria-label={t("options.deleteProfile")}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setDeletingId(profile.id);
-                      }}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </Button>
-                  </Tooltip>
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        </Scroller>
       )}
 
       <Dialog

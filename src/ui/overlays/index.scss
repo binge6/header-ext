@@ -44,11 +44,15 @@
   .he-menu-content {
     min-width: 188px;
     max-width: 320px;
-    max-height: min(
-      360px,
-      var(--radix-dropdown-menu-content-available-height)
-    );
-    overflow-y: auto;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .he-menu-scroll {
+    max-height: min(360px, var(--radix-dropdown-menu-content-available-height));
+  }
+
+  .he-menu-scroll-content {
     padding: 5px;
   }
 

@@ -16,6 +16,8 @@ import { TemplateMenu } from "@/src/components/TemplateMenu";
 import { Button } from "@/src/ui/controls";
 import { Badge } from "@/src/ui/feedback";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
+import { Scroller } from "@/src/ui/scroll";
+import type { OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
 import type {
   DomainFilter,
   ExcludeUrlFilter,
@@ -57,7 +59,7 @@ interface Props {
   profileMenu: React.ReactNode;
   profileMenuVisible: boolean;
   scrollShadow: { top: boolean; bottom: boolean };
-  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
+  scrollAreaRef: React.RefObject<OverlayScrollbarsComponentRef | null>;
   modificationMenuProps: React.ComponentProps<typeof ModificationMenu>;
   filterMenuProps: React.ComponentProps<typeof FilterMenu>;
   onProfileMenuVisibleChange: (open: boolean) => void;
@@ -82,7 +84,7 @@ interface Props {
   onSetMethodFilters: (methods: string[]) => void;
   onAddHeader: (target: "request" | "response") => void;
   onAddRule: (kind: HeaderRule["kind"]) => void;
-  onScroll: () => void;
+  onScrollUpdate: () => void;
 }
 
 export function ProfileEditor({
@@ -123,7 +125,7 @@ export function ProfileEditor({
   onSetMethodFilters,
   onAddHeader,
   onAddRule,
-  onScroll,
+  onScrollUpdate,
 }: Props) {
   const { t } = useTranslation();
 
@@ -246,10 +248,11 @@ export function ProfileEditor({
             scrollShadow.top && styles.scrollShadowVisible,
           )}
         />
-        <div
+        <Scroller
           ref={scrollAreaRef}
-          className="he-popup-editor-scroll overflow-y-auto"
-          onScroll={onScroll}
+          className="he-popup-editor-scroll"
+          options={{ scrollbars: { autoHide: "scroll" } }}
+          events={{ scroll: onScrollUpdate, updated: onScrollUpdate }}
         >
           <div className="flex flex-col gap-2">
             {!hasRuleContent && !hasFilterContent && (
@@ -398,7 +401,7 @@ export function ProfileEditor({
               </>
             )}
           </div>
-        </div>
+        </Scroller>
         <div
           className={cn(
             styles.scrollShadow,

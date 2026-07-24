@@ -29,6 +29,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Scroller,
   SelectControl,
   Tooltip,
 } from "@/src/ui";
@@ -254,91 +255,93 @@ export function HeaderRuleList({
             </div>
           </div>
         </div>
-        <div className="he-advanced-popover-body">
-          <div className="he-advanced-popover-field">
-            {label(t("rule.filter"))}
-            <Input
-              placeholder={
-                cond.useRegex
-                  ? t("rule.regexPlaceholder")
-                  : t("rule.filterPlaceholder")
-              }
-              value={cond.urlFilter ?? ""}
-              onChange={(event) =>
-                onUpdate({
-                  ...rule,
-                  condition: { ...cond, urlFilter: event.target.value },
-                })
-              }
-            />
-            <Checkbox
-              checked={!!cond.useRegex}
-              className="he-advanced-popover-checkbox"
-              label={t("rule.useRegex")}
-              onCheckedChange={(checked) =>
-                onUpdate({
-                  ...rule,
-                  condition: { ...cond, useRegex: checked },
-                })
-              }
-            />
-          </div>
+        <Scroller className="he-advanced-popover-body" defer={false}>
+          <div className="he-advanced-popover-body-content">
+            <div className="he-advanced-popover-field">
+              {label(t("rule.filter"))}
+              <Input
+                placeholder={
+                  cond.useRegex
+                    ? t("rule.regexPlaceholder")
+                    : t("rule.filterPlaceholder")
+                }
+                value={cond.urlFilter ?? ""}
+                onChange={(event) =>
+                  onUpdate({
+                    ...rule,
+                    condition: { ...cond, urlFilter: event.target.value },
+                  })
+                }
+              />
+              <Checkbox
+                checked={!!cond.useRegex}
+                className="he-advanced-popover-checkbox"
+                label={t("rule.useRegex")}
+                onCheckedChange={(checked) =>
+                  onUpdate({
+                    ...rule,
+                    condition: { ...cond, useRegex: checked },
+                  })
+                }
+              />
+            </div>
 
-          <div className="he-advanced-popover-field">
-            {label(t("rule.excludeDomains"))}
-            <MultiSelect
-              value={cond.excludedDomains ?? []}
-              options={[]}
-              allowCreate
-              placeholder={t("rule.excludeDomainsPlaceholder")}
-              onValueChange={(excludedDomains) =>
-                onUpdate({
-                  ...rule,
-                  condition: { ...cond, excludedDomains },
-                })
-              }
-            />
-          </div>
+            <div className="he-advanced-popover-field">
+              {label(t("rule.excludeDomains"))}
+              <MultiSelect
+                value={cond.excludedDomains ?? []}
+                options={[]}
+                allowCreate
+                placeholder={t("rule.excludeDomainsPlaceholder")}
+                onValueChange={(excludedDomains) =>
+                  onUpdate({
+                    ...rule,
+                    condition: { ...cond, excludedDomains },
+                  })
+                }
+              />
+            </div>
 
-          <div className="he-advanced-popover-field">
-            {label(t("rule.resourceTypes"))}
-            <MultiSelect
-              value={cond.resourceTypes ?? []}
-              options={RESOURCE_TYPES.map((resourceType) => ({
-                value: resourceType,
-                label: resourceType,
-              }))}
-              placeholder={t("rule.resourceTypesPlaceholder")}
-              onValueChange={(resourceTypes) =>
-                onUpdate({
-                  ...rule,
-                  condition: {
-                    ...cond,
-                    resourceTypes: resourceTypes as ResourceType[],
-                  },
-                })
-              }
-            />
-          </div>
+            <div className="he-advanced-popover-field">
+              {label(t("rule.resourceTypes"))}
+              <MultiSelect
+                value={cond.resourceTypes ?? []}
+                options={RESOURCE_TYPES.map((resourceType) => ({
+                  value: resourceType,
+                  label: resourceType,
+                }))}
+                placeholder={t("rule.resourceTypesPlaceholder")}
+                onValueChange={(resourceTypes) =>
+                  onUpdate({
+                    ...rule,
+                    condition: {
+                      ...cond,
+                      resourceTypes: resourceTypes as ResourceType[],
+                    },
+                  })
+                }
+              />
+            </div>
 
-          <div className="he-advanced-popover-field">
-            {label(t("rule.requestMethods"))}
-            <MultiSelect
-              value={cond.requestMethods ?? []}
-              options={REQUEST_METHODS.map((method) => ({
-                value: method,
-                label: method.toUpperCase(),
-              }))}
-              placeholder={t("rule.requestMethodsPlaceholder")}
-              onValueChange={(requestMethods) =>
-                onUpdate({
-                  ...rule,
-                  condition: { ...cond, requestMethods },
-                })
-              }
-            />
+            <div className="he-advanced-popover-field">
+              {label(t("rule.requestMethods"))}
+              <MultiSelect
+                value={cond.requestMethods ?? []}
+                options={REQUEST_METHODS.map((method) => ({
+                  value: method,
+                  label: method.toUpperCase(),
+                }))}
+                placeholder={t("rule.requestMethodsPlaceholder")}
+                onValueChange={(requestMethods) =>
+                  onUpdate({
+                    ...rule,
+                    condition: { ...cond, requestMethods },
+                  })
+                }
+              />
+            </div>
           </div>
-        </div>
+        </Scroller>
       </div>
     );
   };
@@ -491,13 +494,12 @@ export function HeaderRuleList({
             }
           />
         )}
-        {isEditor && (
+        {isEditor &&
           renderToggle(
             rule.enabled,
             rule.enabled ? t("rule.disableRule") : t("rule.enableRule"),
             () => onToggle(rule.id),
-          )
-        )}
+          )}
         <div className="flex items-center">
           <Popover>
             <Tooltip content={t("rule.advancedConditions")}>
@@ -559,9 +561,7 @@ export function HeaderRuleList({
       <div className="he-editor-section-header flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className={sectionIconClassName}>{renderSectionIcon()}</span>
-          <span className="he-section-title">
-            {t(groupTitleKey)}
-          </span>
+          <span className="he-section-title">{t(groupTitleKey)}</span>
           <span className="he-editor-section-count">{rules.length}</span>
         </div>
         <div className="flex items-center gap-1">

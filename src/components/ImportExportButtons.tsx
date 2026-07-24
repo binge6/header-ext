@@ -15,6 +15,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Scroller,
   Tooltip,
 } from "@/src/ui";
 
@@ -109,16 +110,18 @@ export function ImportExportButtons({
           onCheckedChange={handleToggleAll}
         />
       </div>
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-1 py-2">
-        {profiles.map((p) => (
-          <Checkbox
-            key={p.id}
-            checked={effectiveSelected.includes(p.id)}
-            label={p.name}
-            onCheckedChange={(checked) => handleToggleOne(p.id, checked)}
-          />
-        ))}
-      </div>
+      <Scroller className="min-h-0 flex-1">
+        <div className="flex flex-col gap-2 px-1 py-2">
+          {profiles.map((p) => (
+            <Checkbox
+              key={p.id}
+              checked={effectiveSelected.includes(p.id)}
+              label={p.name}
+              onCheckedChange={(checked) => handleToggleOne(p.id, checked)}
+            />
+          ))}
+        </div>
+      </Scroller>
       <div className="flex justify-end gap-2 border-t border-border px-1 pt-3">
         <Button
           size="sm"
@@ -194,11 +197,7 @@ export function ImportExportButtons({
     </Tooltip>
   ) : (
     <PopoverTrigger asChild>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={profiles.length === 0}
-      >
+      <Button size="sm" variant="outline" disabled={profiles.length === 0}>
         <Download aria-hidden="true" />
         {t("options.export")}
       </Button>
