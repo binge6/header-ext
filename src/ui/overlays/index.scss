@@ -12,13 +12,16 @@
 @layer components {
   .he-tooltip {
     z-index: 100;
-    max-width: 260px;
+    max-width: min(300px, calc(100vw - 16px));
     border-radius: 7px;
     padding: 6px 9px;
     background: color-mix(in oklab, var(--foreground) 92%, transparent);
     color: var(--background);
     font-size: 12px;
     line-height: 1.4;
+    text-align: left;
+    text-wrap: pretty;
+    overflow-wrap: break-word;
     box-shadow: var(--app-shadow-soft);
     animation: he-enter 120ms ease-out;
   }
