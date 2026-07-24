@@ -47,7 +47,22 @@ async function clearAll(): Promise<void> {
   }
 }
 
+// applyState 串行化队列：保证多次调用不交错执行 DNR 更新
+let applyQueue: Promise<void> = Promise.resolve();
+
 export async function applyState(state: AppState): Promise<void> {
+  // 串行化：background 的 init / onInstalled / storage.onChanged 可能并发触发
+  // applyState，而每次调用是 read-existing → remove → add 的非原子序列。
+  // 若交错执行，后一次会基于陈旧快照计算 removeRuleIds，且 addRules 都从 id=1
+  // 重新编号，导致 "Rule with ID already exists" 整批被拒或下发过期规则。
+  // 用 Promise 链把每次调用排队，保证前一次完全结束后再开始下一次。
+  const run = applyQueue.then(() => doApply(state));
+  // 吞掉本次错误以免阻断队列；调用方（background）自行 catch 记录日志
+  applyQueue = run.catch(() => {});
+  return run;
+}
+
+async function doApply(state: AppState): Promise<void> {
   const enabledProfileIds = getEnabledProfileIds(state.meta, state.profiles);
 
   // 暂停或无开启 profile：仅清空两类规则
