@@ -66,16 +66,16 @@ function ruleConflictKey(rule: HeaderRule): string | null {
   if (!rule.enabled) return null;
   const kind = ruleKind(rule);
   if (kind === "redirect") {
-    return `redirect:${trimValue(rule.condition.urlFilter) || "*"}`;
+    return `redirect:${trimValue(rule.condition?.urlFilter) || "*"}`;
   }
   if (kind === "cookie-request-append") {
-    return `request:cookie:${rule.name.trim()}`;
+    return `request:cookie:${trimValue(rule.name)}`;
   }
   if (kind === "cookie-response-append") {
-    return `response:set-cookie:${rule.name.trim()}`;
+    return `response:set-cookie:${trimValue(rule.name)}`;
   }
-  if (!rule.name.trim()) return null;
-  return `${rule.target}:${rule.name.trim().toLowerCase()}`;
+  if (!trimValue(rule.name)) return null;
+  return `${rule.target}:${trimValue(rule.name).toLowerCase()}`;
 }
 
 export function getEnabledProfileIds(
