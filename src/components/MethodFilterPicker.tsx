@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Filter } from "lucide-react";
 import type { MethodFilter } from "../core/types";
+import { SUPPORTED_REQUEST_METHODS } from "../core/types";
 import { Button, MultiSelect } from "@/src/ui";
 
 interface Props {
@@ -9,17 +10,10 @@ interface Props {
   variant?: "compact" | "editor";
 }
 
-const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-  "CONNECT",
-  "TRACE",
-];
+// DNR requestMethods 支持的方法（大写展示）；不含 TRACE——Chrome/Firefox 均不支持
+const HTTP_METHODS = SUPPORTED_REQUEST_METHODS.map((method) =>
+  method.toUpperCase(),
+);
 
 // 请求方法过滤：以多选下拉形式呈现，避免逐项添加。
 // outerBottomSlot 底部增加 "全选 / 清空" 快捷操作。

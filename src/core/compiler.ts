@@ -1,6 +1,7 @@
 // UserRule -> DNR Rule 编译器
 
 import type { HeaderRule, Profile, ResourceType, TabFilter } from "./types";
+import { SUPPORTED_REQUEST_METHODS } from "./types";
 import type { DnrRule, DnrHeaderAction } from "./browserApi";
 
 export interface CompileError {
@@ -48,6 +49,9 @@ const ALL_RESOURCE_TYPES: ResourceType[] = [
 
 const idMap = new Map<string, number>();
 let nextDnrId = 1;
+
+// DNR 支持的请求方法集合（小写），用于过滤非法枚举避免整批规则被拒
+const SUPPORTED_METHOD_SET = new Set<string>(SUPPORTED_REQUEST_METHODS);
 
 export function getDnrId(ruleId: string): number {
   let id = idMap.get(ruleId);
@@ -172,10 +176,15 @@ function compileOne(
   else
     condition.resourceTypes =
       ALL_RESOURCE_TYPES as DnrRule["condition"]["resourceTypes"];
-  if (cond.requestMethods?.length)
-    condition.requestMethods = cond.requestMethods.map((m) =>
-      m.toLowerCase()
-    ) as DnrRule["condition"]["requestMethods"];
+  if (cond.requestMethods?.length) {
+    // 过滤掉 DNR 不支持的方法（如 trace），避免非法枚举导致整批规则被拒
+    const methods = cond.requestMethods
+      .map((m) => m.toLowerCase())
+      .filter((m) => SUPPORTED_METHOD_SET.has(m));
+    if (methods.length)
+      condition.requestMethods =
+        methods as DnrRule["condition"]["requestMethods"];
+  }
 
   if (cond.tabIds?.length) {
     condition.tabIds = cond.tabIds;
@@ -225,7 +234,9 @@ export function compileRules(
   const methodFilters = ctx.profile?.methodFilters ?? [];
   const allowedMethods = methodFilters
     .filter((m) => m.enabled && m.method?.trim())
-    .map((m) => m.method.trim().toLowerCase());
+    .map((m) => m.method.trim().toLowerCase())
+    // 过滤 DNR 不支持的方法（如 trace），避免非法枚举导致整批规则被拒
+    .filter((m) => SUPPORTED_METHOD_SET.has(m));
   const allowedDomains = domainFilters
     .filter((d) => d.enabled && d.domain?.trim())
     .map((d) => d.domain.trim());
@@ -297,6 +308,9 @@ export function compileRules(
       const merged = ruleMethods?.length
         ? ruleMethods.filter((m) => allowedMethods.includes(m))
         : allowedMethods;
+      // 交集为空：规则自带方法与 profile 白名单无交集，该规则不匹配任何请求，跳过。
+      // DNR 不接受空的 requestMethods 数组，注入会导致整批规则被拒。
+      if (!merged.length) continue;
       rule.condition = {
         ...rule.condition,
         requestMethods: merged as DnrRule["condition"]["requestMethods"],

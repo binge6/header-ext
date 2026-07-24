@@ -96,6 +96,20 @@ export interface MethodFilter {
   method: string;
 }
 
+// DNR requestMethods 支持的 HTTP 方法（Chrome / Firefox 一致，均为小写）。
+// 注意：不含 "trace"——Chrome 与 Firefox 的 DNR RequestMethod 枚举都不支持，
+// 传入非法枚举会导致 updateDynamicRules 整批 reject。
+export const SUPPORTED_REQUEST_METHODS = [
+  "connect",
+  "delete",
+  "get",
+  "head",
+  "options",
+  "patch",
+  "post",
+  "put",
+] as const;
+
 export interface Profile {
   id: string;
   name: string;
