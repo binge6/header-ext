@@ -8,6 +8,8 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
 import { Button } from "../controls";
 
+export { ErrorBoundary } from "./ErrorBoundary";
+
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
