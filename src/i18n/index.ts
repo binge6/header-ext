@@ -24,10 +24,17 @@ let detected = false;
 
 export async function initI18n(): Promise<typeof i18n> {
   if (detected) return i18n;
-  detected = true;
-  const lng = await detectLanguage();
-  if (i18n.language !== lng) {
-    await i18n.changeLanguage(lng);
+  try {
+    const lng = await detectLanguage();
+    if (i18n.language !== lng) {
+      await i18n.changeLanguage(lng);
+    }
+    // 仅在成功探测后标记完成，失败时允许后续重试
+    detected = true;
+  } catch (err) {
+    // 探测失败（如 storage 拒绝）时回退到已同步注册的默认语言，
+    // 不 reject，避免阻断调用方的 hydrate 流程导致整页卡加载态
+    console.error("[header-ext] initI18n failed, falling back to default", err);
   }
   return i18n;
 }
