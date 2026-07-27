@@ -7,6 +7,7 @@
 ## 安装
 
 - Chrome Web Store：<https://chromewebstore.google.com/detail/header-ext/fmeahkfblcdknabpmhlmbkconfcaoemi>
+- Microsoft Edge Add-ons：<https://microsoftedge.microsoft.com/addons/detail/header-ext/ablejeigpmcijedpfaefhjdijjlnphni>
 - Firefox Add-ons：<https://addons.mozilla.org/zh-CN/firefox/addon/header-ext/>
 
 ## 功能特性

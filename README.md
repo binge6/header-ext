@@ -7,6 +7,7 @@ A browser extension for modifying HTTP request/response headers, appending cooki
 ## Installation
 
 - Chrome Web Store: <https://chromewebstore.google.com/detail/header-ext/fmeahkfblcdknabpmhlmbkconfcaoemi>
+- Microsoft Edge Add-ons: <https://microsoftedge.microsoft.com/addons/detail/header-ext/ablejeigpmcijedpfaefhjdijjlnphni>
 - Firefox Add-ons: <https://addons.mozilla.org/zh-CN/firefox/addon/header-ext/>
 
 ## Features
