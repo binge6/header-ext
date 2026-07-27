@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/store/profileStore";
+import { getProfileStats } from "@/src/core/profileStatus";
 import { cn } from "@/src/utils/cn";
 import styles from "./index.module.scss";
 
@@ -10,8 +11,9 @@ interface Props {
 }
 
 /**
- * 当激活 Profile 没有任何启用的过滤项（tab / domain / url / excludeUrl / method）时，
- * 提示用户当前修改将作用于所有请求。
+ * 当激活 Profile 存在启用规则、却没有任何作用范围（既无 profile 级过滤项，
+ * 也存在自身无行级条件的规则）时，提示用户当前修改将作用于所有请求。
+ * 纯 Redirect/URL 重写或每行自带行级过滤的 profile 不会触发。
  */
 export function NoFilterBanner({ compact }: Props) {
   const { t } = useTranslation();
@@ -20,18 +22,8 @@ export function NoFilterBanner({ compact }: Props) {
   const profile = profiles.find((p) => p.id === activeId);
   if (!profile) return null;
 
-  const hasEnabledFilter =
-    (profile.tabFilters ?? []).some((f) => f.enabled && f.urlFilter?.trim()) ||
-    (profile.domainFilters ?? []).some((f) => f.enabled && f.domain?.trim()) ||
-    (profile.urlFilters ?? []).some((f) => f.enabled && f.regex?.trim()) ||
-    (profile.excludeUrlFilters ?? []).some((f) => f.enabled && f.url?.trim()) ||
-    (profile.methodFilters ?? []).some((f) => f.enabled && f.method?.trim());
-
-  if (hasEnabledFilter) return null;
-
-  // 仅当 profile 至少存在一条启用的规则时才提示，否则没有任何修改在生效
-  const hasEnabledRule = (profile.rules ?? []).some((r) => r.enabled);
-  if (!hasEnabledRule) return null;
+  // 与 badge / popup 风险提示共用同一判定，避免作用范围逻辑重复实现而漂移
+  if (!getProfileStats(profile).hasGlobalRisk) return null;
 
   const fullText = t("filters.noFilterHint");
 

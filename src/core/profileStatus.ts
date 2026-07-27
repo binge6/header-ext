@@ -1,10 +1,4 @@
-import type {
-  AppMeta,
-  AppState,
-  HeaderRule,
-  Profile,
-  RuleKind,
-} from "./types";
+import type { AppMeta, AppState, HeaderRule, Profile, RuleKind } from "./types";
 
 export interface ProfileStats {
   totalRules: number;
@@ -55,10 +49,25 @@ function hasAdvancedCondition(rule: HeaderRule): boolean {
   const condition = rule.condition ?? {};
   return Boolean(
     trimValue(condition.urlFilter) ||
-      condition.useRegex ||
-      condition.excludedDomains?.length ||
-      condition.resourceTypes?.length ||
-      condition.requestMethods?.length,
+    condition.useRegex ||
+    condition.excludedDomains?.length ||
+    condition.resourceTypes?.length ||
+    condition.requestMethods?.length,
+  );
+}
+
+// 规则是否自带行级作用范围（narrowing condition）：urlFilter / 排除域名 /
+// 资源类型 / 请求方法 都会把该规则限定到部分请求。典型如 Redirect / URL 重写
+// 规则，其 urlFilter 即匹配的源 URL，天然带有作用范围。
+// 注意：useRegex 单独存在（无 urlFilter）不收窄范围（编译时按 "*" 匹配全部），
+// 故不计入，避免误判为已配置作用范围。
+function ruleHasOwnScope(rule: HeaderRule): boolean {
+  const condition = rule.condition ?? {};
+  return Boolean(
+    trimValue(condition.urlFilter) ||
+    condition.excludedDomains?.length ||
+    condition.resourceTypes?.length ||
+    condition.requestMethods?.length,
   );
 }
 
@@ -84,7 +93,8 @@ export function getEnabledProfileIds(
 ): string[] {
   const alwaysEnabledIds = getAlwaysEnabledProfileIds(meta, profiles);
   const activeId =
-    meta.activeProfileId && profiles.some((profile) => profile.id === meta.activeProfileId)
+    meta.activeProfileId &&
+    profiles.some((profile) => profile.id === meta.activeProfileId)
       ? meta.activeProfileId
       : null;
   return Array.from(
@@ -129,7 +139,15 @@ export function getProfileStats(profile: Profile): ProfileStats {
   const enabledFilters = filterEntries.filter(
     (filter) => filter.enabled && trimValue(filter.value),
   ).length;
-  const enabledRules = profile.rules.filter((rule) => rule.enabled).length;
+  const hasEnabledFilter = enabledFilters > 0;
+  const enabledRuleList = profile.rules.filter((rule) => rule.enabled);
+  const enabledRules = enabledRuleList.length;
+
+  // 全局作用风险：没有任何 profile 级过滤器时，若存在自身也无行级作用范围的
+  // 启用规则，该规则会命中全部请求。反之，纯 Redirect/URL 重写（urlFilter 即源）
+  // 或每行都自带行级过滤条件的 profile 不算「未配置作用范围」。
+  const hasGlobalRisk =
+    !hasEnabledFilter && enabledRuleList.some((rule) => !ruleHasOwnScope(rule));
 
   return {
     totalRules: profile.rules.length,
@@ -138,8 +156,8 @@ export function getProfileStats(profile: Profile): ProfileStats {
     enabledFilters,
     advancedRules: profile.rules.filter(hasAdvancedCondition).length,
     hasEnabledRule: enabledRules > 0,
-    hasEnabledFilter: enabledFilters > 0,
-    hasGlobalRisk: enabledRules > 0 && enabledFilters === 0,
+    hasEnabledFilter,
+    hasGlobalRisk,
   };
 }
 
@@ -193,10 +211,14 @@ export function buildWorkspaceStatus(
   currentDomain = "",
 ): WorkspaceStatus {
   const enabledIds = getEnabledProfileIds(state.meta, state.profiles);
-  const alwaysEnabledIds = getAlwaysEnabledProfileIds(state.meta, state.profiles);
+  const alwaysEnabledIds = getAlwaysEnabledProfileIds(
+    state.meta,
+    state.profiles,
+  );
   const activeProfile =
-    state.profiles.find((profile) => profile.id === state.meta.activeProfileId) ??
-    null;
+    state.profiles.find(
+      (profile) => profile.id === state.meta.activeProfileId,
+    ) ?? null;
   const conflictMap = new Map<string, Set<string>>();
   const statuses: ProfileStatus[] = state.profiles.map((profile) => {
     const stats = getProfileStats(profile);
@@ -213,7 +235,8 @@ export function buildWorkspaceStatus(
       profile,
       alwaysEnabled: alwaysEnabledIds.includes(profile.id),
       enabled: enabledIds.includes(profile.id),
-      pausedByGlobal: state.meta.globalPaused && enabledIds.includes(profile.id),
+      pausedByGlobal:
+        state.meta.globalPaused && enabledIds.includes(profile.id),
       editing: profile.id === state.meta.activeProfileId,
       stats,
       scopeParts: getScopeParts(profile),
@@ -251,7 +274,9 @@ export function buildWorkspaceStatus(
       (sum, profile) => sum + profile.rules.length,
       0,
     ),
-    riskyProfiles: activeEnabledStatuses.filter((status) => status.stats.hasGlobalRisk),
+    riskyProfiles: activeEnabledStatuses.filter(
+      (status) => status.stats.hasGlobalRisk,
+    ),
     currentDomainProfiles: activeEnabledStatuses.filter(
       (status) => status.affectsDomain && status.stats.hasEnabledRule,
     ),
