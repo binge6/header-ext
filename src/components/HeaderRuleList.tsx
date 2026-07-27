@@ -259,20 +259,24 @@ export function HeaderRuleList({
           <div className="he-advanced-popover-body-content">
             <div className="he-advanced-popover-field">
               {label(t("rule.filter"))}
-              <Input
-                placeholder={
-                  cond.useRegex
-                    ? t("rule.regexPlaceholder")
-                    : t("rule.filterPlaceholder")
-                }
-                value={cond.urlFilter ?? ""}
-                onChange={(event) =>
-                  onUpdate({
-                    ...rule,
-                    condition: { ...cond, urlFilter: event.target.value },
-                  })
-                }
-              />
+              {/* redirect 的 urlFilter 已由主行"重定向来源"编辑，此处不再重复暴露，
+                  仅保留是否按正则解释来源的开关 */}
+              {!isRedirect && (
+                <Input
+                  placeholder={
+                    cond.useRegex
+                      ? t("rule.regexPlaceholder")
+                      : t("rule.filterPlaceholder")
+                  }
+                  value={cond.urlFilter ?? ""}
+                  onChange={(event) =>
+                    onUpdate({
+                      ...rule,
+                      condition: { ...cond, urlFilter: event.target.value },
+                    })
+                  }
+                />
+              )}
               <Checkbox
                 checked={!!cond.useRegex}
                 className="he-advanced-popover-checkbox"
@@ -349,7 +353,8 @@ export function HeaderRuleList({
   const rows = rules.map((rule) => {
     const cond = rule.condition ?? {};
     const filterActive =
-      !!cond.urlFilter ||
+      // redirect 规则的 urlFilter 是"重定向来源"（主行已编辑），不算附加过滤条件
+      (!isRedirect && !!cond.urlFilter) ||
       !!cond.excludedDomains?.length ||
       !!cond.resourceTypes?.length ||
       !!cond.requestMethods?.length;
