@@ -218,17 +218,18 @@ function compileOne(
 function expandWithTabFilters(base: DnrRule, filters: TabFilter[]): DnrRule[] {
   const enabled = filters.filter((f) => f.enabled && f.urlFilter?.trim());
   if (!enabled.length) return [base];
+  // 规则已是 regex 模式：DNR 一条规则只能有一个 url/regex 条件，无法再用
+  // tab filter 的 urlFilter 收紧。此时展开成 N 条只会得到 N 条完全相同的规则
+  // （对 Cookie append 等会重复生效 N 次，其余则浪费规则配额），故不展开。
+  if (base.condition.regexFilter) return [base];
   return enabled.map((f) => ({
     ...base,
     id: nextDnrId++,
-    condition: base.condition.regexFilter
-      ? // 已经是 regex 模式：保留原 regex，不再叠加 tab filter（DNR 限制）
-        { ...base.condition }
-      : {
-          ...base.condition,
-          // 用 tab filter 收紧 urlFilter
-          urlFilter: f.urlFilter,
-        },
+    condition: {
+      ...base.condition,
+      // 用 tab filter 收紧 urlFilter
+      urlFilter: f.urlFilter,
+    },
   }));
 }
 
