@@ -121,4 +121,56 @@
     background: var(--popover) !important;
     color: var(--popover-foreground) !important;
   }
+
+  .he-error-boundary {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .he-error-boundary-icon {
+    display: inline-flex;
+    color: var(--warning);
+
+    svg {
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .he-error-boundary-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .he-error-boundary-desc {
+    max-width: 360px;
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .he-error-boundary-detail {
+    max-width: 100%;
+    margin: 2px 0 4px;
+    overflow: auto;
+    max-height: 96px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--muted);
+    padding: 8px 10px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 }
