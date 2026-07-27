@@ -235,7 +235,7 @@ export function HeaderRuleList({
   };
 
   const renderFilterPopover = (rule: HeaderRule) => {
-    const cond = rule.condition;
+    const cond = rule.condition ?? {};
     const label = (text: string) => (
       <div className="he-advanced-popover-label">{text}</div>
     );
@@ -347,7 +347,7 @@ export function HeaderRuleList({
   };
 
   const rows = rules.map((rule) => {
-    const cond = rule.condition;
+    const cond = rule.condition ?? {};
     const filterActive =
       !!cond.urlFilter ||
       !!cond.excludedDomains?.length ||
