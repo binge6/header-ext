@@ -4,7 +4,12 @@
 
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import { loadState, saveState, subscribeState } from "../core/storage";
+import {
+  loadState,
+  saveState,
+  subscribeState,
+  createDefaultState,
+} from "../core/storage";
 import type {
   AppState,
   HeaderRule,
@@ -277,7 +282,15 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
 
   actions: {
     hydrate: async () => {
-      const state = await loadState();
+      // storage 读取失败（如扩展上下文失效）时回退到默认态并仍标记 hydrated，
+      // 避免 UI 永久卡在加载态（loadState reject 会让 hydrated 一直为 false）
+      let state;
+      try {
+        state = await loadState();
+      } catch (err) {
+        console.error("[header-ext] hydrate loadState failed", err);
+        state = createDefaultState();
+      }
       set({
         profiles: state.profiles,
         meta: state.meta,
@@ -285,11 +298,15 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       });
       // 反注册上一次 hydrate 的监听，避免重复 hydrate（HMR / 重挂载）累积监听器
       unsubscribeState?.();
-      unsubscribeState = subscribeState((next) => {
-        isApplyingRemote = true;
-        set({ profiles: next.profiles, meta: next.meta });
-        isApplyingRemote = false;
-      });
+      try {
+        unsubscribeState = subscribeState((next) => {
+          isApplyingRemote = true;
+          set({ profiles: next.profiles, meta: next.meta });
+          isApplyingRemote = false;
+        });
+      } catch (err) {
+        console.error("[header-ext] hydrate subscribeState failed", err);
+      }
     },
 
     addProfile: (name) => {
