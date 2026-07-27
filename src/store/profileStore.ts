@@ -90,6 +90,8 @@ interface ProfileStore extends AppState {
 }
 
 let isApplyingRemote = false;
+// hydrate 注册的 storage 监听取消函数；重复 hydrate 前先反注册，避免监听泄漏
+let unsubscribeState: (() => void) | null = null;
 
 function emptyRule(
   kind: RuleKind = "header",
@@ -281,7 +283,9 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         meta: state.meta,
         hydrated: true,
       });
-      subscribeState((next) => {
+      // 反注册上一次 hydrate 的监听，避免重复 hydrate（HMR / 重挂载）累积监听器
+      unsubscribeState?.();
+      unsubscribeState = subscribeState((next) => {
         isApplyingRemote = true;
         set({ profiles: next.profiles, meta: next.meta });
         isApplyingRemote = false;
