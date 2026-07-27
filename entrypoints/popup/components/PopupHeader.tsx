@@ -13,6 +13,7 @@ import { LanguageSwitcher } from "@/src/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/src/components/ThemeSwitcher";
 import { ImportExportButtons } from "@/src/components/ImportExportButtons";
 import { useProfileActions } from "@/src/store/profileStore";
+import { detectCapabilities } from "@/src/core/capabilities";
 import { parseImport, readFileAsText } from "@/src/core/portable";
 import { Button } from "@/src/ui/controls";
 import {
@@ -54,8 +55,15 @@ export function PopupHeader({
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const { mergeProfiles } = useProfileActions();
+  const isFirefox = detectCapabilities().isFirefox;
 
-  const handleImportClick = () => fileRef.current?.click();
+  const handleImportClick = () => {
+    if (isFirefox) {
+      void openOptionsPage();
+      return;
+    }
+    fileRef.current?.click();
+  };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -145,17 +153,25 @@ export function PopupHeader({
               {t("popup.openOptions")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <ImportExportButtons menuItem onImportRequest={handleImportClick} />
+            <ImportExportButtons
+              menuItem
+              importLabel={
+                isFirefox ? t("options.importInOptions") : undefined
+              }
+              onImportRequest={handleImportClick}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+      {!isFirefox && (
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      )}
     </header>
   );
 }

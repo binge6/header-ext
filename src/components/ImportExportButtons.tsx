@@ -24,6 +24,7 @@ interface Props {
   iconOnly?: boolean;
   /** menuItem: 渲染为下拉菜单项，用于更多菜单内 */
   menuItem?: boolean;
+  importLabel?: string;
   onImportRequest?: () => void;
 }
 
@@ -36,9 +37,11 @@ interface Props {
 export function ImportExportButtons({
   iconOnly,
   menuItem,
+  importLabel,
   onImportRequest,
 }: Props) {
   const { t } = useTranslation();
+  const resolvedImportLabel = importLabel ?? t("options.import");
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
   const { mergeProfiles } = useProfileActions();
@@ -151,14 +154,14 @@ export function ImportExportButtons({
       }}
     >
       <Upload aria-hidden="true" />
-      {t("options.import")}
+      {resolvedImportLabel}
     </button>
   ) : iconOnly ? (
-    <Tooltip content={t("options.import")}>
+    <Tooltip content={resolvedImportLabel}>
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={t("options.import")}
+        aria-label={resolvedImportLabel}
         onClick={handleImportClick}
       >
         <Upload aria-hidden="true" />
@@ -167,7 +170,7 @@ export function ImportExportButtons({
   ) : (
     <Button size="sm" variant="outline" onClick={handleImportClick}>
       <Upload aria-hidden="true" />
-      {t("options.import")}
+      {resolvedImportLabel}
     </Button>
   );
 

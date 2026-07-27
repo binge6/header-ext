@@ -1,6 +1,13 @@
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import "./index.scss";
-import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronsUpDown, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/utils/cn";
@@ -31,47 +38,163 @@ export function SelectControl({
   disabled,
   "aria-label": ariaLabel,
 }: SelectControlProps) {
+  const [open, setOpen] = useState(false);
+  const listboxId = useId();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const selectedOption = options.find((option) => option.value === value);
+  const selectedIndex = options.findIndex((option) => option.value === value);
+  const [activeIndex, setActiveIndex] = useState(
+    selectedIndex >= 0 ? selectedIndex : 0,
+  );
+
+  useEffect(() => {
+    if (open) setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [open, selectedIndex]);
+
+  useEffect(() => {
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      optionRefs.current[activeIndex]?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeIndex, open]);
+
+  const focusTrigger = () => {
+    window.requestAnimationFrame(() => {
+      triggerRef.current?.focus({ preventScroll: true });
+    });
+  };
+
+  const selectValue = (nextValue: string) => {
+    if (nextValue !== value) onValueChange(nextValue);
+    setOpen(false);
+    focusTrigger();
+  };
+
+  const moveActive = (nextIndex: number) => {
+    if (options.length === 0) return;
+    setActiveIndex((nextIndex + options.length) % options.length);
+  };
+
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+      moveActive(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setOpen(true);
+      moveActive(selectedIndex >= 0 ? selectedIndex : options.length - 1);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  const handleContentKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      focusTrigger();
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveActive(activeIndex + 1);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveActive(activeIndex - 1);
+      return;
+    }
+    if (event.key === "Home") {
+      event.preventDefault();
+      moveActive(0);
+      return;
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      moveActive(options.length - 1);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      const activeOption = options[activeIndex];
+      if (activeOption) selectValue(activeOption.value);
+    }
+  };
+
   return (
-    <SelectPrimitive.Root
-      value={value}
-      disabled={disabled}
-      onValueChange={onValueChange}
-    >
-      <SelectPrimitive.Trigger
-        aria-label={ariaLabel}
-        className={cn("he-select-trigger", className)}
-      >
-        <SelectPrimitive.Value placeholder={placeholder} />
-        <SelectPrimitive.Icon>
-          <ChevronDown aria-hidden="true" />
-        </SelectPrimitive.Icon>
-      </SelectPrimitive.Trigger>
-      <SelectPrimitive.Portal>
-        <SelectPrimitive.Content
-          position="popper"
-          sideOffset={6}
-          collisionPadding={8}
-          className="he-select-content"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          ref={triggerRef}
+          type="button"
+          role="combobox"
+          aria-label={ariaLabel}
+          aria-controls={open ? listboxId : undefined}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          disabled={disabled}
+          data-state={open ? "open" : "closed"}
+          className={cn("he-select-trigger", className)}
+          onKeyDown={handleTriggerKeyDown}
         >
-          <SelectPrimitive.Viewport>
-            {options.map((option) => (
-              <SelectPrimitive.Item
-                key={option.value}
-                value={option.value}
-                className="he-select-item"
-              >
-                <SelectPrimitive.ItemText>
-                  {option.label}
-                </SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator>
-                  <Check aria-hidden="true" />
-                </SelectPrimitive.ItemIndicator>
-              </SelectPrimitive.Item>
-            ))}
-          </SelectPrimitive.Viewport>
-        </SelectPrimitive.Content>
-      </SelectPrimitive.Portal>
-    </SelectPrimitive.Root>
+          <span className="he-select-value">
+            {selectedOption ? (
+              selectedOption.label
+            ) : (
+              <span className="he-control-placeholder">{placeholder}</span>
+            )}
+          </span>
+          <ChevronDown aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="he-select-content"
+        onKeyDown={handleContentKeyDown}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
+        <Scroller className="he-select-scroll" defer={false}>
+          <div id={listboxId} role="listbox" className="he-select-list">
+            {options.map((option, index) => {
+              const selected = option.value === value;
+              const highlighted = index === activeIndex;
+              return (
+                <button
+                  key={option.value}
+                  ref={(node) => {
+                    optionRefs.current[index] = node;
+                  }}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  data-state={selected ? "checked" : "unchecked"}
+                  data-highlighted={highlighted ? "" : undefined}
+                  className="he-select-item"
+                  onClick={() => selectValue(option.value)}
+                  onFocus={() => setActiveIndex(index)}
+                  onMouseMove={() => setActiveIndex(index)}
+                >
+                  <span className="he-select-item-label">{option.label}</span>
+                  <span className="he-select-item-indicator">
+                    {selected && <Check aria-hidden="true" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Scroller>
+      </PopoverContent>
+    </Popover>
   );
 }
 

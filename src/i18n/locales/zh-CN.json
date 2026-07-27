@@ -96,6 +96,7 @@
     "noProfiles": "暂无 Profile，请先新建",
     "untitledProfile": "未命名 Profile",
     "import": "导入",
+    "importInOptions": "在设置页导入",
     "export": "导出",
     "importSuccess": "导入成功，已合并 {{count}} 个 Profile",
     "importFailed": "导入失败：{{msg}}",
