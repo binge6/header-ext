@@ -96,6 +96,7 @@
     "noProfiles": "No profile yet, create one first",
     "untitledProfile": "Untitled profile",
     "import": "Import",
+    "importInOptions": "Import in Options",
     "export": "Export",
     "importSuccess": "Imported successfully, merged {{count}} profile(s)",
     "importFailed": "Import failed: {{msg}}",
