@@ -12,7 +12,6 @@ import { initI18n } from "@/src/i18n";
 import { LanguageSwitcher } from "@/src/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/src/components/ThemeSwitcher";
 import { useThemeMode } from "@/src/hooks/useThemeMode";
-import { useBodyOverlayScrollbars } from "@/src/hooks/useBodyOverlayScrollbars";
 import { ProfilePanel } from "@/src/components/ProfilePanel";
 import { RuleTable } from "@/src/components/RuleTable";
 import { GlobalToolbar } from "@/src/components/GlobalToolbar";
@@ -26,7 +25,6 @@ const logoUrl = new URL("../../assets/logo.svg", import.meta.url).href;
 function App() {
   const { t } = useTranslation();
   useThemeMode();
-  useBodyOverlayScrollbars();
   const hydrated = useProfileStore((s) => s.hydrated);
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
@@ -89,7 +87,11 @@ function App() {
             <ProfilePanel />
           </aside>
           <main className="he-options-main">
-            <RuleTable />
+            <Scroller className="h-full">
+              <div className="he-options-main-content">
+                <RuleTable />
+              </div>
+            </Scroller>
           </main>
           <aside className="he-options-inspector">
             <Scroller className="h-full px-4 py-6">
