@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Copy, Edit3, Plus, ShieldAlert, Trash2, Workflow } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
@@ -20,7 +20,10 @@ export function ProfilePanel() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const meta = useProfileStore((s) => s.meta);
-  const workspace = buildWorkspaceStatus({ profiles, meta });
+  const workspace = useMemo(
+    () => buildWorkspaceStatus({ profiles, meta }),
+    [profiles, meta],
+  );
   const {
     addProfile,
     duplicateProfile,
