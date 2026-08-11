@@ -10,6 +10,11 @@ A browser extension for modifying HTTP request/response headers, appending cooki
 - Microsoft Edge Add-ons: <https://microsoftedge.microsoft.com/addons/detail/header-ext/ablejeigpmcijedpfaefhjdijjlnphni>
 - Firefox Add-ons: <https://addons.mozilla.org/zh-CN/firefox/addon/header-ext/>
 
+If you cannot access Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-ons, download the matching zip from [Releases](https://github.com/binge6/header-ext/releases), unzip it, and load the extracted directory manually:
+
+- Chrome / Edge: open `chrome://extensions` or `edge://extensions`, enable Developer mode, then choose **Load unpacked**.
+- Firefox: open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, then select `manifest.json` from the extracted directory.
+
 ## Features
 
 - **Request/response header editing**: Add, remove, or modify headers, with templates (common presets like CORS and CSP) and autocomplete from history.

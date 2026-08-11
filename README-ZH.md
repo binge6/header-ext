@@ -10,6 +10,11 @@
 - Microsoft Edge Add-ons：<https://microsoftedge.microsoft.com/addons/detail/header-ext/ablejeigpmcijedpfaefhjdijjlnphni>
 - Firefox Add-ons：<https://addons.mozilla.org/zh-CN/firefox/addon/header-ext/>
 
+如果无法访问 Chrome Web Store、Microsoft Edge Add-ons 或 Firefox Add-ons，可以从 [Releases](https://github.com/binge6/header-ext/releases) 下载对应 zip 产物，解压后手动加载：
+
+- Chrome / Edge：打开 `chrome://extensions` 或 `edge://extensions`，启用开发者模式，然后选择「加载已解压的扩展程序」。
+- Firefox：打开 `about:debugging#/runtime/this-firefox`，选择「临时载入附加组件」，然后选中解压目录里的 `manifest.json`。
+
 ## 功能特性
 
 - **请求/响应头修改**：增删改 Header，支持模板（CORS、CSP 等常用预设）和历史值自动补全。
