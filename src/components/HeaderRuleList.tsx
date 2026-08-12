@@ -1,5 +1,6 @@
 import { useState, type DragEvent, type ReactNode } from "react";
 import {
+  ChevronDown,
   Cookie,
   Filter,
   GripVertical,
@@ -20,10 +21,13 @@ import type {
 import { useHistorySuggestions } from "@/src/hooks/useHistorySuggestions";
 import { cn } from "@/src/utils/cn";
 import { GroupHeader } from "./GroupHeader";
+import styles from "./HeaderRuleList.module.scss";
 import {
   AutoCompleteInput,
   Button,
   Checkbox,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   Input,
   MultiSelect,
   Popover,
@@ -32,6 +36,9 @@ import {
   Scroller,
   SelectControl,
   Tooltip,
+  TooltipDropdownMenu,
+  TooltipDropdownMenuContent,
+  TooltipDropdownMenuTrigger,
 } from "@/src/ui";
 
 interface Props {
@@ -49,9 +56,15 @@ interface Props {
   onReorder?: (orderedRuleIds: string[]) => void;
   variant?: "compact" | "editor";
   advancedPopoverDensity?: "default" | "compact";
+  actionControlVariant?: "select" | "compact-menu";
 }
 
 const ACTION_OPTIONS: HeaderAction[] = ["set", "append", "remove"];
+const ACTION_SYMBOLS: Record<HeaderAction, string> = {
+  set: "=",
+  append: "+",
+  remove: "-",
+};
 
 const RESOURCE_TYPES: ResourceType[] = [
   "main_frame",
@@ -90,6 +103,7 @@ export function HeaderRuleList({
   onReorder,
   variant = "compact",
   advancedPopoverDensity = "default",
+  actionControlVariant = "select",
 }: Props) {
   const { t } = useTranslation();
   const isCookie =
@@ -401,6 +415,70 @@ export function HeaderRuleList({
       isEditor && "he-editor-field",
       isEditor ? "w-22" : "w-19",
     );
+    const actionLabel = t(`rule.actionOption.${rule.action}`);
+    const actionTooltip = `${t("rule.action")}: ${actionLabel}`;
+    const renderActionControl = () => {
+      if (actionControlVariant === "compact-menu") {
+        return (
+          <TooltipDropdownMenu>
+            <TooltipDropdownMenuTrigger tooltip={actionTooltip}>
+              <Button
+                variant="outline"
+                size="sm"
+                className={styles.actionTrigger}
+                aria-label={actionTooltip}
+              >
+                <span aria-hidden="true" className={styles.actionTriggerSymbol}>
+                  {ACTION_SYMBOLS[rule.action]}
+                </span>
+                <ChevronDown aria-hidden="true" />
+              </Button>
+            </TooltipDropdownMenuTrigger>
+            <TooltipDropdownMenuContent
+              align="start"
+              className={styles.actionMenu}
+            >
+              <DropdownMenuRadioGroup
+                value={rule.action}
+                onValueChange={(action) => {
+                  if (action !== rule.action) {
+                    onUpdate({ ...rule, action: action as HeaderAction });
+                  }
+                }}
+              >
+                {ACTION_OPTIONS.map((action) => (
+                  <DropdownMenuRadioItem key={action} value={action}>
+                    <span
+                      aria-hidden="true"
+                      className={styles.actionMenuSymbol}
+                    >
+                      {ACTION_SYMBOLS[action]}
+                    </span>
+                    {t(`rule.actionOption.${action}`)}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </TooltipDropdownMenuContent>
+          </TooltipDropdownMenu>
+        );
+      }
+
+      return (
+        <SelectControl
+          className={actionClassName}
+          value={rule.action}
+          aria-label={t("rule.action")}
+          onValueChange={(action) =>
+            onUpdate({ ...rule, action: action as HeaderAction })
+          }
+          options={ACTION_OPTIONS.map((action) => ({
+            value: action,
+            label: t(`rule.actionOption.${action}`),
+          }))}
+        />
+      );
+    };
+
     return (
       <div
         key={rule.id}
@@ -433,20 +511,7 @@ export function HeaderRuleList({
             () => onToggle(rule.id),
           )
         )}
-        {!isCookie && !isRedirect && (
-          <SelectControl
-            className={actionClassName}
-            value={rule.action}
-            aria-label={t("rule.action")}
-            onValueChange={(action) =>
-              onUpdate({ ...rule, action: action as HeaderAction })
-            }
-            options={ACTION_OPTIONS.map((action) => ({
-              value: action,
-              label: t(`rule.actionOption.${action}`),
-            }))}
-          />
-        )}
+        {!isCookie && !isRedirect && renderActionControl()}
         {isRedirect ? (
           <Input
             placeholder={

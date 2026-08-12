@@ -335,6 +335,7 @@ export function ProfileEditor({
                   profileId={active.id}
                   variant="editor"
                   advancedPopoverDensity="compact"
+                  actionControlVariant="compact-menu"
                   kind="header"
                   target="request"
                   rules={ruleGroups.requestRules}
@@ -343,6 +344,7 @@ export function ProfileEditor({
                   profileId={active.id}
                   variant="editor"
                   advancedPopoverDensity="compact"
+                  actionControlVariant="compact-menu"
                   kind="header"
                   target="response"
                   rules={ruleGroups.responseRules}
