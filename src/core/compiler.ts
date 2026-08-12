@@ -111,6 +111,33 @@ function formatMissingVariables(names: string[]): string {
   return `变量未定义：${Array.from(new Set(names)).join(", ")}`;
 }
 
+function cleanDomains(domains: string[] | undefined): string[] {
+  return (domains ?? []).map((domain) => domain.trim()).filter(Boolean);
+}
+
+function isSameOrSubdomain(domain: string, scope: string): boolean {
+  const normalizedDomain = domain.toLowerCase();
+  const normalizedScope = scope.toLowerCase();
+  return (
+    normalizedDomain === normalizedScope ||
+    normalizedDomain.endsWith(`.${normalizedScope}`)
+  );
+}
+
+function intersectDomainScopes(left: string[], right: string[]): string[] {
+  const result = new Set<string>();
+  for (const leftDomain of left) {
+    for (const rightDomain of right) {
+      if (isSameOrSubdomain(leftDomain, rightDomain)) {
+        result.add(leftDomain);
+      } else if (isSameOrSubdomain(rightDomain, leftDomain)) {
+        result.add(rightDomain);
+      }
+    }
+  }
+  return Array.from(result);
+}
+
 export function getDnrId(ruleId: string): number {
   let id = idMap.get(ruleId);
   if (id == null) {
@@ -208,6 +235,10 @@ function compileOne(
     rule.condition?.urlFilter,
     variables,
   );
+  const resolvedIncludedDomains = resolveVariableList(
+    rule.condition?.includedDomains,
+    variables,
+  );
   const resolvedExcludedDomains = resolveVariableList(
     rule.condition?.excludedDomains,
     variables,
@@ -216,6 +247,7 @@ function compileOne(
     ...resolvedName.missing,
     ...resolvedValue.missing,
     ...resolvedUrlFilter.missing,
+    ...resolvedIncludedDomains.missing,
     ...resolvedExcludedDomains.missing,
   ];
   if (missingVariables.length) {
@@ -229,6 +261,7 @@ function compileOne(
     condition: {
       ...rule.condition,
       urlFilter: resolvedUrlFilter.value,
+      includedDomains: resolvedIncludedDomains.values,
       excludedDomains: resolvedExcludedDomains.values,
     },
   };
@@ -261,8 +294,13 @@ function compileOne(
     condition.urlFilter = "*";
   }
 
+  if (cond.includedDomains?.length) {
+    const cleaned = cleanDomains(cond.includedDomains);
+    if (cleaned.length) condition.requestDomains = cleaned;
+  }
+
   if (cond.excludedDomains?.length) {
-    const cleaned = cond.excludedDomains.map((d) => d.trim()).filter(Boolean);
+    const cleaned = cleanDomains(cond.excludedDomains);
     if (cleaned.length) condition.excludedRequestDomains = cleaned;
   }
 
@@ -360,13 +398,15 @@ export function compileRules(
     // 过滤 DNR 不支持的方法（如 trace），避免非法枚举导致整批规则被拒
     .filter((m) => SUPPORTED_METHOD_SET.has(m));
   const allowedDomainMissing = new Set<string>();
-  const allowedDomains = domainFilters
-    .filter((d) => d.enabled && d.domain?.trim())
-    .map((d) => {
-      const resolved = resolveVariables(d.domain.trim(), variables);
-      resolved.missing.forEach((name) => allowedDomainMissing.add(name));
-      return resolved.value.trim();
-    });
+  const allowedDomains = cleanDomains(
+    domainFilters
+      .filter((d) => d.enabled && d.domain?.trim())
+      .map((d) => {
+        const resolved = resolveVariables(d.domain.trim(), variables);
+        resolved.missing.forEach((name) => allowedDomainMissing.add(name));
+        return resolved.value.trim();
+      }),
+  );
   if (allowedDomainMissing.size) {
     hasProfileVariableError = true;
     errors.push({
@@ -437,7 +477,12 @@ export function compileRules(
 
     // 应用 Profile 级请求域名白名单（DNR requestDomains 自动匹配子域）
     if (allowedDomains.length) {
-      rule.condition = { ...rule.condition, requestDomains: allowedDomains };
+      const existing = rule.condition.requestDomains ?? [];
+      const requestDomains = existing.length
+        ? intersectDomainScopes(existing, allowedDomains)
+        : allowedDomains;
+      if (!requestDomains.length) continue;
+      rule.condition = { ...rule.condition, requestDomains };
     }
     // 应用 Profile 级排除域名黑名单（与规则自带的 excludedRequestDomains 合并）
     if (excludedDomains.length) {

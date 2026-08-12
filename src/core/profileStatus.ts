@@ -50,6 +50,7 @@ function hasAdvancedCondition(rule: HeaderRule): boolean {
   return Boolean(
     trimValue(condition.urlFilter) ||
     condition.useRegex ||
+    condition.includedDomains?.length ||
     condition.excludedDomains?.length ||
     condition.resourceTypes?.length ||
     condition.requestMethods?.length,
@@ -65,6 +66,7 @@ function ruleHasOwnScope(rule: HeaderRule): boolean {
   const condition = rule.condition ?? {};
   return Boolean(
     trimValue(condition.urlFilter) ||
+    condition.includedDomains?.length ||
     condition.excludedDomains?.length ||
     condition.resourceTypes?.length ||
     condition.requestMethods?.length,

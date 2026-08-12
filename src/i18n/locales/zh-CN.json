@@ -148,6 +148,8 @@
     "filterPlaceholder": "如：*://*.example.com/*（留空匹配所有）",
     "regexPlaceholder": "正则模式，如：^https?://.*\\.example\\.com/",
     "useRegex": "使用正则",
+    "includeDomains": "包含域名",
+    "includeDomainsPlaceholder": "如：api.example.com，可输入多个",
     "excludeDomains": "排除域名",
     "excludeDomainsPlaceholder": "如：foo.com，可输入多个",
     "resourceTypes": "资源类型",

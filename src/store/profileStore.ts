@@ -207,6 +207,9 @@ function cloneRuleCondition(
 ): HeaderRule["condition"] {
   const next = { ...condition };
 
+  if (condition.includedDomains) {
+    next.includedDomains = [...condition.includedDomains];
+  }
   if (condition.excludedDomains) {
     next.excludedDomains = [...condition.excludedDomains];
   }

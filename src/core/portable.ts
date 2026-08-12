@@ -114,6 +114,8 @@ function normalizeCondition(raw: unknown): RuleCondition {
   const condition: RuleCondition = {};
   if (typeof source.urlFilter === "string") condition.urlFilter = source.urlFilter;
   if (typeof source.useRegex === "boolean") condition.useRegex = source.useRegex;
+  const includedDomains = asStringArray(source.includedDomains);
+  if (includedDomains.length) condition.includedDomains = includedDomains;
   const excludedDomains = asStringArray(source.excludedDomains);
   if (excludedDomains.length) condition.excludedDomains = excludedDomains;
   const resourceTypes = asStringArray(source.resourceTypes).filter(

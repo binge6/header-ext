@@ -34,6 +34,8 @@ export interface RuleCondition {
   // include 模式：urlFilter 是 DNR pattern；当 useRegex 为 true 时按正则解释
   urlFilter?: string;
   useRegex?: boolean;
+  // include：DNR requestDomains，自动匹配子域
+  includedDomains?: string[];
   // exclude：DNR 仅支持域名级 exclude（excludedRequestDomains），暂不支持 pattern exclude
   excludedDomains?: string[];
   resourceTypes?: ResourceType[];

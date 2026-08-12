@@ -39,6 +39,7 @@ function hasRuleAdvancedConditions(rule: HeaderRule): boolean {
   return Boolean(
     condition.urlFilter?.trim() ||
     condition.useRegex ||
+    condition.includedDomains?.length ||
     condition.excludedDomains?.length ||
     condition.resourceTypes?.length ||
     condition.requestMethods?.length,

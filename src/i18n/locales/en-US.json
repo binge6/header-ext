@@ -148,6 +148,8 @@
     "filterPlaceholder": "e.g. *://*.example.com/* (empty = all)",
     "regexPlaceholder": "Regex, e.g. ^https?://.*\\.example\\.com/",
     "useRegex": "Use regex",
+    "includeDomains": "Include domains",
+    "includeDomainsPlaceholder": "e.g. api.example.com (multiple allowed)",
     "excludeDomains": "Exclude domains",
     "excludeDomainsPlaceholder": "e.g. foo.com (multiple allowed)",
     "resourceTypes": "Resource types",

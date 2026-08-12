@@ -291,6 +291,22 @@ export function HeaderRuleList({
             </div>
 
             <div className="he-advanced-popover-field">
+              {label(t("rule.includeDomains"))}
+              <MultiSelect
+                value={cond.includedDomains ?? []}
+                options={[]}
+                allowCreate
+                placeholder={t("rule.includeDomainsPlaceholder")}
+                onValueChange={(includedDomains) =>
+                  onUpdate({
+                    ...rule,
+                    condition: { ...cond, includedDomains },
+                  })
+                }
+              />
+            </div>
+
+            <div className="he-advanced-popover-field">
               {label(t("rule.excludeDomains"))}
               <MultiSelect
                 value={cond.excludedDomains ?? []}
@@ -355,6 +371,7 @@ export function HeaderRuleList({
     const filterActive =
       // redirect 规则的 urlFilter 是"重定向来源"（主行已编辑），不算附加过滤条件
       (!isRedirect && !!cond.urlFilter) ||
+      !!cond.includedDomains?.length ||
       !!cond.excludedDomains?.length ||
       !!cond.resourceTypes?.length ||
       !!cond.requestMethods?.length;
