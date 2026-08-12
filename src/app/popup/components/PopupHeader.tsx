@@ -56,6 +56,9 @@ export function PopupHeader({
   const { mergeProfiles } = useProfileActions();
   const isFirefox = detectCapabilities().isFirefox;
 
+  // 文件选择器托管在此处而非菜单内的 ImportExportButtons：
+  // 打开系统文件框会让 popup 失焦、下拉菜单卸载，若 input 挂在菜单里会随之
+  // 销毁导致 change 收不到。Firefox 则直接引导到 Options 页完成导入。
   const handleImportClick = () => {
     if (isFirefox) {
       void openOptionsPage();
@@ -156,11 +159,7 @@ export function PopupHeader({
               {t("popup.openOptions")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <ImportExportButtons
-              menuItem
-              importLabel={isFirefox ? t("options.importInOptions") : undefined}
-              onImportRequest={handleImportClick}
-            />
+            <ImportExportButtons menuItem onImportRequest={handleImportClick} />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

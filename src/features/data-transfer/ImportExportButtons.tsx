@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { ClipboardPaste, Copy, Download, Upload } from "lucide-react";
+import { Copy, Download, FileUp, Share2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/application";
@@ -93,7 +93,11 @@ export function ImportExportButtons({
     setSelectedIds(Array.from(current));
   };
 
-  const handleImportClick = () => {
+  const openImportDialog = () => {
+    setPasteOpen(true);
+  };
+
+  const handleImportFromFile = () => {
     if (onImportRequest) {
       onImportRequest();
       return;
@@ -108,6 +112,7 @@ export function ImportExportButtons({
     try {
       const text = await readFileAsText(file);
       importFromText(text);
+      setPasteOpen(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "unknown";
       toast.error(t("options.importFailed", { msg }));
@@ -181,21 +186,18 @@ export function ImportExportButtons({
           disabled={effectiveSelected.length === 0}
           onClick={handleExport}
         >
-          {t("options.export")}
+          <Download aria-hidden="true" />
+          {t("options.download")}
         </Button>
       </div>
     </div>
   );
 
-  const handlePasteClick = () => {
-    setPasteOpen(true);
-  };
-
   const importBtn = menuItem ? (
     <MenuButton
       onClick={(event) => {
         event.preventDefault();
-        handleImportClick();
+        openImportDialog();
       }}
     >
       <Upload aria-hidden="true" />
@@ -207,50 +209,22 @@ export function ImportExportButtons({
         variant="ghost"
         size="icon-sm"
         aria-label={resolvedImportLabel}
-        onClick={handleImportClick}
+        onClick={openImportDialog}
       >
         <Upload aria-hidden="true" />
       </Button>
     </Tooltip>
   ) : (
-    <Button size="sm" variant="outline" onClick={handleImportClick}>
+    <Button size="sm" variant="outline" onClick={openImportDialog}>
       <Upload aria-hidden="true" />
       {resolvedImportLabel}
-    </Button>
-  );
-
-  const pasteBtn = menuItem ? (
-    <MenuButton
-      onClick={(event) => {
-        event.preventDefault();
-        handlePasteClick();
-      }}
-    >
-      <ClipboardPaste aria-hidden="true" />
-      {t("options.pasteJson")}
-    </MenuButton>
-  ) : iconOnly ? (
-    <Tooltip content={t("options.pasteJson")}>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={t("options.pasteJson")}
-        onClick={handlePasteClick}
-      >
-        <ClipboardPaste aria-hidden="true" />
-      </Button>
-    </Tooltip>
-  ) : (
-    <Button size="sm" variant="outline" onClick={handlePasteClick}>
-      <ClipboardPaste aria-hidden="true" />
-      {t("options.pasteJson")}
     </Button>
   );
 
   const exportTrigger = menuItem ? (
     <PopoverTrigger asChild>
       <MenuButton disabled={profiles.length === 0}>
-        <Download aria-hidden="true" />
+        <Share2 aria-hidden="true" />
         {t("options.export")}
       </MenuButton>
     </PopoverTrigger>
@@ -263,14 +237,14 @@ export function ImportExportButtons({
           aria-label={t("options.export")}
           disabled={profiles.length === 0}
         >
-          <Download aria-hidden="true" />
+          <Share2 aria-hidden="true" />
         </Button>
       </PopoverTrigger>
     </Tooltip>
   ) : (
     <PopoverTrigger asChild>
       <Button size="sm" variant="outline" disabled={profiles.length === 0}>
-        <Download aria-hidden="true" />
+        <Share2 aria-hidden="true" />
         {t("options.export")}
       </Button>
     </PopoverTrigger>
@@ -279,7 +253,6 @@ export function ImportExportButtons({
   return (
     <div className={menuItem ? "block" : "inline-flex items-center gap-1"}>
       {importBtn}
-      {pasteBtn}
       <Popover open={exportOpen} onOpenChange={setExportOpen}>
         {exportTrigger}
         <PopoverContent
@@ -300,6 +273,14 @@ export function ImportExportButtons({
         description={t("options.pasteJsonHint")}
         footer={
           <>
+            <Button
+              variant="outline"
+              className="mr-auto"
+              onClick={handleImportFromFile}
+            >
+              <FileUp aria-hidden="true" />
+              {t("options.importFromFile")}
+            </Button>
             <Button variant="outline" onClick={() => setPasteOpen(false)}>
               {t("common.cancel")}
             </Button>
