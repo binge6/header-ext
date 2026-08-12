@@ -50,7 +50,7 @@ export function Dialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-1000 animate-in bg-foreground/50 fade-in backdrop-blur-sm animation-duration-150" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-1000 animate-in bg-black/50 fade-in backdrop-blur-sm animation-duration-150" />
         <DialogPrimitive.Content
           className={cn(
             "he-dialog-content fixed top-1/2 left-1/2 z-1001 w-90 max-w-dialog-limit -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card text-card-foreground shadow-panel",
@@ -113,7 +113,7 @@ export function ConfirmDialog({
   return (
     <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialogPrimitive.Portal>
-        <AlertDialogPrimitive.Overlay className="fixed inset-0 z-1000 animate-in bg-foreground/50 fade-in backdrop-blur-sm animation-duration-150" />
+        <AlertDialogPrimitive.Overlay className="fixed inset-0 z-1000 animate-in bg-black/50 fade-in backdrop-blur-sm animation-duration-150" />
         <AlertDialogPrimitive.Content className="he-dialog-content fixed top-1/2 left-1/2 z-1001 w-90 max-w-dialog-limit -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card text-card-foreground shadow-panel">
           <div className="px-4 pt-4">
             <AlertDialogPrimitive.Title className="m-0 text-dialog-title font-bold tracking-tight">
