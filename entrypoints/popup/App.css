@@ -522,6 +522,12 @@ body {
   line-height: 25px;
 }
 
+.he-dialog-content .he-json-paste-textarea {
+  min-height: 180px;
+  max-height: 320px;
+  line-height: 20px;
+}
+
 .he-popup-shell .he-checkbox {
   width: 18px;
   height: 18px;

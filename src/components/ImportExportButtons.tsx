@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Download, Upload } from "lucide-react";
+import { ClipboardPaste, Copy, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
@@ -12,6 +12,7 @@ import {
 import {
   Button,
   Checkbox,
+  Dialog,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -49,6 +50,8 @@ export function ImportExportButtons({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [exportOpen, setExportOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
   // null = 默认全选；数组 = 用户显式选择
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
 
@@ -60,6 +63,25 @@ export function ImportExportButtons({
     const payload = buildExport(profiles, meta, effectiveSelected);
     downloadJson(t("options.exportFileName"), payload);
     setExportOpen(false);
+  };
+
+  const handleCopyExport = async () => {
+    if (effectiveSelected.length === 0) return;
+    try {
+      const payload = buildExport(profiles, meta, effectiveSelected);
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      toast.success(t("options.copyJsonSuccess"));
+      setExportOpen(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      toast.error(t("options.copyJsonFailed", { msg }));
+    }
+  };
+
+  const importFromText = (text: string) => {
+    const { profiles: incoming, meta: incomingMeta } = parseImport(text);
+    mergeProfiles(incoming, incomingMeta);
+    toast.success(t("options.importSuccess", { count: incoming.length }));
   };
 
   const handleToggleAll = (checked: boolean) => {
@@ -87,9 +109,23 @@ export function ImportExportButtons({
     if (!file) return;
     try {
       const text = await readFileAsText(file);
-      const { profiles: incoming, meta: incomingMeta } = parseImport(text);
-      mergeProfiles(incoming, incomingMeta);
-      toast.success(t("options.importSuccess", { count: incoming.length }));
+      importFromText(text);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      toast.error(t("options.importFailed", { msg }));
+    }
+  };
+
+  const handlePasteImport = () => {
+    const text = pasteText.trim();
+    if (!text) {
+      toast.error(t("options.importFailed", { msg: t("options.emptyJson") }));
+      return;
+    }
+    try {
+      importFromText(text);
+      setPasteText("");
+      setPasteOpen(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "unknown";
       toast.error(t("options.importFailed", { msg }));
@@ -135,6 +171,15 @@ export function ImportExportButtons({
         </Button>
         <Button
           size="sm"
+          variant="outline"
+          disabled={effectiveSelected.length === 0}
+          onClick={() => void handleCopyExport()}
+        >
+          <Copy aria-hidden="true" />
+          {t("options.copyJson")}
+        </Button>
+        <Button
+          size="sm"
           disabled={effectiveSelected.length === 0}
           onClick={handleExport}
         >
@@ -143,6 +188,10 @@ export function ImportExportButtons({
       </div>
     </div>
   );
+
+  const handlePasteClick = () => {
+    setPasteOpen(true);
+  };
 
   const importBtn = menuItem ? (
     <button
@@ -171,6 +220,36 @@ export function ImportExportButtons({
     <Button size="sm" variant="outline" onClick={handleImportClick}>
       <Upload aria-hidden="true" />
       {resolvedImportLabel}
+    </Button>
+  );
+
+  const pasteBtn = menuItem ? (
+    <button
+      type="button"
+      className="he-menu-item"
+      onClick={(event) => {
+        event.preventDefault();
+        handlePasteClick();
+      }}
+    >
+      <ClipboardPaste aria-hidden="true" />
+      {t("options.pasteJson")}
+    </button>
+  ) : iconOnly ? (
+    <Tooltip content={t("options.pasteJson")}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("options.pasteJson")}
+        onClick={handlePasteClick}
+      >
+        <ClipboardPaste aria-hidden="true" />
+      </Button>
+    </Tooltip>
+  ) : (
+    <Button size="sm" variant="outline" onClick={handlePasteClick}>
+      <ClipboardPaste aria-hidden="true" />
+      {t("options.pasteJson")}
     </Button>
   );
 
@@ -210,6 +289,7 @@ export function ImportExportButtons({
   return (
     <div className={menuItem ? "block" : "inline-flex items-center gap-1"}>
       {importBtn}
+      {pasteBtn}
       <Popover open={exportOpen} onOpenChange={setExportOpen}>
         {exportTrigger}
         <PopoverContent
@@ -220,6 +300,34 @@ export function ImportExportButtons({
           {exportPanel}
         </PopoverContent>
       </Popover>
+      <Dialog
+        open={pasteOpen}
+        onOpenChange={(open) => {
+          setPasteOpen(open);
+          if (!open) setPasteText("");
+        }}
+        title={t("options.pasteJson")}
+        description={t("options.pasteJsonHint")}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPasteOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handlePasteImport}>
+              {t("options.importJson")}
+            </Button>
+          </>
+        }
+      >
+        <textarea
+          className="he-input he-json-paste-textarea resize-y py-2 leading-5"
+          value={pasteText}
+          autoFocus
+          spellCheck={false}
+          placeholder={t("options.pasteJsonPlaceholder")}
+          onChange={(event) => setPasteText(event.target.value)}
+        />
+      </Dialog>
       {!onImportRequest && (
         <input
           ref={fileRef}
