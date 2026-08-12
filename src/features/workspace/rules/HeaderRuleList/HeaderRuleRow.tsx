@@ -68,7 +68,7 @@ export function HeaderRuleRow({
     : t("rule.enableRule");
 
   const toggle = (
-    <Tooltip content={toggleLabel}>
+    <Tooltip content={toggleLabel} keepOpenOnClick>
       <Checkbox
         checked={rule.enabled}
         aria-label={toggleLabel}
@@ -89,7 +89,7 @@ export function HeaderRuleRow({
       onDragOver={(event) => onDragOver(event, rule.id)}
       onDrop={(event) => onDrop(event, rule.id)}
     >
-      {isEditor ? (
+      {isEditor && (
         <span
           draggable={canDrag}
           className={cn(
@@ -101,17 +101,6 @@ export function HeaderRuleRow({
         >
           <GripVertical aria-hidden="true" className="h-4 w-4" />
         </span>
-      ) : (
-        toggle
-      )}
-
-      {!isCookie && !isRedirect && (
-        <RuleActionControl
-          rule={rule}
-          isEditor={isEditor}
-          variant={actionControlVariant}
-          onUpdate={onUpdate}
-        />
       )}
 
       {isRedirect ? (
@@ -175,7 +164,15 @@ export function HeaderRuleRow({
         />
       )}
 
-      {isEditor && toggle}
+      {!isCookie && !isRedirect && (
+        <RuleActionControl
+          rule={rule}
+          isEditor={isEditor}
+          variant={actionControlVariant}
+          onUpdate={onUpdate}
+        />
+      )}
+
       <div className="flex items-center">
         <Popover>
           <Tooltip content={t("rule.advancedConditions")}>
@@ -218,6 +215,7 @@ export function HeaderRuleRow({
           </Button>
         </Tooltip>
       </div>
+      {toggle}
     </div>
   );
 }

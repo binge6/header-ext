@@ -182,7 +182,9 @@
       "set": "设置",
       "append": "追加",
       "remove": "移除"
-    }
+    },
+    "actionCurrent": "当前操作：{{action}}",
+    "actionClickToSwitch": "点击切换至 {{action}}"
   },
   "tabFilters": {
     "title": "Tab 过滤",

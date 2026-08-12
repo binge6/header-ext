@@ -62,7 +62,7 @@ export function TabFilterList({
     onCheckedChange: (checked: boolean) => void,
     disabled = false,
   ) => (
-    <Tooltip content={ariaLabel}>
+    <Tooltip content={ariaLabel} keepOpenOnClick>
       <Checkbox
         checked={checked}
         disabled={disabled}
@@ -73,7 +73,7 @@ export function TabFilterList({
   );
 
   const renderGroupToggle = () => (
-    <Tooltip content={groupToggleLabel}>
+    <Tooltip content={groupToggleLabel} keepOpenOnClick>
       <Checkbox
         checked={groupToggleState}
         disabled={filters.length === 0}
@@ -97,12 +97,6 @@ export function TabFilterList({
             isEditor && !f.enabled && "opacity-70",
           )}
         >
-          {!isEditor &&
-            renderToggle(
-              f.enabled,
-              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
-              () => onToggle(f.id),
-            )}
           <Input
             placeholder={t("tabFilters.urlPlaceholder")}
             className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
@@ -111,12 +105,6 @@ export function TabFilterList({
               onUpdate({ ...f, urlFilter: event.target.value })
             }
           />
-          {isEditor &&
-            renderToggle(
-              f.enabled,
-              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
-              () => onToggle(f.id),
-            )}
           <Tooltip content={t("tabFilters.deleteItem")}>
             <Button
               variant="ghost"
@@ -127,6 +115,11 @@ export function TabFilterList({
               <Trash2 aria-hidden="true" />
             </Button>
           </Tooltip>
+          {renderToggle(
+            f.enabled,
+            f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
+            () => onToggle(f.id),
+          )}
         </div>
       ))
     );

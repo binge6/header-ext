@@ -182,7 +182,9 @@
       "set": "Set",
       "append": "Append",
       "remove": "Remove"
-    }
+    },
+    "actionCurrent": "Current action: {{action}}",
+    "actionClickToSwitch": "Click to switch to {{action}}"
   },
   "tabFilters": {
     "title": "Tab filters",

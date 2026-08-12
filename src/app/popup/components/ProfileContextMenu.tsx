@@ -20,7 +20,7 @@ export function ProfileContextMenuContent({
   const { t } = useTranslation();
 
   return (
-    <DropdownMenuContent align="start" className="w-52">
+    <DropdownMenuContent align="start">
       <DropdownMenuItem onClick={onRename}>
         <Edit3 aria-hidden="true" />
         {t("options.renameProfile")}

@@ -1,18 +1,8 @@
-import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { HeaderAction, HeaderRule } from "@/src/domain";
-import {
-  Button,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  SelectControl,
-  TooltipDropdownMenu,
-  TooltipDropdownMenuContent,
-  TooltipDropdownMenuTrigger,
-} from "@/src/shared/ui";
+import { Button, Tooltip } from "@/src/shared/ui";
 import { cn } from "@/src/shared/lib/cn";
-import { ACTION_OPTIONS, ACTION_SYMBOLS } from "./const";
-import { editorFieldClassName } from "../../components/editor-styles";
+import { ACTION_ICONS, ACTION_OPTIONS } from "./const";
 
 interface RuleActionControlProps {
   rule: HeaderRule;
@@ -23,72 +13,39 @@ interface RuleActionControlProps {
 
 export function RuleActionControl({
   rule,
-  isEditor,
   variant,
   onUpdate,
 }: RuleActionControlProps) {
   const { t } = useTranslation();
-  const actionClassName = cn(
-    isEditor && editorFieldClassName,
-    isEditor ? "w-22" : "w-19",
+  const currentIndex = ACTION_OPTIONS.indexOf(rule.action);
+  const nextAction = ACTION_OPTIONS[(currentIndex + 1) % ACTION_OPTIONS.length];
+  const currentLabel = t(`rule.actionOption.${rule.action}`);
+  const nextLabel = t(`rule.actionOption.${nextAction}`);
+  const Icon = ACTION_ICONS[rule.action];
+  const tooltip = (
+    <span className="flex flex-col gap-0.5">
+      <span>{t("rule.actionCurrent", { action: currentLabel })}</span>
+      <span>{t("rule.actionClickToSwitch", { action: nextLabel })}</span>
+    </span>
   );
-  const actionLabel = t(`rule.actionOption.${rule.action}`);
-  const actionTooltip = `${t("rule.action")}: ${actionLabel}`;
 
-  if (variant === "compact-menu") {
-    return (
-      <TooltipDropdownMenu>
-        <TooltipDropdownMenuTrigger tooltip={actionTooltip}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6.25 w-11 shrink-0 gap-0.5 rounded-sm px-1.25 text-xs font-extrabold leading-none shadow-soft [&_svg]:h-3 [&_svg]:w-3"
-            aria-label={actionTooltip}
-          >
-            <span aria-hidden="true" className="w-3 text-center font-extrabold">
-              {ACTION_SYMBOLS[rule.action]}
-            </span>
-            <ChevronDown aria-hidden="true" />
-          </Button>
-        </TooltipDropdownMenuTrigger>
-        <TooltipDropdownMenuContent align="start" className="min-w-31 max-w-40">
-          <DropdownMenuRadioGroup
-            value={rule.action}
-            onValueChange={(action) => {
-              if (action !== rule.action) {
-                onUpdate({ ...rule, action: action as HeaderAction });
-              }
-            }}
-          >
-            {ACTION_OPTIONS.map((action) => (
-              <DropdownMenuRadioItem key={action} value={action}>
-                <span
-                  aria-hidden="true"
-                  className="w-3 text-center font-extrabold text-muted-foreground"
-                >
-                  {ACTION_SYMBOLS[action]}
-                </span>
-                {t(`rule.actionOption.${action}`)}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </TooltipDropdownMenuContent>
-      </TooltipDropdownMenu>
-    );
-  }
+  const cycle = () => onUpdate({ ...rule, action: nextAction as HeaderAction });
 
   return (
-    <SelectControl
-      className={actionClassName}
-      value={rule.action}
-      aria-label={t("rule.action")}
-      onValueChange={(action) =>
-        onUpdate({ ...rule, action: action as HeaderAction })
-      }
-      options={ACTION_OPTIONS.map((action) => ({
-        value: action,
-        label: t(`rule.actionOption.${action}`),
-      }))}
-    />
+    <Tooltip content={tooltip} keepOpenOnClick>
+      <Button
+        variant="outline"
+        size={variant === "compact-menu" ? "sm" : "icon-sm"}
+        className={cn(
+          "shrink-0",
+          variant === "compact-menu" &&
+            "h-6.25 w-6.25 rounded-sm p-0 shadow-soft",
+        )}
+        aria-label={t("rule.actionCurrent", { action: currentLabel })}
+        onClick={cycle}
+      >
+        <Icon aria-hidden="true" />
+      </Button>
+    </Tooltip>
   );
 }

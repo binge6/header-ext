@@ -202,7 +202,7 @@ export function HeaderRuleList({
               <Plus aria-hidden="true" />
             </Button>
           </Tooltip>
-          <Tooltip content={groupToggleLabel}>
+          <Tooltip content={groupToggleLabel} keepOpenOnClick>
             <Checkbox
               checked={groupToggleState}
               disabled={rules.length === 0}

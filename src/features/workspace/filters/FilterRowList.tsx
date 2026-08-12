@@ -72,7 +72,7 @@ export function FilterRowList<T extends FilterRowItem>({
     onCheckedChange: (checked: boolean) => void,
     disabled = false,
   ) => (
-    <Tooltip content={ariaLabel}>
+    <Tooltip content={ariaLabel} keepOpenOnClick>
       <Checkbox
         checked={checked}
         disabled={disabled}
@@ -83,7 +83,7 @@ export function FilterRowList<T extends FilterRowItem>({
   );
 
   const renderGroupToggle = () => (
-    <Tooltip content={groupToggleLabel}>
+    <Tooltip content={groupToggleLabel} keepOpenOnClick>
       <Checkbox
         checked={groupToggleState}
         disabled={filters.length === 0}
@@ -107,12 +107,6 @@ export function FilterRowList<T extends FilterRowItem>({
             isEditor && !f.enabled && "opacity-70",
           )}
         >
-          {!isEditor &&
-            renderToggle(
-              f.enabled,
-              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
-              () => onToggle(f.id),
-            )}
           <Input
             placeholder={t(`${i18nKey}.placeholder`)}
             className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
@@ -121,12 +115,6 @@ export function FilterRowList<T extends FilterRowItem>({
               onUpdate({ ...f, [valueField]: event.target.value } as T)
             }
           />
-          {isEditor &&
-            renderToggle(
-              f.enabled,
-              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
-              () => onToggle(f.id),
-            )}
           <Tooltip content={t(`${i18nKey}.deleteItem`)}>
             <Button
               variant="ghost"
@@ -137,6 +125,11 @@ export function FilterRowList<T extends FilterRowItem>({
               <Trash2 aria-hidden="true" />
             </Button>
           </Tooltip>
+          {renderToggle(
+            f.enabled,
+            f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
+            () => onToggle(f.id),
+          )}
         </div>
       ))
     );

@@ -26,6 +26,12 @@ interface TooltipProps {
   disabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Keep the tooltip visible after clicking the trigger (Radix closes it on
+   * pointer-down by default). When enabled and uncontrolled, open state is
+   * driven solely by hover/focus of the trigger.
+   */
+  keepOpenOnClick?: boolean;
 }
 
 export function Tooltip({
@@ -35,12 +41,31 @@ export function Tooltip({
   disabled,
   open,
   onOpenChange,
+  keepOpenOnClick,
 }: TooltipProps) {
+  const [hoverOpen, setHoverOpen] = useState(false);
+  const selfControlled = keepOpenOnClick && open === undefined;
+
   if (disabled) return children;
 
+  const rootOpen = selfControlled ? hoverOpen : open;
+  const hoverHandlers = selfControlled
+    ? {
+        onPointerEnter: () => setHoverOpen(true),
+        onPointerLeave: () => setHoverOpen(false),
+        onFocus: () => setHoverOpen(true),
+        onBlur: () => setHoverOpen(false),
+      }
+    : undefined;
+
   return (
-    <TooltipPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+    <TooltipPrimitive.Root
+      open={rootOpen}
+      onOpenChange={selfControlled ? undefined : onOpenChange}
+    >
+      <TooltipPrimitive.Trigger asChild {...hoverHandlers}>
+        {children}
+      </TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}
@@ -345,7 +370,7 @@ export const DropdownMenuContent = forwardRef<
       sideOffset={sideOffset}
       collisionPadding={8}
       className={cn(
-        "z-90 min-w-47 max-w-80 animate-in overflow-hidden rounded-md border border-border bg-popover p-0 text-popover-foreground shadow-panel fade-in zoom-in-95 animation-duration-150",
+        "z-90 min-w-40 max-w-80 animate-in overflow-hidden rounded-md border border-border bg-popover p-0 text-popover-foreground shadow-panel fade-in zoom-in-95 animation-duration-150",
         className,
       )}
       {...props}

@@ -1,4 +1,4 @@
-import { Braces, Plus, Trash2 } from "lucide-react";
+import { Braces, Info, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ProfileVariable } from "@/src/domain";
 import { cn } from "@/src/shared/lib/cn";
@@ -60,7 +60,7 @@ export function VariableList({
     onCheckedChange: (checked: boolean) => void,
     disabled = false,
   ) => (
-    <Tooltip content={ariaLabel}>
+    <Tooltip content={ariaLabel} keepOpenOnClick>
       <Checkbox
         checked={checked}
         disabled={disabled}
@@ -71,7 +71,7 @@ export function VariableList({
   );
 
   const renderGroupToggle = () => (
-    <Tooltip content={groupToggleLabel}>
+    <Tooltip content={groupToggleLabel} keepOpenOnClick>
       <Checkbox
         checked={groupToggleState}
         disabled={variables.length === 0}
@@ -95,14 +95,6 @@ export function VariableList({
             isEditor && !variable.enabled && "opacity-70",
           )}
         >
-          {!isEditor &&
-            renderToggle(
-              variable.enabled,
-              variable.enabled
-                ? t("variables.disableItem")
-                : t("variables.enableItem"),
-              () => onToggle(variable.id),
-            )}
           <Input
             placeholder={t("variables.namePlaceholder")}
             className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
@@ -119,14 +111,6 @@ export function VariableList({
               onUpdate({ ...variable, value: event.target.value })
             }
           />
-          {isEditor &&
-            renderToggle(
-              variable.enabled,
-              variable.enabled
-                ? t("variables.disableItem")
-                : t("variables.enableItem"),
-              () => onToggle(variable.id),
-            )}
           <Tooltip content={t("variables.deleteItem")}>
             <Button
               variant="ghost"
@@ -137,6 +121,13 @@ export function VariableList({
               <Trash2 aria-hidden="true" />
             </Button>
           </Tooltip>
+          {renderToggle(
+            variable.enabled,
+            variable.enabled
+              ? t("variables.disableItem")
+              : t("variables.enableItem"),
+            () => onToggle(variable.id),
+          )}
         </div>
       ))
     );
@@ -159,6 +150,16 @@ export function VariableList({
             <span className={editorSectionTitleClassName}>
               {t("variables.title")}
             </span>
+            <Tooltip content={t("variables.hint", { syntax: "{{name}}" })}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground [&_svg]:h-3.5 [&_svg]:w-3.5"
+                aria-label={t("variables.hint", { syntax: "{{name}}" })}
+              >
+                <Info aria-hidden="true" />
+              </Button>
+            </Tooltip>
             <span className={editorSectionCountClassName}>
               {variables.length}
             </span>
@@ -176,9 +177,6 @@ export function VariableList({
             </Tooltip>
             {renderGroupToggle()}
           </div>
-        </div>
-        <div className="border-b border-border px-3 py-2 text-xs leading-5 text-muted-foreground">
-          {t("variables.hint", { syntax: "{{name}}" })}
         </div>
         <div className="flex flex-col">{rows}</div>
       </section>

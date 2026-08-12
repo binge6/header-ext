@@ -1,11 +1,13 @@
+import { Equal, Minus, Plus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { HeaderAction, ResourceType } from "@/src/domain";
 
 export const ACTION_OPTIONS: HeaderAction[] = ["set", "append", "remove"];
 
-export const ACTION_SYMBOLS: Record<HeaderAction, string> = {
-  set: "=",
-  append: "+",
-  remove: "-",
+export const ACTION_ICONS: Record<HeaderAction, LucideIcon> = {
+  set: Equal,
+  append: Plus,
+  remove: Minus,
 };
 
 export const RESOURCE_TYPES: ResourceType[] = [
