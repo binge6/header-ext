@@ -19,6 +19,7 @@ import { FilterRowList } from "./FilterRowList";
 import { MethodFilterPicker } from "./MethodFilterPicker";
 import { NoFilterBanner } from "./NoFilterBanner";
 import { FilterMenu, ModificationMenu } from "./RuleActionMenus";
+import { VariableList } from "./VariableList";
 import { Badge, Button } from "@/src/ui";
 import type {
   HeaderRule,
@@ -26,6 +27,7 @@ import type {
   DomainFilter,
   UrlFilter,
   ExcludeUrlFilter,
+  ProfileVariable,
 } from "@/src/core/types";
 
 function ruleKind(r: HeaderRule): RuleKind {
@@ -71,6 +73,10 @@ export function RuleTable() {
     toggleExcludeUrlFilter,
     addMethodFilter,
     setMethodFilters,
+    addVariable,
+    updateVariable,
+    deleteVariable,
+    toggleVariable,
   } = useProfileActions();
 
   const profile = profiles.find((p) => p.id === activeId);
@@ -104,6 +110,7 @@ export function RuleTable() {
   const urlFilters = profile.urlFilters ?? [];
   const excludeUrlFilters = profile.excludeUrlFilters ?? [];
   const methodFilters = profile.methodFilters ?? [];
+  const variables = profile.variables ?? [];
   const stats = getProfileStats(profile);
   const scopeParts = getScopeParts(profile);
   const advancedRuleCount = profile.rules.filter(
@@ -214,6 +221,11 @@ export function RuleTable() {
                 {t("options.advancedRuleCount", { count: advancedRuleCount })}
               </Badge>
             )}
+            {variables.length > 0 && (
+              <Badge>
+                {t("options.variableCount", { count: variables.length })}
+              </Badge>
+            )}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {formatScopeSummary(scopeParts)}
@@ -312,6 +324,18 @@ export function RuleTable() {
           </div>
         )}
       </section>
+
+      <VariableList
+        variant="editor"
+        showEmpty
+        variables={variables}
+        onAdd={() => addVariable(profile.id)}
+        onUpdate={(variable: ProfileVariable) =>
+          updateVariable(profile.id, variable)
+        }
+        onDelete={(variableId) => deleteVariable(profile.id, variableId)}
+        onToggle={(variableId) => toggleVariable(profile.id, variableId)}
+      />
 
       <section className="he-workbench-section">
         <div className="he-workbench-section-head">

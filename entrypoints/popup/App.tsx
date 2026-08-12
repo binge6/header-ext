@@ -63,6 +63,10 @@ function App() {
     toggleExcludeUrlFilter,
     addMethodFilter,
     setMethodFilters,
+    addVariable,
+    updateVariable,
+    deleteVariable,
+    toggleVariable,
   } = useProfileActions();
 
   const [currentTabId, setCurrentTabId] = useState<number | null>(null);
@@ -163,6 +167,7 @@ function App() {
       active?.urlFilters,
     ],
   );
+  const variables = useMemo(() => active?.variables ?? [], [active?.variables]);
 
   const hasRuleContent =
     ruleGroups.requestRules.length +
@@ -179,6 +184,7 @@ function App() {
       filterGroups.excludeUrlFilters.length +
       filterGroups.methodFilters.length >
     0;
+  const hasVariableContent = variables.length > 0;
 
   const isLocked = meta.lockedTabId != null;
   const lockedHere =
@@ -277,7 +283,7 @@ function App() {
   // OverlayScrollbars 的 scroll / updated 事件驱动（见 ProfileEditor 的 events）。
   useEffect(() => {
     updateScrollShadow();
-  }, [active?.id, filterGroups, ruleGroups, updateScrollShadow]);
+  }, [active?.id, filterGroups, ruleGroups, updateScrollShadow, variables]);
 
   if (!hydrated) {
     return (
@@ -366,6 +372,8 @@ function App() {
               filterGroups={filterGroups}
               hasRuleContent={hasRuleContent}
               hasFilterContent={hasFilterContent}
+              variables={variables}
+              hasVariableContent={hasVariableContent}
               globalPaused={meta.globalPaused}
               riskyProfilesCount={workspace.riskyProfiles.length}
               riskyProfileNames={riskyProfileNames}
@@ -424,6 +432,16 @@ function App() {
               }
               onSetMethodFilters={(methods) =>
                 active && setMethodFilters(active.id, methods)
+              }
+              onAddVariable={() => active && addVariable(active.id)}
+              onUpdateVariable={(variable) =>
+                active && updateVariable(active.id, variable)
+              }
+              onDeleteVariable={(variableId) =>
+                active && deleteVariable(active.id, variableId)
+              }
+              onToggleVariable={(variableId) =>
+                active && toggleVariable(active.id, variableId)
               }
               onAddHeader={handleAddHeader}
               onAddRule={handleAddRule}

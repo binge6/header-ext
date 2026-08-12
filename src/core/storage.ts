@@ -23,6 +23,7 @@ export function createDefaultState(): AppState {
     name: 'Default',
     color: '#1677ff',
     rules: [],
+    variables: [],
     createdAt: now,
     updatedAt: now,
   };

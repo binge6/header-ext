@@ -343,6 +343,11 @@
     background: color-mix(in oklab, var(--primary) 12%, transparent);
   }
 
+  .he-editor-section-icon-variable {
+    color: var(--purple);
+    background: var(--purple-soft);
+  }
+
   .he-editor-section-count {
     display: inline-flex;
     min-width: 20px;

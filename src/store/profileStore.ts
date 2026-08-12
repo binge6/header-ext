@@ -21,6 +21,7 @@ import type {
   UrlFilter,
   ExcludeUrlFilter,
   MethodFilter,
+  ProfileVariable,
 } from "../core/types";
 
 interface ProfileActions {
@@ -77,6 +78,12 @@ interface ProfileActions {
   // 整体重置请求方法白名单（用于多选下拉一次性更新）
   setMethodFilters: (profileId: string, methods: string[]) => void;
 
+  // variables (Profile 级静态变量)
+  addVariable: (profileId: string, name?: string, value?: string) => string;
+  updateVariable: (profileId: string, variable: ProfileVariable) => void;
+  deleteVariable: (profileId: string, variableId: string) => void;
+  toggleVariable: (profileId: string, variableId: string) => void;
+
   // 一键模板：把模板规则追加到指定 profile
   applyTemplate: (profileId: string, rules: HeaderRule[]) => void;
 
@@ -127,6 +134,7 @@ function emptyProfile(name: string): Profile {
     color: "#1677ff",
     rules: [],
     tabFilters: [],
+    variables: [],
     createdAt: now,
     updatedAt: now,
   };
@@ -178,6 +186,15 @@ function emptyDomainFilter(domain = ""): DomainFilter {
     id: nanoid(),
     enabled: true,
     domain,
+  };
+}
+
+function emptyVariable(name = "", value = ""): ProfileVariable {
+  return {
+    id: nanoid(),
+    enabled: true,
+    name,
+    value,
   };
 }
 
@@ -237,6 +254,8 @@ function cloneProfile(source: Profile, name: string): Profile {
   } else {
     delete next.methodFilters;
   }
+  if (source.variables) next.variables = cloneFilters(source.variables);
+  else delete next.variables;
 
   return next;
 }
@@ -404,10 +423,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const validIds = new Set(profiles.map((profile) => profile.id));
       if (!validIds.has(profileId)) return;
       const current = new Set(
-        normalizeEnabledProfileIds(
-          get().meta.enabledProfileIds,
-          profiles,
-        ),
+        normalizeEnabledProfileIds(get().meta.enabledProfileIds, profiles),
       );
       if (enabled) current.add(profileId);
       else current.delete(profileId);
@@ -848,6 +864,72 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       void persist({ profiles, meta: get().meta });
     },
 
+    addVariable: (profileId, name = "", value = "") => {
+      const variable = emptyVariable(name, value);
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              variables: [...(p.variables ?? []), variable],
+              updatedAt: Date.now(),
+            }
+          : p,
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+      return variable.id;
+    },
+
+    updateVariable: (profileId, variable) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              variables: (p.variables ?? []).map((item) =>
+                item.id === variable.id ? variable : item,
+              ),
+              updatedAt: Date.now(),
+            }
+          : p,
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    deleteVariable: (profileId, variableId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              variables: (p.variables ?? []).filter(
+                (item) => item.id !== variableId,
+              ),
+              updatedAt: Date.now(),
+            }
+          : p,
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
+    toggleVariable: (profileId, variableId) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === profileId
+          ? {
+              ...p,
+              variables: (p.variables ?? []).map((item) =>
+                item.id === variableId
+                  ? { ...item, enabled: !item.enabled }
+                  : item,
+              ),
+              updatedAt: Date.now(),
+            }
+          : p,
+      );
+      set({ profiles });
+      void persist({ profiles, meta: get().meta });
+    },
+
     applyTemplate: (profileId, templateRules) => {
       if (!templateRules.length) return;
       const profiles = get().profiles.map((p) =>
@@ -868,10 +950,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       const profiles = get().profiles;
       const now = Date.now();
       const incomingEnabledIds = new Set(
-        normalizeEnabledProfileIds(
-          incomingMeta?.enabledProfileIds,
-          incoming,
-        ),
+        normalizeEnabledProfileIds(incomingMeta?.enabledProfileIds, incoming),
       );
       // 维护一个动态扩展的命名池，确保新增项之间也不重名
       const pool: Profile[] = [...profiles];

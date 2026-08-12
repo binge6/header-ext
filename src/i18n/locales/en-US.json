@@ -105,6 +105,7 @@
     "exportFileName": "header-ext-config.json",
     "globalScopeRisk": "Global scope risk",
     "advancedRuleCount": "{{count}} advanced rule(s)",
+    "variableCount": "{{count}} variable(s)",
     "liveStack": "Live stack",
     "liveStackHint": "The current profile applies by default. Always-on profiles are merged before DNR delivery.",
     "enabledProfiles": "Active profiles",
@@ -222,6 +223,19 @@
     "selectAll": "Select all methods",
     "clearAll": "Clear selection",
     "deleteItem": "Delete method"
+  },
+  "variables": {
+    "title": "Variables",
+    "addItem": "Add variable",
+    "enableItem": "Enable this variable",
+    "disableItem": "Disable this variable",
+    "enableGroup": "Enable all variables in this group",
+    "disableGroup": "Disable all variables in this group",
+    "namePlaceholder": "Variable name, e.g. apiToken",
+    "valuePlaceholder": "Variable value",
+    "empty": "No variables yet; rule fields can reference {{syntax}}",
+    "hint": "Use {{syntax}} in header, cookie, redirect, and filter fields. It is replaced before DNR delivery.",
+    "deleteItem": "Delete variable"
   },
   "scope": {
     "title": "Scope",

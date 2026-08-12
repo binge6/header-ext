@@ -1,6 +1,12 @@
 // UserRule -> DNR Rule 编译器
 
-import type { HeaderRule, Profile, ResourceType, TabFilter } from "./types";
+import type {
+  HeaderRule,
+  Profile,
+  ProfileVariable,
+  ResourceType,
+  TabFilter,
+} from "./types";
 import { SUPPORTED_REQUEST_METHODS } from "./types";
 import type { DnrRule, DnrHeaderAction } from "./browserApi";
 
@@ -52,6 +58,58 @@ let nextDnrId = 1;
 
 // DNR 支持的请求方法集合（小写），用于过滤非法枚举避免整批规则被拒
 const SUPPORTED_METHOD_SET = new Set<string>(SUPPORTED_REQUEST_METHODS);
+const VARIABLE_TOKEN_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
+
+interface VariableResolution {
+  value: string;
+  missing: string[];
+}
+
+function buildVariableMap(
+  variables: ProfileVariable[] | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const variable of variables ?? []) {
+    const name = variable.name.trim();
+    if (variable.enabled && name) map.set(name, variable.value);
+  }
+  return map;
+}
+
+function resolveVariables(
+  value: string | undefined,
+  variables: Map<string, string>,
+): VariableResolution {
+  if (!value) return { value: value ?? "", missing: [] };
+  const missing = new Set<string>();
+  const next = value.replace(VARIABLE_TOKEN_RE, (match, rawName: string) => {
+    const name = rawName.trim();
+    if (!variables.has(name)) {
+      missing.add(name);
+      return match;
+    }
+    return variables.get(name) ?? "";
+  });
+  return { value: next, missing: Array.from(missing) };
+}
+
+function resolveVariableList(
+  values: string[] | undefined,
+  variables: Map<string, string>,
+): { values?: string[]; missing: string[] } {
+  if (!values?.length) return { missing: [] };
+  const missing = new Set<string>();
+  const next = values.map((value) => {
+    const resolved = resolveVariables(value, variables);
+    resolved.missing.forEach((name) => missing.add(name));
+    return resolved.value;
+  });
+  return { values: next, missing: Array.from(missing) };
+}
+
+function formatMissingVariables(names: string[]): string {
+  return `变量未定义：${Array.from(new Set(names)).join(", ")}`;
+}
 
 export function getDnrId(ruleId: string): number {
   let id = idMap.get(ruleId);
@@ -134,11 +192,49 @@ function buildAction(rule: HeaderRule): DnrRule["action"] | null {
 
 function compileOne(
   rule: HeaderRule,
-  ctx: CompileContext
+  ctx: CompileContext,
+  variables: Map<string, string>,
 ): { rule?: DnrRule; error?: string } {
-  const action = buildAction(rule);
+  const kind = rule.kind ?? "header";
+  const shouldResolveName = kind !== "redirect";
+  const shouldResolveValue = kind !== "header" || rule.action !== "remove";
+  const resolvedName = shouldResolveName
+    ? resolveVariables(rule.name, variables)
+    : { value: rule.name, missing: [] };
+  const resolvedValue = shouldResolveValue
+    ? resolveVariables(rule.value, variables)
+    : { value: rule.value, missing: [] };
+  const resolvedUrlFilter = resolveVariables(
+    rule.condition?.urlFilter,
+    variables,
+  );
+  const resolvedExcludedDomains = resolveVariableList(
+    rule.condition?.excludedDomains,
+    variables,
+  );
+  const missingVariables = [
+    ...resolvedName.missing,
+    ...resolvedValue.missing,
+    ...resolvedUrlFilter.missing,
+    ...resolvedExcludedDomains.missing,
+  ];
+  if (missingVariables.length) {
+    return { error: formatMissingVariables(missingVariables) };
+  }
+
+  const resolvedRule: HeaderRule = {
+    ...rule,
+    name: resolvedName.value,
+    value: resolvedValue.value,
+    condition: {
+      ...rule.condition,
+      urlFilter: resolvedUrlFilter.value,
+      excludedDomains: resolvedExcludedDomains.values,
+    },
+  };
+  const action = buildAction(resolvedRule);
   if (!action) {
-    const kind = rule.kind ?? "header";
+    const kind = resolvedRule.kind ?? "header";
     return {
       error:
         kind === "redirect"
@@ -147,7 +243,7 @@ function compileOne(
     };
   }
 
-  const cond = rule.condition ?? {};
+  const cond = resolvedRule.condition ?? {};
   const condition: DnrRule["condition"] = {};
 
   if (cond.urlFilter) {
@@ -204,7 +300,7 @@ function compileOne(
   }
 
   const dnrRule: DnrRule = {
-    id: getDnrId(rule.id),
+    id: getDnrId(resolvedRule.id),
     priority: DNR_BASE_PRIORITY,
     action,
     condition,
@@ -235,11 +331,25 @@ function expandWithTabFilters(base: DnrRule, filters: TabFilter[]): DnrRule[] {
 
 export function compileRules(
   rules: HeaderRule[],
-  ctx: CompileContext = {}
+  ctx: CompileContext = {},
 ): CompileResult {
   const out: DnrRule[] = [];
   const errors: CompileError[] = [];
-  const tabFilters = ctx.profile?.tabFilters ?? [];
+  const variables = buildVariableMap(ctx.profile?.variables);
+  let hasProfileVariableError = false;
+  const tabFilterMissing = new Set<string>();
+  const tabFilters = (ctx.profile?.tabFilters ?? []).map((filter) => {
+    const resolved = resolveVariables(filter.urlFilter, variables);
+    resolved.missing.forEach((name) => tabFilterMissing.add(name));
+    return { ...filter, urlFilter: resolved.value };
+  });
+  if (tabFilterMissing.size) {
+    hasProfileVariableError = true;
+    errors.push({
+      ruleId: "__tab_filter__",
+      message: formatMissingVariables(Array.from(tabFilterMissing)),
+    });
+  }
   const domainFilters = ctx.profile?.domainFilters ?? [];
   const urlFilters = ctx.profile?.urlFilters ?? [];
   const excludeUrlFilters = ctx.profile?.excludeUrlFilters ?? [];
@@ -249,13 +359,28 @@ export function compileRules(
     .map((m) => m.method.trim().toLowerCase())
     // 过滤 DNR 不支持的方法（如 trace），避免非法枚举导致整批规则被拒
     .filter((m) => SUPPORTED_METHOD_SET.has(m));
+  const allowedDomainMissing = new Set<string>();
   const allowedDomains = domainFilters
     .filter((d) => d.enabled && d.domain?.trim())
-    .map((d) => d.domain.trim());
+    .map((d) => {
+      const resolved = resolveVariables(d.domain.trim(), variables);
+      resolved.missing.forEach((name) => allowedDomainMissing.add(name));
+      return resolved.value.trim();
+    });
+  if (allowedDomainMissing.size) {
+    hasProfileVariableError = true;
+    errors.push({
+      ruleId: "__domain_filter__",
+      message: formatMissingVariables(Array.from(allowedDomainMissing)),
+    });
+  }
+  const excludedUrlMissing = new Set<string>();
   const excludedDomains = excludeUrlFilters
     .filter((u) => u.enabled && u.url?.trim())
     .map((u) => {
-      const v = u.url.trim();
+      const resolved = resolveVariables(u.url.trim(), variables);
+      resolved.missing.forEach((name) => excludedUrlMissing.add(name));
+      const v = resolved.value.trim();
       // 优先按 URL 解析提取 hostname；不是合法 URL 则按域名直传
       try {
         return new URL(v).hostname || v;
@@ -264,10 +389,29 @@ export function compileRules(
       }
     })
     .filter(Boolean);
+  if (excludedUrlMissing.size) {
+    hasProfileVariableError = true;
+    errors.push({
+      ruleId: "__exclude_url_filter__",
+      message: formatMissingVariables(Array.from(excludedUrlMissing)),
+    });
+  }
   // 多个 URL 正则用 (?:a)|(?:b) 合并为单个 regex（DNR 仅支持单个 regexFilter）
+  const urlRegexMissing = new Set<string>();
   const enabledRegexes = urlFilters
     .filter((f) => f.enabled && f.regex?.trim())
-    .map((f) => f.regex.trim());
+    .map((f) => {
+      const resolved = resolveVariables(f.regex.trim(), variables);
+      resolved.missing.forEach((name) => urlRegexMissing.add(name));
+      return resolved.value.trim();
+    });
+  if (urlRegexMissing.size) {
+    hasProfileVariableError = true;
+    errors.push({
+      ruleId: "__url_filter__",
+      message: formatMissingVariables(Array.from(urlRegexMissing)),
+    });
+  }
   let mergedRegex: string | null = null;
   if (enabledRegexes.length) {
     try {
@@ -283,10 +427,11 @@ export function compileRules(
       });
     }
   }
+  if (hasProfileVariableError) return { rules: [], errors };
 
   for (const r of rules) {
     if (!r.enabled) continue;
-    const { rule, error } = compileOne(r, ctx);
+    const { rule, error } = compileOne(r, ctx, variables);
     if (error) errors.push({ ruleId: r.id, message: error });
     if (!rule) continue;
 
@@ -300,7 +445,7 @@ export function compileRules(
       rule.condition = {
         ...rule.condition,
         excludedRequestDomains: Array.from(
-          new Set([...existing, ...excludedDomains])
+          new Set([...existing, ...excludedDomains]),
         ),
       };
     }
@@ -314,8 +459,7 @@ export function compileRules(
       if (rule.condition.regexFilter) {
         errors.push({
           ruleId: r.id,
-          message:
-            "规则自身已使用正则匹配，Profile 级 URL 正则过滤未对其生效",
+          message: "规则自身已使用正则匹配，Profile 级 URL 正则过滤未对其生效",
         });
       } else {
         const { urlFilter: _omit, ...rest } = rule.condition;

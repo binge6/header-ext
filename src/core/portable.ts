@@ -14,6 +14,7 @@ import type {
   UrlFilter,
   ExcludeUrlFilter,
   MethodFilter,
+  ProfileVariable,
 } from "./types";
 
 export interface ExportPayload {
@@ -170,6 +171,20 @@ function normalizeStringFilters<T extends { id: string; enabled: boolean }>(
     );
 }
 
+function normalizeVariables(raw: unknown): ProfileVariable[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item): item is Record<string, unknown> =>
+      Boolean(item && typeof item === "object"),
+    )
+    .map((item) => ({
+      id: typeof item.id === "string" ? item.id : nanoid(),
+      enabled: typeof item.enabled === "boolean" ? item.enabled : true,
+      name: asString(item.name),
+      value: asString(item.value),
+    }));
+}
+
 // 把导入的原始 profile 归一化为结构完整的 Profile；丢弃缺 id 的条目
 function normalizeProfile(raw: unknown): Profile | null {
   const source = (raw && typeof raw === "object" ? raw : {}) as Record<
@@ -201,6 +216,7 @@ function normalizeProfile(raw: unknown): Profile | null {
       source.methodFilters,
       "method",
     ),
+    variables: normalizeVariables(source.variables),
     createdAt: typeof source.createdAt === "number" ? source.createdAt : now,
     updatedAt: typeof source.updatedAt === "number" ? source.updatedAt : now,
   };

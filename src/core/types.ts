@@ -96,6 +96,15 @@ export interface MethodFilter {
   method: string;
 }
 
+// Profile 级静态变量：规则字段可用 {{name}} 引用，编译下发 DNR 前替换为 value。
+export interface ProfileVariable {
+  id: string;
+  enabled: boolean;
+  // 变量名不包含 {{ }}；编译时按 trim 后的名称匹配
+  name: string;
+  value: string;
+}
+
 // DNR requestMethods 支持的 HTTP 方法（Chrome / Firefox 一致，均为小写）。
 // 注意：不含 "trace"——Chrome 与 Firefox 的 DNR RequestMethod 枚举都不支持，
 // 传入非法枚举会导致 updateDynamicRules 整批 reject。
@@ -125,6 +134,8 @@ export interface Profile {
   excludeUrlFilters?: ExcludeUrlFilter[];
   // Profile 级请求方法白名单
   methodFilters?: MethodFilter[];
+  // Profile 级静态变量，用于规则字段占位符替换
+  variables?: ProfileVariable[];
   createdAt: number;
   updatedAt: number;
 }

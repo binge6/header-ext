@@ -105,6 +105,7 @@
     "exportFileName": "header-ext-config.json",
     "globalScopeRisk": "全局作用风险",
     "advancedRuleCount": "{{count}} 条高级条件",
+    "variableCount": "{{count}} 个变量",
     "liveStack": "实时生效",
     "liveStackHint": "当前 Profile 默认生效，始终启用的 Profile 会叠加下发到 DNR",
     "enabledProfiles": "生效 Profile",
@@ -222,6 +223,19 @@
     "selectAll": "全选所有方法",
     "clearAll": "清空选择",
     "deleteItem": "删除方法"
+  },
+  "variables": {
+    "title": "变量",
+    "addItem": "新增变量",
+    "enableItem": "启用此变量",
+    "disableItem": "停用此变量",
+    "enableGroup": "启用本组全部变量",
+    "disableGroup": "停用本组全部变量",
+    "namePlaceholder": "变量名，如：apiToken",
+    "valuePlaceholder": "变量值",
+    "empty": "未配置变量；规则字段可引用 {{syntax}}",
+    "hint": "在 Header、Cookie、Redirect 和过滤字段中输入 {{syntax}}，下发 DNR 前会替换为变量值。",
+    "deleteItem": "删除变量"
   },
   "scope": {
     "title": "作用范围",

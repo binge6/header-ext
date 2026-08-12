@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  Braces,
   Filter,
   Layers3,
   MoreHorizontal,
@@ -13,6 +14,7 @@ import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
 import { FilterMenu, ModificationMenu } from "@/src/components/RuleActionMenus";
 import { TabFilterList } from "@/src/components/TabFilterList";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
+import { VariableList } from "@/src/components/VariableList";
 import { Button } from "@/src/ui/controls";
 import { Badge } from "@/src/ui/feedback";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
@@ -23,6 +25,7 @@ import type {
   ExcludeUrlFilter,
   HeaderRule,
   Profile,
+  ProfileVariable,
   TabFilter,
   UrlFilter,
 } from "@/src/core/types";
@@ -51,8 +54,10 @@ interface Props {
   activeStatus: ProfileStatus | null;
   ruleGroups: RuleGroups;
   filterGroups: FilterGroups;
+  variables: ProfileVariable[];
   hasRuleContent: boolean;
   hasFilterContent: boolean;
+  hasVariableContent: boolean;
   globalPaused: boolean;
   riskyProfilesCount: number;
   riskyProfileNames: string;
@@ -82,6 +87,10 @@ interface Props {
   onDeleteExcludeUrlFilter: (filterId: string) => void;
   onToggleExcludeUrlFilter: (filterId: string) => void;
   onSetMethodFilters: (methods: string[]) => void;
+  onAddVariable: () => void;
+  onUpdateVariable: (variable: ProfileVariable) => void;
+  onDeleteVariable: (variableId: string) => void;
+  onToggleVariable: (variableId: string) => void;
   onAddHeader: (target: "request" | "response") => void;
   onAddRule: (kind: HeaderRule["kind"]) => void;
   onScrollUpdate: () => void;
@@ -92,8 +101,10 @@ export function ProfileEditor({
   activeStatus,
   ruleGroups,
   filterGroups,
+  variables,
   hasRuleContent,
   hasFilterContent,
+  hasVariableContent,
   globalPaused,
   riskyProfilesCount,
   riskyProfileNames,
@@ -123,6 +134,10 @@ export function ProfileEditor({
   onDeleteExcludeUrlFilter,
   onToggleExcludeUrlFilter,
   onSetMethodFilters,
+  onAddVariable,
+  onUpdateVariable,
+  onDeleteVariable,
+  onToggleVariable,
   onAddHeader,
   onAddRule,
   onScrollUpdate,
@@ -204,6 +219,17 @@ export function ProfileEditor({
               </Button>
             }
           />
+          <Tooltip content={t("variables.addItem")} side="bottom">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={!active}
+              aria-label={t("variables.addItem")}
+              onClick={onAddVariable}
+            >
+              <Braces aria-hidden="true" />
+            </Button>
+          </Tooltip>
           <TemplateMenu profileId={active?.id ?? null} iconOnly />
           <AlwaysEnableProfileButton
             checked={!!activeStatus?.alwaysEnabled}
@@ -255,7 +281,7 @@ export function ProfileEditor({
           events={{ scroll: onScrollUpdate, updated: onScrollUpdate }}
         >
           <div className="flex flex-col gap-2">
-            {!hasRuleContent && !hasFilterContent && (
+            {!hasRuleContent && !hasFilterContent && !hasVariableContent && (
               <div className="flex min-h-54 flex-col items-center justify-center gap-2.5 px-4 py-5.5">
                 <div
                   className={cn(
@@ -285,6 +311,16 @@ export function ProfileEditor({
                   }
                 />
               </div>
+            )}
+            {hasVariableContent && (
+              <VariableList
+                variant="editor"
+                variables={variables}
+                onAdd={onAddVariable}
+                onUpdate={onUpdateVariable}
+                onDelete={onDeleteVariable}
+                onToggle={onToggleVariable}
+              />
             )}
             {hasRuleContent && (
               <>
