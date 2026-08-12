@@ -18,12 +18,35 @@ pnpm dev:firefox     # Firefox MV3 开发
 pnpm build           # Chrome 生产构建
 pnpm build:firefox   # Firefox 生产构建
 pnpm compile         # 仅类型检查（tsc --noEmit）——改完代码务必跑一次
+pnpm lint            # Oxlint 静态检查
+pnpm format          # Oxfmt 全仓格式化
+pnpm check           # Oxfmt check + Oxlint + TypeScript
 pnpm zip / zip:firefox
 ```
 
-改动后的最低验证标准：`pnpm compile` 通过 + `pnpm build` 通过。涉及 Firefox 行为时补跑 `pnpm build:firefox`。
+改动后的最低验证标准：`pnpm check` 通过 + `pnpm build` 通过。涉及 Firefox 行为时补跑 `pnpm build:firefox`。
 
 ## 架构与数据流
+
+完整架构说明见 [ARCHITECTURE.md](./ARCHITECTURE.md)。项目采用分层 + feature 组织：
+
+```text
+entrypoints → app → features → application
+                         ├────→ platform → domain
+                         └────→ shared
+```
+
+- `domain/`：纯业务模型与纯派生逻辑，不依赖浏览器、状态库或 React。
+- `platform/`：浏览器、storage、文件、DNR 适配；可依赖 domain，不能依赖 application/features/app。
+- `application/`：Zustand、持久化编排、i18n、状态感知 hook；不能依赖 features/app。
+- `features/`：按用户能力组织业务 UI，目前包括 workspace、preferences、data-transfer。
+- `app/`：组合 feature，承载 popup/options 页面及页面专属组件。
+- `entrypoints/`：只保留 WXT 生命周期、HTML 与 React 挂载。
+- `shared/`：无 Header Ext 业务含义的 UI primitive、设计 token 与通用工具。
+
+跨层引用优先使用各层或 feature 的 `index.ts` public API。禁止新建 `core/`、`components/`、`utils/`
+等职责不明的兜底目录。.oxlintrc.json 已限制底层反向依赖，并禁止 platform 之外直接使用
+`browser` / `chrome` 全局。
 
 单一信源是 `storage.local`（键 `app:state:v1`），三处（popup / options / background）通过它保持一致：
 
@@ -34,15 +57,13 @@ UI 编辑 → Zustand store → persist() 写 storage.local
                                     └──→ background: applyState() 编译并下发 DNR
 ```
 
-- [src/store/profileStore.ts](./src/store/profileStore.ts)：唯一 store。所有 mutation 都走 `actions`，每次改动都 `set()` 后 `persist()` 写 storage。远端回写时用模块级 `isApplyingRemote` 标志避免回环（`persist` 内会 `return`）。组件里用 `useProfileActions()` 拿稳定的 actions 引用。
+- [src/application/profile-store](./src/application/profile-store)：唯一 store。所有 mutation 都走 `actions`，每次改动都 `set()` 后持久化。远端回写时用 `isApplyingRemote` 避免回环；组件用 `useProfileActions()` 获取稳定 actions 引用。
 - **多 profile 模型（重要）**：`meta.activeProfileId` 只是「UI 当前编辑/展示」的那个；真正下发的是 `meta.enabledProfileIds`——所有被启用的 profile 会**同时**编译进 DNR。`meta.globalPaused` 是总开关，为真时清空全部规则。
-- [src/core/registry.ts](./src/core/registry.ts)：`applyState()` 遍历所有 `enabledProfileIds` 编译成 DNR 规则。含 `tabIds`/`excludedTabIds` 的规则只能进 **session rules**（Chrome MV3 限制），其余进 dynamic rules；两组都从 id=1 重新连续编号避免冲突。
-- [src/core/compiler.ts](./src/core/compiler.ts)：规则模型 → DNR 规则的编译器（cookie 模式自动合成 Cookie/Set-Cookie 头、正则重定向、把 profile 级过滤器并到每条规则的 condition、tab 过滤器展开为多条规则等）。
-- [src/core/profileStatus.ts](./src/core/profileStatus.ts)：**纯派生层**（无副作用/不碰 storage）。算每个 profile 的统计与风险（`hasGlobalRisk = 有启用规则但无任何启用过滤器`）、作用域摘要、是否命中当前域名，以及 `buildWorkspaceStatus()` 聚合启用/风险/冲突分组，供 popup 侧栏与 options inspector 展示。
-- [src/core/types.ts](./src/core/types.ts)：公共领域模型（`Profile` / `HeaderRule` / 各类 `*Filter` / `AppMeta` / `AppState`）。**加字段时注意向后兼容**：老数据缺 `kind` 视为 `"header"`，缺 `theme` 视为 `"system"`，缺 `enabledProfileIds` 回退 `[activeProfileId]`，过滤器数组都是可选（`?? []` 兜底）。
-- [src/core/storage.ts](./src/core/storage.ts)：`loadState`/`saveState`/`subscribeState` + 默认态工厂 + `normalizeMeta` 兼容回填。
-- [src/core/browserApi.ts](./src/core/browserApi.ts)：跨端封装 `dnr` / `storageLocal` / `getUILanguage` / `openOptionsPage`。
-- [src/core/capabilities.ts](./src/core/capabilities.ts)：运行时能力探测（`hasDeclarativeNetRequest` / `hasWebRequestBlocking`(仅 FF) / `isFirefox`），UI 据此隐藏不支持的功能。
+- [src/platform/dnr](./src/platform/dnr)：`applyState()` 与 DNR 编译器；处理 Cookie/Header、正则重定向、Profile 条件合并与 session/dynamic rules。
+- [src/domain/profile-status.ts](./src/domain/profile-status.ts)：纯派生层，计算统计、风险、作用域与冲突分组。
+- [src/domain/models.ts](./src/domain/models.ts)：公共领域模型。加字段时必须兼容老数据：缺 `kind` 视为 `"header"`，缺 `theme` 视为 `"system"`，缺 `enabledProfileIds` 回退 `[activeProfileId]`，可选数组统一 `?? []`。
+- [src/platform/storage](./src/platform/storage)：状态仓储与兼容归一化。
+- [src/platform/browser](./src/platform/browser)：跨浏览器 API 与能力探测；其他层不得直接访问浏览器全局。
 - [entrypoints/background.ts](./entrypoints/background.ts)：SW 启动/唤醒/安装时重建状态，并订阅 storage 变化实时下发。
 
 过滤语义：Tab / 域名 / URL 正则 / 排除 URL / 请求方法 之间是 **AND 组合**；同类多项之间是 OR（URL 正则合并成 `(?:a)|(?:b)`，domain/method 走 DNR 数组条件，tab 展开成多条规则）。没有任何启用的过滤项时，规则作用于全部请求（此时 `NoFilterBanner` 会提示：有启用规则却零过滤器）。
@@ -51,35 +72,29 @@ UI 编辑 → Zustand store → persist() 写 storage.local
 
 ```
 entrypoints/
-  background.ts                     # Service Worker
-  popup/
-    { App.tsx, main.tsx, App.css, index.html }
-    components/ { PopupHeader, ProfileRail, ProfileEditor/, ProfileContextMenu, utils }
-  options/
-    { App.tsx, main.tsx, App.css, index.html }
+  background.ts                     # WXT Service Worker 适配
+  popup/ { main.tsx, index.html }    # 仅挂载 src/app/popup
+  options/ { main.tsx, index.html }  # 仅挂载 src/app/options
 src/
-  core/        # types / compiler / registry / storage / browserApi / templates / portable / capabilities / profileStatus
-  store/       # profileStore（唯一 Zustand store）
-  ui/          # 基础 primitive 封装 + primitive 样式：controls/ feedback/ overlays/ select/
-  components/  # 业务组件
-  hooks/       # useThemeMode / useHistorySuggestions
-  i18n/        # index / detector + locales/{zh-CN,en-US}.json
-  styles/      # app.css（设计 token + 跨业务共享 he-* 类，唯一 token 入口）
-  utils/       # cn.ts
+  app/         # Popup / Options 页面组合、页面 CSS、页面私有组件
+  application/ # profile-store / hooks / i18n
+  domain/      # models / profile-status / templates / transfer
+  features/    # workspace / preferences / data-transfer
+  platform/    # browser / storage / files / dnr
+  shared/      # ui / styles / lib
 public/
   _locales/{en,zh_CN}/messages.json # manifest 文案（__MSG_*__）
   icon/                             # 扩展图标 16/32/48/96/128
 assets/logo.svg
 ```
 
-## UI 组件分层（重要）
+## UI 与 Feature 分层（重要）
 
-分两层，改 UI 前先认清在哪一层：
+1. **基础 primitive**：[src/shared/ui](./src/shared/ui)。只允许无业务语义的 Button/Input/Dialog/Popover/Select 等；按 `controls` / `feedback` / `overlays` / `scroll` / `select` 分组，并在同目录 side-effect import 样式。
+2. **业务能力 UI**：[src/features](./src/features)。组件按能力归属，不按“通用组件”归属。Profile/规则/过滤器/变量编辑都在 `features/workspace`；主题语言在 `features/preferences`；导入导出在 `features/data-transfer`。
+3. **页面组合**：[src/app](./src/app)。只放 Popup/Options 的页面编排和页面私有组件，不沉淀跨页面业务组件。
 
-1. **基础 primitive**：[src/ui/](./src/ui)。`controls/`（Button/Input/AutoCompleteInput/Switch/Checkbox）、`feedback/`（Dialog/ConfirmDialog/Spinner/Badge/AppToaster）、`overlays/`（Tooltip/UIProvider/DropdownMenu\*/Popover\*）、`select/`（SelectControl/MultiSelect）；[index.tsx](./src/ui/index.tsx) 汇总 `export *`。这些封装 Radix primitives 与 `sonner`，统一挂 `he-*` 类；每个 primitive 目录用 `index.tsx` + `index.scss` 分层，`index.tsx` 直接 side-effect import 同目录样式，保证 deep import 不漏样式。引入时走 barrel `@/src/ui`，或按需 deep-import `@/src/ui/controls` 等。**新增基础组件加在 `src/ui/` 对应目录；新增 primitive 样式加在同目录 `index.scss`。**
-2. **业务组件**：[src/components/](./src/components)（HeaderRuleList / RuleTable / ProfilePanel / 各类 Filter picker / GroupHeader / MenuItemLabel …）与 [entrypoints/popup/components/](./entrypoints/popup/components)（PopupHeader / ProfileRail / ProfileEditor / ProfileContextMenu）。它们消费第 1 层 primitive，不直接拼 Radix 组合结构。
-
-复用优先：重复结构抽成组件而非复制。现有公共小组件：`GroupHeader`（分组标题+新增按钮）、`MenuItemLabel`（菜单项标题+描述两行）。
+复用优先，但复用不等于上移到全局目录：优先放在所属 feature 的 `components/`；只有无业务语义时才进入 `shared/`。
 
 ## 组件目录分层（约定）
 
@@ -97,9 +112,9 @@ ComponentName/
 - **按需拆分，别为拆而拆**：只有 1～2 个常量时直接内联进 `index.tsx`，不必单开 `const.ts`；没有复杂样式就不建 `index.module.scss`。避免过度提取。
 - **单文件规模阈值**：组件单文件超过 500 行时，应主动评估是否拆成同名目录、子组件、`utils.ts` / `types.ts` / `const.ts` 等；如果 500+ 行仍保持单文件，需要有明确理由（例如高度线性的表单配置或短期迁移状态）。
 - **子组件同样适用**：子组件复杂到同样含样式/常量/工具时，在该目录下再开子目录，按同一套结构拆分。
-- **就近原则**：`const.ts` / `utils.ts` / `types.ts` 只放**本组件私有**的内容；一旦被多个组件复用，就上移到 `src/`（见下条）。
+- **就近原则**：`const.ts` / `utils.ts` / `types.ts` 先放组件或 feature 内；只有职责明确且无业务依赖时才上移到 `shared/lib`。
 
-**entrypoints 与 src 的分工**：`entrypoints/*/components/` 只放该入口页**专属**的组件，其内部分层同样参考上面的结构。**公共通用的方法、组件、样式、类型一律放 `src/`**——工具进 [src/utils/](./src/utils)、可复用业务组件进 [src/components/](./src/components)、基础 primitive 与 primitive 样式进 [src/ui/](./src/ui)、设计 token 与跨业务共享样式进 [src/styles/app.css](./src/styles/app.css)、共享 hook 进 [src/hooks/](./src/hooks)。别让入口页互相 import 对方的局部文件。
+**entrypoints 与 app 的分工**：`entrypoints/` 不放业务组件，只负责 WXT 适配与 React 挂载。页面专属组件进入 `src/app/{popup,options}`；可复用业务能力进入对应 feature。
 
 ## 样式约定（重要）
 
@@ -109,7 +124,7 @@ ComponentName/
 2. **`*.module.scss`**（其次）：当原子类表达不了或会导致 `className` 冗长难读时——例如复杂选择器（`&:hover`、`[data-state]`、`::before`）、伪元素装饰、多状态嵌套、局部关键帧动画——把这部分收进组件同级的 module scss，用 `import styles from "./index.module.scss"` + `cn(styles.xxx, "tw-原子类")` 组合。scoped class 不会污染全局。
 3. **共享 `he-*` 组件类 / 页面布局类**：仅当样式需要**跨组件复用**（primitive 外观）或属于**页面级布局骨架**时才落到全局 CSS（见下）。
 
-> 交互控件（按钮/输入/菜单/开关等）永远**优先复用 [src/ui/](./src/ui) 的 primitive**，而不是用上面任何一种手搓外观。
+> 交互控件（按钮/输入/菜单/开关等）永远**优先复用 [src/shared/ui](./src/shared/ui) 的 primitive**，而不是手搓外观。
 
 **module scss 规则**：
 
@@ -120,10 +135,10 @@ ComponentName/
 
 **全局 CSS（跨页复用 / 页面骨架）**：
 
-- **设计 token + 跨业务共享类**：[src/styles/app.css](./src/styles/app.css) 是**唯一 token 入口**，两个 `main.tsx` 在最顶部 `@import`。它含 `@theme`、`:root` / `:root[data-theme="dark"]` 变量，以及 `@layer components` 里跨业务复用的 `he-*` 类（如 `he-editor-*`、`he-profile-list-*`、`he-empty-state`、`he-section-title`）。primitive 外观类（如 `he-button`、`he-input`、`he-switch`、`he-select-*`、`he-menu-*`、`he-dialog-*`、`he-badge`）归属 [src/ui](./src/ui) 下对应模块的 scss 文件，不要放回 app.css。
-- **页面布局类**：popup / options 各自的 `App.css`（[popup/App.css](./entrypoints/popup/App.css) 的 `he-popup-*`、`he-profile-rail-*`、`he-scroll-shadow-*`；[options/App.css](./entrypoints/options/App.css) 的 `he-options-*`、`he-workbench-*`、`he-inspector-*`）。**只在单页出现的布局骨架放这里，别塞进 app.css，也别用 module scss 承载页面级 sticky/grid 骨架。**
-- **颜色 token**：shadcn 风格语义 token——`bg-background`、`bg-card`、`text-foreground`、`text-muted-foreground`、`border-border`、`text-primary`，以及状态色 `success` / `warning` / `info` / `purple` / `orange`（各带 `-soft` 底色、部分带 `-hover`）。浅色在 `:root`，深色在 `:root[data-theme="dark"]`；主题切换由 [useThemeMode](./src/hooks/useThemeMode.ts) 同步到 `<html data-theme>`。
-- **类名拼接**：用 [src/utils/cn.ts](./src/utils/cn.ts) 的 `cn()`（`clsx` + `tailwind-merge`），module scss class 与 Tailwind 原子类混用时也走它。
+- **设计 token + 跨业务共享类**：[src/shared/styles/app.css](./src/shared/styles/app.css) 是**唯一 token 入口**，两个 `main.tsx` 在最顶部 import。primitive 外观类归属 [src/shared/ui](./src/shared/ui) 对应模块的 scss，不要放回 app.css。
+- **页面布局类**：popup / options 各自使用 [PopupApp.css](./src/app/popup/PopupApp.css) 与 [OptionsApp.css](./src/app/options/OptionsApp.css)。只在单页出现的 sticky/grid 骨架放页面 CSS。
+- **颜色 token**：shadcn 风格语义 token——`bg-background`、`bg-card`、`text-foreground`、`text-muted-foreground`、`border-border`、`text-primary`，以及状态色 `success` / `warning` / `info` / `purple` / `orange`。主题切换由 [use-theme-mode.ts](./src/application/hooks/use-theme-mode.ts) 同步到 `<html data-theme>`。
+- **类名拼接**：用 [src/shared/lib/cn.ts](./src/shared/lib/cn.ts) 的 `cn()`（`clsx` + `tailwind-merge`）。
 - **图标**：统一 `lucide-react`；无文字图标按钮必须提供 `aria-label`。
 - **禁止**在原子类里用 px / 颜色 arbitrary value（例如任意宽度值或十六进制颜色值）。
   - 尺寸走 4px 栅格：`w-155`=620px（popup 固定宽）、`max-w-360`=1440px、`gap-1.5`=6px。
@@ -134,15 +149,15 @@ ComponentName/
 
 ## i18n
 
-- 界面文案走 [src/i18n](./src/i18n)（i18next + react-i18next），组件内用 `useTranslation()` 的 `t(key)`。目前两种语言，新增文案**同时**更新 `locales/zh-CN.json` 和 `locales/en-US.json`。语言探测顺序：用户存储偏好 → `browser.i18n.getUILanguage()` → 兜底 `en-US`。
+- 界面文案走 [src/application/i18n](./src/application/i18n)（i18next + react-i18next），组件内用 `useTranslation()` 的 `t(key)`。新增文案同时更新中英文 locale。语言探测顺序：用户偏好 → 平台层 UI language → `en-US`。
 - 扩展元信息（name/description）走 `public/_locales/**/messages.json`，manifest 里用 `__MSG_extName__` / `__MSG_extDesc__` 引用，`default_locale: "en"`。**注意目录名是 Chrome 要求的下划线形式 `zh_CN`**，与 UI locale 文件名 `zh-CN` 不同。
 
 ## 跨端与权限注意
 
-- 不直接依赖 `chrome.*` 命名空间；通过 [src/core/browserApi.ts](./src/core/browserApi.ts) 适配（WXT 注入的全局 `browser`），`ResourceType` 等类型自定义以便跨端。差异化能力用 [capabilities.ts](./src/core/capabilities.ts) 探测后再决定是否渲染。
+- `browser` / `chrome` 全局仅允许出现在 [src/platform/browser](./src/platform/browser)。其他层通过平台层 public API 访问 Tabs、Runtime、storage 与 DNR；Oxlint 会阻止越界。
 - manifest 权限：`declarativeNetRequest` / `declarativeNetRequestFeedback` / `storage` / `tabs` + `host_permissions: ["<all_urls>"]`。
 - Firefox MV3 特有配置在 `wxt.config.ts` 的 `browser_specific_settings.gecko`（含 `strict_min_version: "128.0"` 与 `data_collection_permissions: { required: ["none"] }`，AMO 要求）。改 manifest/权限时注意两端差异。
-- 隐私红线：只用本地 `storage.local`，**不得**向任何远端发送用户数据；导入/导出走本地文件（[portable.ts](./src/core/portable.ts)，schema `header-ext.v1`）。
+- 隐私红线：只用本地 `storage.local`，不得向任何远端发送用户数据；导入解析走 [src/domain/transfer.ts](./src/domain/transfer.ts)，文件 IO 走 [src/platform/files](./src/platform/files)，schema 为 `header-ext.v1`。
 
 ## 依赖安装提醒
 

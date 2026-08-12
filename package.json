@@ -12,6 +12,11 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "lint": "oxlint entrypoints src wxt.config.ts --deny-warnings",
+    "lint:fix": "oxlint entrypoints src wxt.config.ts --fix",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "check": "pnpm format:check && pnpm lint && pnpm compile",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -40,6 +45,8 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "sass": "^1.101.3",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",

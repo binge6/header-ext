@@ -1,11 +1,10 @@
-import "@/src/styles/app.css";
+import "@/src/shared/styles/app.css";
 import ReactDOM from "react-dom/client";
-import { ErrorBoundary } from "@/src/ui";
-import App from "./App.tsx";
-import "./App.css";
+import { OptionsApp } from "@/src/app/options";
+import { ErrorBoundary } from "@/src/shared/ui";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
-    <App />
+    <OptionsApp />
   </ErrorBoundary>,
 );

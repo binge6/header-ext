@@ -1,10 +1,10 @@
-import "@/src/styles/app.css";
+import "@/src/shared/styles/app.css";
 import ReactDOM from "react-dom/client";
-import { ErrorBoundary } from "@/src/ui";
-import App from "./App.tsx";
+import { PopupApp } from "@/src/app/popup";
+import { ErrorBoundary } from "@/src/shared/ui";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
-    <App />
+    <PopupApp />
   </ErrorBoundary>,
 );

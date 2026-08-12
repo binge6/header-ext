@@ -1,0 +1,98 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/domain/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/src/platform/**",
+                  "@/src/application/**",
+                  "@/src/features/**",
+                  "@/src/app/**"
+                ],
+                "message": "Domain must remain independent from upper layers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/platform/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/src/application/**",
+                  "@/src/features/**",
+                  "@/src/app/**"
+                ],
+                "message": "Platform may depend on domain, never on application or UI."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/application/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/src/features/**", "@/src/app/**"],
+                "message": "Application may not depend on features or app composition."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "entrypoints/**/*.{ts,tsx}",
+        "src/application/**/*.{ts,tsx}",
+        "src/domain/**/*.{ts,tsx}",
+        "src/features/**/*.{ts,tsx}",
+        "src/shared/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "browser",
+            "message": "Use the platform/browser adapter instead of the global browser API."
+          },
+          {
+            "name": "chrome",
+            "message": "Use the platform/browser adapter instead of chrome.*."
+          }
+        ]
+      }
+    }
+  ],
+  "env": {
+    "browser": true,
+    "builtin": true
+  }
+}

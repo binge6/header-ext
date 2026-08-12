@@ -51,22 +51,31 @@ pnpm build:firefox   # Firefox
 pnpm zip             # 打包 Chrome zip
 pnpm zip:firefox     # 打包 Firefox zip
 pnpm compile         # 仅做类型检查
+pnpm lint            # Oxlint 静态检查
+pnpm format          # 使用 Oxfmt 格式化
+pnpm check           # 格式检查 + lint + 类型检查
 ```
 
 ## 项目结构
 
 ```
 entrypoints/
-  background.ts        # Service Worker，规则编译与下发
-  popup/               # 工具栏弹窗
-  options/             # 设置页（独立 Tab 打开）
+  background.ts        # WXT Service Worker 适配入口
+  popup/               # Popup HTML 与 React 挂载
+  options/             # Options HTML 与 React 挂载
 src/
-  core/                # 规则模型、编译器、存储、浏览器 API 适配
-  components/          # 通用 UI 组件
-  store/               # Zustand store
-  i18n/                # 中英文资源
+  app/                 # Popup / Options 页面组合与页面专属 UI
+  application/         # Zustand 状态、同步、应用 Hook、i18n
+  domain/              # 纯模型、派生逻辑、模板、导入导出 Schema
+  features/            # 工作区、偏好设置、数据迁移等业务能力
+  platform/            # 浏览器、存储、文件与 DNR 适配
+  shared/              # 无业务含义的 UI、样式与通用工具
 public/icon/           # 16/32/48/96/128 图标
 ```
+
+依赖从 entrypoints 和 app 组合层单向流向 features、application、platform
+与 domain；底层不得反向依赖页面或业务 UI。完整依赖规则与文件放置指南见
+[ARCHITECTURE.md](./ARCHITECTURE.md)。
 
 ## 权限说明
 

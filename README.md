@@ -51,22 +51,32 @@ pnpm build:firefox   # Firefox
 pnpm zip             # Package Chrome zip
 pnpm zip:firefox     # Package Firefox zip
 pnpm compile         # Type check only
+pnpm lint            # Oxlint
+pnpm format          # Format with Oxfmt
+pnpm check           # Format check + lint + type check
 ```
 
 ## Project Structure
 
 ```
 entrypoints/
-  background.ts        # Service Worker: rule compilation and dispatch
-  popup/               # Toolbar popup
-  options/             # Options page (opens in a dedicated tab)
+  background.ts        # WXT service-worker adapter
+  popup/               # Popup HTML + React mount
+  options/             # Options HTML + React mount
 src/
-  core/                # Rule model, compiler, storage, browser API adapter
-  components/          # Shared UI components
-  store/               # Zustand store
-  i18n/                # Chinese and English resources
+  app/                 # Popup/options composition and page-only UI
+  application/         # Zustand state, synchronization, hooks, i18n
+  domain/              # Pure models, derivations, templates, transfer schema
+  features/            # Workspace, preferences, and data-transfer capabilities
+  platform/            # Browser, storage, file, and DNR adapters
+  shared/              # Business-agnostic UI, styles, and utilities
 public/icon/           # 16/32/48/96/128 icons
 ```
+
+Dependencies point from entrypoints and app composition toward features,
+application, platform, and domain. Lower layers never import UI or app layers.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full dependency rules and
+placement guide.
 
 ## Permissions
 
