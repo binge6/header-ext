@@ -7,14 +7,27 @@ import {
   Plus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
-import { FilterRowList } from "@/src/components/FilterRowList";
-import { HeaderRuleList } from "@/src/components/HeaderRuleList";
-import { MethodFilterPicker } from "@/src/components/MethodFilterPicker";
-import { FilterMenu, ModificationMenu } from "@/src/components/RuleActionMenus";
-import { TabFilterList } from "@/src/components/TabFilterList";
+import {
+  AddProfileButton,
+  ProfileAlwaysEnableButton,
+} from "@/src/components/ProfileActionButtons";
+import {
+  ProfileFilterMenu,
+  ProfileModificationMenu,
+} from "@/src/components/ProfileActionMenus";
+import {
+  ProfileDomainFilterList,
+  ProfileExcludeUrlFilterList,
+  ProfileMethodFilterPicker,
+  ProfileTabFilterList,
+  ProfileUrlFilterList,
+} from "@/src/components/ProfileFilterLists";
+import { ProfileHeaderRuleList } from "@/src/components/ProfileHeaderRuleList";
+import {
+  ProfileAddVariableButton,
+  ProfileVariableList,
+} from "@/src/components/ProfileVariableList";
 import { TemplateMenu } from "@/src/components/TemplateMenu";
-import { VariableList } from "@/src/components/VariableList";
 import { Button } from "@/src/ui/controls";
 import { Badge } from "@/src/ui/feedback";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
@@ -25,7 +38,7 @@ import type {
   ExcludeUrlFilter,
   HeaderRule,
   Profile,
-  ProfileVariable,
+  RuleKind,
   TabFilter,
   UrlFilter,
 } from "@/src/core/types";
@@ -52,12 +65,6 @@ interface FilterGroups {
 interface Props {
   active: Profile | undefined;
   activeStatus: ProfileStatus | null;
-  ruleGroups: RuleGroups;
-  filterGroups: FilterGroups;
-  variables: ProfileVariable[];
-  hasRuleContent: boolean;
-  hasFilterContent: boolean;
-  hasVariableContent: boolean;
   globalPaused: boolean;
   riskyProfilesCount: number;
   riskyProfileNames: string;
@@ -65,46 +72,21 @@ interface Props {
   profileMenuVisible: boolean;
   scrollShadow: { top: boolean; bottom: boolean };
   scrollAreaRef: React.RefObject<OverlayScrollbarsComponentRef | null>;
-  modificationMenuProps: React.ComponentProps<typeof ModificationMenu>;
-  filterMenuProps: React.ComponentProps<typeof FilterMenu>;
+  currentTabDomain: string;
+  currentTabUrl: string;
+  currentTabUrlPattern: string;
+  currentTabRegex: string;
   onProfileMenuVisibleChange: (open: boolean) => void;
-  onAddProfile: () => void;
-  onToggleAlwaysEnabled: (enabled: boolean) => void;
-  onUpdateRule: (rule: HeaderRule) => void;
-  onDeleteRule: (ruleId: string) => void;
-  onToggleRule: (ruleId: string) => void;
-  onReorderRules: (ruleIds: string[]) => void;
-  onUpdateTabFilter: (filter: TabFilter) => void;
-  onDeleteTabFilter: (filterId: string) => void;
-  onToggleTabFilter: (filterId: string) => void;
-  onUpdateDomainFilter: (filter: DomainFilter) => void;
-  onDeleteDomainFilter: (filterId: string) => void;
-  onToggleDomainFilter: (filterId: string) => void;
-  onUpdateUrlFilter: (filter: UrlFilter) => void;
-  onDeleteUrlFilter: (filterId: string) => void;
-  onToggleUrlFilter: (filterId: string) => void;
-  onUpdateExcludeUrlFilter: (filter: ExcludeUrlFilter) => void;
-  onDeleteExcludeUrlFilter: (filterId: string) => void;
-  onToggleExcludeUrlFilter: (filterId: string) => void;
-  onSetMethodFilters: (methods: string[]) => void;
-  onAddVariable: () => void;
-  onUpdateVariable: (variable: ProfileVariable) => void;
-  onDeleteVariable: (variableId: string) => void;
-  onToggleVariable: (variableId: string) => void;
-  onAddHeader: (target: "request" | "response") => void;
-  onAddRule: (kind: HeaderRule["kind"]) => void;
   onScrollUpdate: () => void;
+}
+
+function ruleKind(rule: HeaderRule): RuleKind {
+  return rule.kind ?? "header";
 }
 
 export function ProfileEditor({
   active,
   activeStatus,
-  ruleGroups,
-  filterGroups,
-  variables,
-  hasRuleContent,
-  hasFilterContent,
-  hasVariableContent,
   globalPaused,
   riskyProfilesCount,
   riskyProfileNames,
@@ -112,34 +94,11 @@ export function ProfileEditor({
   profileMenuVisible,
   scrollShadow,
   scrollAreaRef,
-  modificationMenuProps,
-  filterMenuProps,
+  currentTabDomain,
+  currentTabUrl,
+  currentTabUrlPattern,
+  currentTabRegex,
   onProfileMenuVisibleChange,
-  onAddProfile,
-  onToggleAlwaysEnabled,
-  onUpdateRule,
-  onDeleteRule,
-  onToggleRule,
-  onReorderRules,
-  onUpdateTabFilter,
-  onDeleteTabFilter,
-  onToggleTabFilter,
-  onUpdateDomainFilter,
-  onDeleteDomainFilter,
-  onToggleDomainFilter,
-  onUpdateUrlFilter,
-  onDeleteUrlFilter,
-  onToggleUrlFilter,
-  onUpdateExcludeUrlFilter,
-  onDeleteExcludeUrlFilter,
-  onToggleExcludeUrlFilter,
-  onSetMethodFilters,
-  onAddVariable,
-  onUpdateVariable,
-  onDeleteVariable,
-  onToggleVariable,
-  onAddHeader,
-  onAddRule,
   onScrollUpdate,
 }: Props) {
   const { t } = useTranslation();
@@ -158,13 +117,53 @@ export function ProfileEditor({
         <div className="text-sm font-semibold text-foreground">
           {t("options.noProfiles")}
         </div>
-        <Button size="sm" onClick={onAddProfile}>
+        <AddProfileButton size="sm">
           <Plus aria-hidden="true" />
           {t("options.newProfile")}
-        </Button>
+        </AddProfileButton>
       </div>
     );
   }
+
+  const rules = active.rules;
+  const ruleGroups: RuleGroups = {
+    requestRules: rules.filter(
+      (rule) => ruleKind(rule) === "header" && rule.target === "request",
+    ),
+    responseRules: rules.filter(
+      (rule) => ruleKind(rule) === "header" && rule.target === "response",
+    ),
+    cookieRequestRules: rules.filter(
+      (rule) => ruleKind(rule) === "cookie-request-append",
+    ),
+    cookieResponseRules: rules.filter(
+      (rule) => ruleKind(rule) === "cookie-response-append",
+    ),
+    redirectRules: rules.filter((rule) => ruleKind(rule) === "redirect"),
+  };
+  const filterGroups: FilterGroups = {
+    tabFilters: active.tabFilters ?? [],
+    domainFilters: active.domainFilters ?? [],
+    urlFilters: active.urlFilters ?? [],
+    excludeUrlFilters: active.excludeUrlFilters ?? [],
+    methodFilters: active.methodFilters ?? [],
+  };
+  const variables = active.variables ?? [];
+  const hasRuleContent =
+    ruleGroups.requestRules.length +
+      ruleGroups.responseRules.length +
+      ruleGroups.cookieRequestRules.length +
+      ruleGroups.cookieResponseRules.length +
+      ruleGroups.redirectRules.length >
+    0;
+  const hasFilterContent =
+    filterGroups.tabFilters.length +
+      filterGroups.domainFilters.length +
+      filterGroups.urlFilters.length +
+      filterGroups.excludeUrlFilters.length +
+      (filterGroups.methodFilters ?? []).length >
+    0;
+  const hasVariableContent = variables.length > 0;
 
   return (
     <section className={cn("he-popup-editor-card", styles.editorScope)}>
@@ -189,8 +188,10 @@ export function ProfileEditor({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <ModificationMenu
-            {...modificationMenuProps}
+          <ProfileModificationMenu
+            profileId={active.id}
+            compact
+            side="top"
             triggerTooltip={t("popup.addMod")}
             triggerTooltipSide="bottom"
             trigger={
@@ -204,8 +205,15 @@ export function ProfileEditor({
               </Button>
             }
           />
-          <FilterMenu
-            {...filterMenuProps}
+          <ProfileFilterMenu
+            profileId={active.id}
+            methodFilters={filterGroups.methodFilters ?? []}
+            initialTabUrlFilter={currentTabUrlPattern}
+            initialDomain={currentTabDomain}
+            initialUrlRegex={currentTabRegex}
+            initialExcludeUrl={currentTabUrl}
+            compact
+            side="top"
             triggerTooltip={t("filters.addFilter")}
             triggerTooltipSide="bottom"
             trigger={
@@ -220,21 +228,21 @@ export function ProfileEditor({
             }
           />
           <Tooltip content={t("variables.addItem")} side="bottom">
-            <Button
+            <ProfileAddVariableButton
+              profileId={active.id}
               variant="ghost"
               size="icon-sm"
               disabled={!active}
               aria-label={t("variables.addItem")}
-              onClick={onAddVariable}
             >
               <Braces aria-hidden="true" />
-            </Button>
+            </ProfileAddVariableButton>
           </Tooltip>
-          <TemplateMenu profileId={active?.id ?? null} iconOnly />
-          <AlwaysEnableProfileButton
+          <TemplateMenu profileId={active.id} iconOnly />
+          <ProfileAlwaysEnableButton
+            profileId={active.id}
             checked={!!activeStatus?.alwaysEnabled}
             side="bottom"
-            onCheckedChange={onToggleAlwaysEnabled}
           />
           <DropdownMenu
             open={profileMenuVisible}
@@ -300,8 +308,10 @@ export function ProfileEditor({
                     {t("popup.emptyModHint")}
                   </span>
                 </div>
-                <ModificationMenu
-                  {...modificationMenuProps}
+                <ProfileModificationMenu
+                  profileId={active.id}
+                  compact
+                  side="top"
                   align="center"
                   trigger={
                     <Button size="sm">
@@ -313,126 +323,89 @@ export function ProfileEditor({
               </div>
             )}
             {hasVariableContent && (
-              <VariableList
+              <ProfileVariableList
+                profileId={active.id}
                 variant="editor"
                 variables={variables}
-                onAdd={onAddVariable}
-                onUpdate={onUpdateVariable}
-                onDelete={onDeleteVariable}
-                onToggle={onToggleVariable}
               />
             )}
             {hasRuleContent && (
               <>
-                <HeaderRuleList
+                <ProfileHeaderRuleList
+                  profileId={active.id}
                   variant="editor"
                   advancedPopoverDensity="compact"
                   kind="header"
                   target="request"
                   rules={ruleGroups.requestRules}
-                  onAdd={() => onAddHeader("request")}
-                  onUpdate={onUpdateRule}
-                  onDelete={onDeleteRule}
-                  onToggle={onToggleRule}
-                  onReorder={onReorderRules}
                 />
-                <HeaderRuleList
+                <ProfileHeaderRuleList
+                  profileId={active.id}
                   variant="editor"
                   advancedPopoverDensity="compact"
                   kind="header"
                   target="response"
                   rules={ruleGroups.responseRules}
-                  onAdd={() => onAddHeader("response")}
-                  onUpdate={onUpdateRule}
-                  onDelete={onDeleteRule}
-                  onToggle={onToggleRule}
-                  onReorder={onReorderRules}
                 />
                 {ruleGroups.cookieRequestRules.length > 0 && (
-                  <HeaderRuleList
+                  <ProfileHeaderRuleList
+                    profileId={active.id}
                     variant="editor"
                     advancedPopoverDensity="compact"
                     kind="cookie-request-append"
                     rules={ruleGroups.cookieRequestRules}
-                    onAdd={() => onAddRule("cookie-request-append")}
-                    onUpdate={onUpdateRule}
-                    onDelete={onDeleteRule}
-                    onToggle={onToggleRule}
-                    onReorder={onReorderRules}
                   />
                 )}
                 {ruleGroups.cookieResponseRules.length > 0 && (
-                  <HeaderRuleList
+                  <ProfileHeaderRuleList
+                    profileId={active.id}
                     variant="editor"
                     advancedPopoverDensity="compact"
                     kind="cookie-response-append"
                     rules={ruleGroups.cookieResponseRules}
-                    onAdd={() => onAddRule("cookie-response-append")}
-                    onUpdate={onUpdateRule}
-                    onDelete={onDeleteRule}
-                    onToggle={onToggleRule}
-                    onReorder={onReorderRules}
                   />
                 )}
                 {ruleGroups.redirectRules.length > 0 && (
-                  <HeaderRuleList
+                  <ProfileHeaderRuleList
+                    profileId={active.id}
                     variant="editor"
                     advancedPopoverDensity="compact"
                     kind="redirect"
                     rules={ruleGroups.redirectRules}
-                    onAdd={() => onAddRule("redirect")}
-                    onUpdate={onUpdateRule}
-                    onDelete={onDeleteRule}
-                    onToggle={onToggleRule}
-                    onReorder={onReorderRules}
                   />
                 )}
               </>
             )}
             {hasFilterContent && (
               <>
-                <TabFilterList
+                <ProfileTabFilterList
+                  profileId={active.id}
                   variant="editor"
                   filters={filterGroups.tabFilters}
-                  onAdd={filterMenuProps.onAddTab}
-                  onUpdate={onUpdateTabFilter}
-                  onDelete={onDeleteTabFilter}
-                  onToggle={onToggleTabFilter}
+                  initialUrlFilter={currentTabUrlPattern}
                 />
-                <FilterRowList<DomainFilter>
+                <ProfileDomainFilterList
+                  profileId={active.id}
                   variant="editor"
                   filters={filterGroups.domainFilters}
-                  valueField="domain"
-                  i18nKey="domainFilters"
-                  onAdd={filterMenuProps.onAddDomain}
-                  onUpdate={onUpdateDomainFilter}
-                  onDelete={onDeleteDomainFilter}
-                  onToggle={onToggleDomainFilter}
+                  initialDomain={currentTabDomain}
                 />
-                <FilterRowList<UrlFilter>
+                <ProfileUrlFilterList
+                  profileId={active.id}
                   variant="editor"
                   filters={filterGroups.urlFilters}
-                  valueField="regex"
-                  i18nKey="urlFilters"
-                  onAdd={filterMenuProps.onAddUrl}
-                  onUpdate={onUpdateUrlFilter}
-                  onDelete={onDeleteUrlFilter}
-                  onToggle={onToggleUrlFilter}
+                  initialRegex={currentTabRegex}
                 />
-                <FilterRowList<ExcludeUrlFilter>
+                <ProfileExcludeUrlFilterList
+                  profileId={active.id}
                   variant="editor"
                   filters={filterGroups.excludeUrlFilters}
-                  valueField="url"
-                  i18nKey="excludeUrlFilters"
-                  onAdd={filterMenuProps.onAddExcludeUrl}
-                  onUpdate={onUpdateExcludeUrlFilter}
-                  onDelete={onDeleteExcludeUrlFilter}
-                  onToggle={onToggleExcludeUrlFilter}
+                  initialUrl={currentTabUrl}
                 />
-                <MethodFilterPicker
+                <ProfileMethodFilterPicker
+                  profileId={active.id}
                   variant="editor"
                   filters={filterGroups.methodFilters ?? []}
-                  onChange={onSetMethodFilters}
                 />
               </>
             )}

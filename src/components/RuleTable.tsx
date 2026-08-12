@@ -7,28 +7,28 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useProfileActions, useProfileStore } from "@/src/store/profileStore";
+import { useProfileStore } from "@/src/store/profileStore";
 import {
   getProfileStats,
   getScopeParts,
   type ScopeParts,
 } from "@/src/core/profileStatus";
-import { HeaderRuleList } from "./HeaderRuleList";
-import { TabFilterList } from "./TabFilterList";
-import { FilterRowList } from "./FilterRowList";
-import { MethodFilterPicker } from "./MethodFilterPicker";
 import { NoFilterBanner } from "./NoFilterBanner";
-import { FilterMenu, ModificationMenu } from "./RuleActionMenus";
-import { VariableList } from "./VariableList";
+import {
+  ProfileFilterMenu,
+  ProfileModificationMenu,
+} from "./ProfileActionMenus";
+import {
+  ProfileDomainFilterList,
+  ProfileExcludeUrlFilterList,
+  ProfileMethodFilterPicker,
+  ProfileTabFilterList,
+  ProfileUrlFilterList,
+} from "./ProfileFilterLists";
+import { ProfileHeaderRuleList } from "./ProfileHeaderRuleList";
+import { ProfileVariableList } from "./ProfileVariableList";
 import { Badge, Button } from "@/src/ui";
-import type {
-  HeaderRule,
-  RuleKind,
-  DomainFilter,
-  UrlFilter,
-  ExcludeUrlFilter,
-  ProfileVariable,
-} from "@/src/core/types";
+import type { HeaderRule, RuleKind } from "@/src/core/types";
 
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
@@ -49,35 +49,6 @@ export function RuleTable() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const activeId = useProfileStore((s) => s.meta.activeProfileId);
-  const {
-    addRule,
-    updateRule,
-    deleteRule,
-    toggleRule,
-    reorderRules,
-    addTabFilter,
-    updateTabFilter,
-    deleteTabFilter,
-    toggleTabFilter,
-    addDomainFilter,
-    updateDomainFilter,
-    deleteDomainFilter,
-    toggleDomainFilter,
-    addUrlFilter,
-    updateUrlFilter,
-    deleteUrlFilter,
-    toggleUrlFilter,
-    addExcludeUrlFilter,
-    updateExcludeUrlFilter,
-    deleteExcludeUrlFilter,
-    toggleExcludeUrlFilter,
-    addMethodFilter,
-    setMethodFilters,
-    addVariable,
-    updateVariable,
-    deleteVariable,
-    toggleVariable,
-  } = useProfileActions();
 
   const profile = profiles.find((p) => p.id === activeId);
 
@@ -131,39 +102,13 @@ export function RuleTable() {
       methodFilters.length >
     0;
 
-  const handleAddHeader = (target: "request" | "response") => {
-    addRule(profile.id, "header", target);
-  };
-
-  const handleUpdate = (rule: HeaderRule) => {
-    updateRule(profile.id, rule);
-  };
-
-  const handleAddMethodFilter = () => {
-    if (methodFilters.length === 0) {
-      addMethodFilter(profile.id, "GET");
-    }
-  };
-
   const actionBar = (
     <div className="flex flex-wrap items-center gap-2">
-      <ModificationMenu
+      <ProfileModificationMenu profileId={profile.id} align="end" />
+      <ProfileFilterMenu
+        profileId={profile.id}
+        methodFilters={methodFilters}
         align="end"
-        onAddRequestHeader={() => handleAddHeader("request")}
-        onAddResponseHeader={() => handleAddHeader("response")}
-        onAddRequestCookie={() => addRule(profile.id, "cookie-request-append")}
-        onAddResponseCookie={() =>
-          addRule(profile.id, "cookie-response-append")
-        }
-        onAddRedirect={() => addRule(profile.id, "redirect")}
-      />
-      <FilterMenu
-        align="end"
-        onAddTab={() => addTabFilter(profile.id)}
-        onAddDomain={() => addDomainFilter(profile.id)}
-        onAddUrl={() => addUrlFilter(profile.id)}
-        onAddExcludeUrl={() => addExcludeUrlFilter(profile.id)}
-        onAddMethod={handleAddMethodFilter}
       />
     </div>
   );
@@ -249,7 +194,9 @@ export function RuleTable() {
               </div>
             </div>
           </div>
-          <FilterMenu
+          <ProfileFilterMenu
+            profileId={profile.id}
+            methodFilters={methodFilters}
             align="end"
             trigger={
               <Button variant="outline" size="sm">
@@ -257,11 +204,6 @@ export function RuleTable() {
                 {t("filters.addFilter")}
               </Button>
             }
-            onAddTab={() => addTabFilter(profile.id)}
-            onAddDomain={() => addDomainFilter(profile.id)}
-            onAddUrl={() => addUrlFilter(profile.id)}
-            onAddExcludeUrl={() => addExcludeUrlFilter(profile.id)}
-            onAddMethod={handleAddMethodFilter}
           />
         </div>
         <div className="he-workbench-scope-summary">
@@ -270,52 +212,34 @@ export function RuleTable() {
         </div>
         {hasScopeContent ? (
           <div className="flex flex-col gap-3">
-            <TabFilterList
+            <ProfileTabFilterList
+              profileId={profile.id}
               variant="editor"
               filters={tabFilters}
-              onAdd={() => addTabFilter(profile.id)}
-              onUpdate={(f) => updateTabFilter(profile.id, f)}
-              onDelete={(id) => deleteTabFilter(profile.id, id)}
-              onToggle={(id) => toggleTabFilter(profile.id, id)}
             />
 
-            <FilterRowList<DomainFilter>
+            <ProfileDomainFilterList
+              profileId={profile.id}
               variant="editor"
               filters={domainFilters}
-              valueField="domain"
-              i18nKey="domainFilters"
-              onAdd={() => addDomainFilter(profile.id)}
-              onUpdate={(f) => updateDomainFilter(profile.id, f)}
-              onDelete={(id) => deleteDomainFilter(profile.id, id)}
-              onToggle={(id) => toggleDomainFilter(profile.id, id)}
             />
 
-            <FilterRowList<UrlFilter>
+            <ProfileUrlFilterList
+              profileId={profile.id}
               variant="editor"
               filters={urlFilters}
-              valueField="regex"
-              i18nKey="urlFilters"
-              onAdd={() => addUrlFilter(profile.id)}
-              onUpdate={(f) => updateUrlFilter(profile.id, f)}
-              onDelete={(id) => deleteUrlFilter(profile.id, id)}
-              onToggle={(id) => toggleUrlFilter(profile.id, id)}
             />
 
-            <FilterRowList<ExcludeUrlFilter>
+            <ProfileExcludeUrlFilterList
+              profileId={profile.id}
               variant="editor"
               filters={excludeUrlFilters}
-              valueField="url"
-              i18nKey="excludeUrlFilters"
-              onAdd={() => addExcludeUrlFilter(profile.id)}
-              onUpdate={(f) => updateExcludeUrlFilter(profile.id, f)}
-              onDelete={(id) => deleteExcludeUrlFilter(profile.id, id)}
-              onToggle={(id) => toggleExcludeUrlFilter(profile.id, id)}
             />
 
-            <MethodFilterPicker
+            <ProfileMethodFilterPicker
+              profileId={profile.id}
               variant="editor"
               filters={methodFilters}
-              onChange={(methods) => setMethodFilters(profile.id, methods)}
             />
           </div>
         ) : (
@@ -325,16 +249,11 @@ export function RuleTable() {
         )}
       </section>
 
-      <VariableList
+      <ProfileVariableList
+        profileId={profile.id}
         variant="editor"
         showEmpty
         variables={variables}
-        onAdd={() => addVariable(profile.id)}
-        onUpdate={(variable: ProfileVariable) =>
-          updateVariable(profile.id, variable)
-        }
-        onDelete={(variableId) => deleteVariable(profile.id, variableId)}
-        onToggle={(variableId) => toggleVariable(profile.id, variableId)}
       />
 
       <section className="he-workbench-section">
@@ -350,7 +269,8 @@ export function RuleTable() {
               </div>
             </div>
           </div>
-          <ModificationMenu
+          <ProfileModificationMenu
+            profileId={profile.id}
             align="end"
             trigger={
               <Button size="sm">
@@ -358,15 +278,6 @@ export function RuleTable() {
                 {t("popup.addMod")}
               </Button>
             }
-            onAddRequestHeader={() => handleAddHeader("request")}
-            onAddResponseHeader={() => handleAddHeader("response")}
-            onAddRequestCookie={() =>
-              addRule(profile.id, "cookie-request-append")
-            }
-            onAddResponseCookie={() =>
-              addRule(profile.id, "cookie-response-append")
-            }
-            onAddRedirect={() => addRule(profile.id, "redirect")}
           />
         </div>
 
@@ -383,7 +294,8 @@ export function RuleTable() {
                 {t("popup.emptyModHint")}
               </div>
             </div>
-            <ModificationMenu
+            <ProfileModificationMenu
+              profileId={profile.id}
               align="center"
               trigger={
                 <Button size="sm">
@@ -391,74 +303,45 @@ export function RuleTable() {
                   {t("popup.addMod")}
                 </Button>
               }
-              onAddRequestHeader={() => handleAddHeader("request")}
-              onAddResponseHeader={() => handleAddHeader("response")}
-              onAddRequestCookie={() =>
-                addRule(profile.id, "cookie-request-append")
-              }
-              onAddResponseCookie={() =>
-                addRule(profile.id, "cookie-response-append")
-              }
-              onAddRedirect={() => addRule(profile.id, "redirect")}
             />
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <HeaderRuleList
+            <ProfileHeaderRuleList
+              profileId={profile.id}
               variant="editor"
               kind="header"
               target="request"
               rules={requestRules}
-              onAdd={() => handleAddHeader("request")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-              onReorder={(ruleIds) => reorderRules(profile.id, ruleIds)}
             />
 
-            <HeaderRuleList
+            <ProfileHeaderRuleList
+              profileId={profile.id}
               variant="editor"
               kind="header"
               target="response"
               rules={responseRules}
-              onAdd={() => handleAddHeader("response")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-              onReorder={(ruleIds) => reorderRules(profile.id, ruleIds)}
             />
 
-            <HeaderRuleList
+            <ProfileHeaderRuleList
+              profileId={profile.id}
               variant="editor"
               kind="cookie-request-append"
               rules={cookieRequestRules}
-              onAdd={() => addRule(profile.id, "cookie-request-append")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-              onReorder={(ruleIds) => reorderRules(profile.id, ruleIds)}
             />
 
-            <HeaderRuleList
+            <ProfileHeaderRuleList
+              profileId={profile.id}
               variant="editor"
               kind="cookie-response-append"
               rules={cookieResponseRules}
-              onAdd={() => addRule(profile.id, "cookie-response-append")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-              onReorder={(ruleIds) => reorderRules(profile.id, ruleIds)}
             />
 
-            <HeaderRuleList
+            <ProfileHeaderRuleList
+              profileId={profile.id}
               variant="editor"
               kind="redirect"
               rules={redirectRules}
-              onAdd={() => addRule(profile.id, "redirect")}
-              onUpdate={handleUpdate}
-              onDelete={(ruleId) => deleteRule(profile.id, ruleId)}
-              onToggle={(ruleId) => toggleRule(profile.id, ruleId)}
-              onReorder={(ruleIds) => reorderRules(profile.id, ruleIds)}
             />
           </div>
         )}

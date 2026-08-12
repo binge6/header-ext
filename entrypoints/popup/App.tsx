@@ -11,7 +11,6 @@ import {
   buildWorkspaceStatus,
   type ProfileStatus,
 } from "@/src/core/profileStatus";
-import type { HeaderRule, RuleKind } from "@/src/core/types";
 import { PopupHeader } from "./components/PopupHeader";
 import { ProfileContextMenuContent } from "./components/ProfileContextMenu";
 import { ProfileEditor } from "./components/ProfileEditor";
@@ -19,10 +18,6 @@ import { ProfileRail } from "./components/ProfileRail";
 import "./App.css";
 
 const logoUrl = new URL("../../assets/logo.svg", import.meta.url).href;
-
-function ruleKind(rule: HeaderRule): RuleKind {
-  return rule.kind ?? "header";
-}
 
 function App() {
   const { t } = useTranslation();
@@ -34,39 +29,10 @@ function App() {
     hydrate,
     setActiveProfile: setActive,
     togglePause,
-    addRule,
     renameProfile,
-    updateRule,
-    deleteRule,
-    toggleRule,
-    reorderRules,
-    addProfile,
     duplicateProfile,
     deleteProfile,
     setLockedTabId,
-    setProfileAlwaysEnabled,
-    addTabFilter,
-    updateTabFilter,
-    deleteTabFilter,
-    toggleTabFilter,
-    addDomainFilter,
-    updateDomainFilter,
-    deleteDomainFilter,
-    toggleDomainFilter,
-    addUrlFilter,
-    updateUrlFilter,
-    deleteUrlFilter,
-    toggleUrlFilter,
-    addExcludeUrlFilter,
-    updateExcludeUrlFilter,
-    deleteExcludeUrlFilter,
-    toggleExcludeUrlFilter,
-    addMethodFilter,
-    setMethodFilters,
-    addVariable,
-    updateVariable,
-    deleteVariable,
-    toggleVariable,
   } = useProfileActions();
 
   const [currentTabId, setCurrentTabId] = useState<number | null>(null);
@@ -132,60 +98,6 @@ function App() {
     workspace.statuses.find((status) => status.profile.id === active?.id) ??
     null;
 
-  const ruleGroups = useMemo(() => {
-    const rules = active?.rules ?? [];
-    return {
-      requestRules: rules.filter(
-        (rule) => ruleKind(rule) === "header" && rule.target === "request",
-      ),
-      responseRules: rules.filter(
-        (rule) => ruleKind(rule) === "header" && rule.target === "response",
-      ),
-      cookieRequestRules: rules.filter(
-        (rule) => ruleKind(rule) === "cookie-request-append",
-      ),
-      cookieResponseRules: rules.filter(
-        (rule) => ruleKind(rule) === "cookie-response-append",
-      ),
-      redirectRules: rules.filter((rule) => ruleKind(rule) === "redirect"),
-    };
-  }, [active?.rules]);
-
-  const filterGroups = useMemo(
-    () => ({
-      tabFilters: active?.tabFilters ?? [],
-      domainFilters: active?.domainFilters ?? [],
-      urlFilters: active?.urlFilters ?? [],
-      excludeUrlFilters: active?.excludeUrlFilters ?? [],
-      methodFilters: active?.methodFilters ?? [],
-    }),
-    [
-      active?.domainFilters,
-      active?.excludeUrlFilters,
-      active?.methodFilters,
-      active?.tabFilters,
-      active?.urlFilters,
-    ],
-  );
-  const variables = useMemo(() => active?.variables ?? [], [active?.variables]);
-
-  const hasRuleContent =
-    ruleGroups.requestRules.length +
-      ruleGroups.responseRules.length +
-      ruleGroups.cookieRequestRules.length +
-      ruleGroups.cookieResponseRules.length +
-      ruleGroups.redirectRules.length >
-    0;
-
-  const hasFilterContent =
-    filterGroups.tabFilters.length +
-      filterGroups.domainFilters.length +
-      filterGroups.urlFilters.length +
-      filterGroups.excludeUrlFilters.length +
-      filterGroups.methodFilters.length >
-    0;
-  const hasVariableContent = variables.length > 0;
-
   const isLocked = meta.lockedTabId != null;
   const lockedHere =
     isLocked && currentTabId != null && meta.lockedTabId === currentTabId;
@@ -194,26 +106,6 @@ function App() {
     : isLocked
       ? t("popup.lockedTo", { id: meta.lockedTabId })
       : t("popup.lockTab");
-
-  const addProfileAndActivate = () => {
-    const id = addProfile();
-    setActive(id);
-  };
-
-  const handleAddHeader = (target: "request" | "response") => {
-    if (!active) return;
-    addRule(active.id, "header", target);
-  };
-
-  const handleAddRule = (kind: HeaderRule["kind"]) => {
-    if (!active || !kind) return;
-    addRule(active.id, kind);
-  };
-
-  const handleUpdateRule = (rule: HeaderRule) => {
-    if (!active) return;
-    updateRule(active.id, rule);
-  };
 
   const handleOpenRenameProfile = (profileId: string, name: string) => {
     setProfileMenuVisible(false);
@@ -283,7 +175,7 @@ function App() {
   // OverlayScrollbars 的 scroll / updated 事件驱动（见 ProfileEditor 的 events）。
   useEffect(() => {
     updateScrollShadow();
-  }, [active?.id, filterGroups, ruleGroups, updateScrollShadow, variables]);
+  }, [active?.id, active?.updatedAt, updateScrollShadow]);
 
   if (!hydrated) {
     return (
@@ -295,34 +187,6 @@ function App() {
       </div>
     );
   }
-
-  const addMethodFilterIfNeeded = () => {
-    if (!active || (active.methodFilters ?? []).length > 0) return;
-    addMethodFilter(active.id, "GET");
-  };
-
-  const modificationMenuProps = {
-    disabled: !active,
-    compact: true,
-    side: "top" as const,
-    onAddRequestHeader: () => handleAddHeader("request"),
-    onAddResponseHeader: () => handleAddHeader("response"),
-    onAddRequestCookie: () => handleAddRule("cookie-request-append"),
-    onAddResponseCookie: () => handleAddRule("cookie-response-append"),
-    onAddRedirect: () => handleAddRule("redirect"),
-  };
-
-  const filterMenuProps = {
-    disabled: !active,
-    compact: true,
-    side: "top" as const,
-    onAddTab: () => active && addTabFilter(active.id, currentTabUrlPattern),
-    onAddDomain: () => active && addDomainFilter(active.id, currentTabDomain),
-    onAddUrl: () => active && addUrlFilter(active.id, currentTabRegex),
-    onAddExcludeUrl: () =>
-      active && addExcludeUrlFilter(active.id, currentTabUrl),
-    onAddMethod: addMethodFilterIfNeeded,
-  };
 
   const riskyProfileNames = workspace.riskyProfiles
     .map((status) => status.profile.name)
@@ -360,20 +224,11 @@ function App() {
               renderMenu={renderProfileMenu}
               onCollapsedChange={setProfileRailCollapsed}
               onContextProfileChange={setContextProfileId}
-              onAddProfile={addProfileAndActivate}
-              onSelectProfile={setActive}
-              onToggleAlwaysEnabled={setProfileAlwaysEnabled}
             />
 
             <ProfileEditor
               active={active}
               activeStatus={activeStatus}
-              ruleGroups={ruleGroups}
-              filterGroups={filterGroups}
-              hasRuleContent={hasRuleContent}
-              hasFilterContent={hasFilterContent}
-              variables={variables}
-              hasVariableContent={hasVariableContent}
               globalPaused={meta.globalPaused}
               riskyProfilesCount={workspace.riskyProfiles.length}
               riskyProfileNames={riskyProfileNames}
@@ -381,70 +236,11 @@ function App() {
               profileMenuVisible={profileMenuVisible}
               scrollShadow={scrollShadow}
               scrollAreaRef={scrollAreaRef}
-              modificationMenuProps={modificationMenuProps}
-              filterMenuProps={filterMenuProps}
+              currentTabDomain={currentTabDomain}
+              currentTabUrl={currentTabUrl}
+              currentTabUrlPattern={currentTabUrlPattern}
+              currentTabRegex={currentTabRegex}
               onProfileMenuVisibleChange={setProfileMenuVisible}
-              onAddProfile={addProfileAndActivate}
-              onToggleAlwaysEnabled={(enabled) => {
-                if (active) setProfileAlwaysEnabled(active.id, enabled);
-              }}
-              onUpdateRule={handleUpdateRule}
-              onDeleteRule={(ruleId) => active && deleteRule(active.id, ruleId)}
-              onToggleRule={(ruleId) => active && toggleRule(active.id, ruleId)}
-              onReorderRules={(ruleIds) =>
-                active && reorderRules(active.id, ruleIds)
-              }
-              onUpdateTabFilter={(filter) =>
-                active && updateTabFilter(active.id, filter)
-              }
-              onDeleteTabFilter={(filterId) =>
-                active && deleteTabFilter(active.id, filterId)
-              }
-              onToggleTabFilter={(filterId) =>
-                active && toggleTabFilter(active.id, filterId)
-              }
-              onUpdateDomainFilter={(filter) =>
-                active && updateDomainFilter(active.id, filter)
-              }
-              onDeleteDomainFilter={(filterId) =>
-                active && deleteDomainFilter(active.id, filterId)
-              }
-              onToggleDomainFilter={(filterId) =>
-                active && toggleDomainFilter(active.id, filterId)
-              }
-              onUpdateUrlFilter={(filter) =>
-                active && updateUrlFilter(active.id, filter)
-              }
-              onDeleteUrlFilter={(filterId) =>
-                active && deleteUrlFilter(active.id, filterId)
-              }
-              onToggleUrlFilter={(filterId) =>
-                active && toggleUrlFilter(active.id, filterId)
-              }
-              onUpdateExcludeUrlFilter={(filter) =>
-                active && updateExcludeUrlFilter(active.id, filter)
-              }
-              onDeleteExcludeUrlFilter={(filterId) =>
-                active && deleteExcludeUrlFilter(active.id, filterId)
-              }
-              onToggleExcludeUrlFilter={(filterId) =>
-                active && toggleExcludeUrlFilter(active.id, filterId)
-              }
-              onSetMethodFilters={(methods) =>
-                active && setMethodFilters(active.id, methods)
-              }
-              onAddVariable={() => active && addVariable(active.id)}
-              onUpdateVariable={(variable) =>
-                active && updateVariable(active.id, variable)
-              }
-              onDeleteVariable={(variableId) =>
-                active && deleteVariable(active.id, variableId)
-              }
-              onToggleVariable={(variableId) =>
-                active && toggleVariable(active.id, variableId)
-              }
-              onAddHeader={handleAddHeader}
-              onAddRule={handleAddRule}
               onScrollUpdate={updateScrollShadow}
             />
           </div>

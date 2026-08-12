@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { AlwaysEnableProfileButton } from "@/src/components/AlwaysEnableProfileButton";
 import type { ProfileStatus } from "@/src/core/profileStatus";
+import { useProfileActions } from "@/src/store/profileStore";
 import { Button } from "@/src/ui/controls";
 import { Scroller } from "@/src/ui/scroll";
 import { DropdownMenu, DropdownMenuTrigger, Tooltip } from "@/src/ui/overlays";
@@ -22,9 +23,6 @@ interface ProfileRailProps {
   renderMenu: (status: ProfileStatus) => ReactNode;
   onCollapsedChange: (collapsed: boolean) => void;
   onContextProfileChange: (profileId: string | null) => void;
-  onAddProfile: () => void;
-  onSelectProfile: (profileId: string) => void;
-  onToggleAlwaysEnabled: (profileId: string, enabled: boolean) => void;
 }
 
 export function ProfileRail({
@@ -34,11 +32,18 @@ export function ProfileRail({
   renderMenu,
   onCollapsedChange,
   onContextProfileChange,
-  onAddProfile,
-  onSelectProfile,
-  onToggleAlwaysEnabled,
 }: ProfileRailProps) {
   const { t } = useTranslation();
+  const {
+    addProfile,
+    setActiveProfile,
+    setProfileAlwaysEnabled,
+  } = useProfileActions();
+
+  const handleAddProfile = () => {
+    const id = addProfile();
+    setActiveProfile(id);
+  };
 
   return (
     <aside
@@ -86,9 +91,9 @@ export function ProfileRail({
               onContextOpenChange={(open) =>
                 onContextProfileChange(open ? status.profile.id : null)
               }
-              onSelect={() => onSelectProfile(status.profile.id)}
+              onSelect={() => setActiveProfile(status.profile.id)}
               onToggle={(enabled) =>
-                onToggleAlwaysEnabled(status.profile.id, enabled)
+                setProfileAlwaysEnabled(status.profile.id, enabled)
               }
             />
           ))}
@@ -101,7 +106,7 @@ export function ProfileRail({
               variant="ghost"
               size="icon-sm"
               aria-label={t("options.newProfile")}
-              onClick={onAddProfile}
+              onClick={handleAddProfile}
             >
               <Plus aria-hidden="true" />
             </Button>
@@ -111,7 +116,7 @@ export function ProfileRail({
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={onAddProfile}
+            onClick={handleAddProfile}
           >
             <Plus aria-hidden="true" />
             {t("options.newProfile")}
