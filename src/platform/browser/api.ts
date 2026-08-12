@@ -87,3 +87,25 @@ export function onExtensionInstalled(handler: () => void): () => void {
   browser.runtime.onInstalled.addListener(handler);
   return () => browser.runtime.onInstalled.removeListener(handler);
 }
+
+// 扩展图标角标：展示当前生效的规则数等提示信息
+export interface BadgeStatus {
+  // 角标文案，空串代表清空
+  text: string;
+  // 角标背景色（含暂停等状态区分）
+  backgroundColor: string;
+}
+
+export async function setActionBadge(status: BadgeStatus): Promise<void> {
+  try {
+    await browser.action.setBadgeText({ text: status.text });
+    if (status.text) {
+      await browser.action.setBadgeBackgroundColor({
+        color: status.backgroundColor,
+      });
+    }
+  } catch (err) {
+    // 部分环境（如无 action 的场景）不支持角标，忽略即可
+    console.warn("[header-ext] setActionBadge failed", err);
+  }
+}

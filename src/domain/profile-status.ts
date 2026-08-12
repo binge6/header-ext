@@ -291,3 +291,25 @@ export function buildWorkspaceStatus(
     conflictGroups,
   };
 }
+
+export interface BadgeSummary {
+  // 角标文案：暂停显示 off，否则显示生效规则数（0 时清空）
+  text: string;
+  // 当前生效的规则数
+  enabledRuleCount: number;
+  // 是否被全局暂停
+  paused: boolean;
+}
+
+// 纯派生：根据状态计算扩展图标角标的展示内容
+export function getBadgeSummary(state: AppState): BadgeSummary {
+  if (state.meta.globalPaused) {
+    return { text: "off", enabledRuleCount: 0, paused: true };
+  }
+  const { enabledRuleCount } = buildWorkspaceStatus(state);
+  return {
+    text: enabledRuleCount > 0 ? String(enabledRuleCount) : "",
+    enabledRuleCount,
+    paused: false,
+  };
+}
