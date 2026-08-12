@@ -15,6 +15,10 @@ stats-*.json
 .wxt
 web-ext.config.ts
 
+# Store submission credentials
+.env.submit
+.env.submit.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -2,7 +2,7 @@
   "name": "header-ext",
   "description": "A browser extension to modify HTTP request/response headers, append cookies, and redirect URLs by rules.",
   "private": true,
-  "version": "0.0.9",
+  "version": "0.0.10",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -11,6 +11,9 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
+    "submit:init": "wxt submit init",
+    "submit:dry": "wxt submit --dry-run --chrome-zip .output/header-ext-$npm_package_version-chrome.zip --firefox-zip .output/header-ext-$npm_package_version-firefox.zip --firefox-sources-zip .output/header-ext-$npm_package_version-sources.zip --edge-zip .output/header-ext-$npm_package_version-chrome.zip",
+    "submit": "wxt submit --chrome-zip .output/header-ext-$npm_package_version-chrome.zip --firefox-zip .output/header-ext-$npm_package_version-firefox.zip --firefox-sources-zip .output/header-ext-$npm_package_version-sources.zip --edge-zip .output/header-ext-$npm_package_version-chrome.zip",
     "compile": "tsc --noEmit",
     "lint": "oxlint entrypoints src wxt.config.ts --deny-warnings",
     "lint:fix": "oxlint entrypoints src wxt.config.ts --fix",
