@@ -71,10 +71,9 @@
     "alwaysEnableProfile": "始终启用 Profile",
     "alwaysEnableProfileShort": "设为常驻",
     "alwaysEnabledProfileShort": "常驻",
-    "alwaysEnableProfileHint": "设为常驻后，即使当前编辑的不是当前 Profile，也会一起生效",
+    "alwaysEnableProfileHint": "设为常驻后，无论选中哪个 Profile，它都会一起生效",
     "disableAlwaysEnableProfile": "取消始终启用 Profile",
-    "disableAlwaysEnableProfileHint": "取消常驻后，该 Profile 只在当前编辑时默认生效",
-    "editing": "正在编辑",
+    "disableAlwaysEnableProfileHint": "取消常驻后，该 Profile 仅在被选中时默认生效",
     "collapseProfiles": "收起 Profile 面板",
     "expandProfiles": "展开 Profile 面板",
     "moreActions": "更多操作"

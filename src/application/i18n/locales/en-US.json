@@ -71,10 +71,9 @@
     "alwaysEnableProfile": "Always enable profile",
     "alwaysEnableProfileShort": "Keep on",
     "alwaysEnabledProfileShort": "Always on",
-    "alwaysEnableProfileHint": "Keep this profile on so it also applies while another profile is active",
+    "alwaysEnableProfileHint": "Keep this profile on so it applies no matter which profile is selected",
     "disableAlwaysEnableProfile": "Disable always-on profile",
-    "disableAlwaysEnableProfileHint": "When disabled, this profile applies only while it is the current profile",
-    "editing": "Editing",
+    "disableAlwaysEnableProfileHint": "When disabled, this profile applies only while it is selected",
     "collapseProfiles": "Collapse profile panel",
     "expandProfiles": "Expand profile panel",
     "moreActions": "More actions"
