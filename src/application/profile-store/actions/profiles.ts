@@ -15,6 +15,7 @@ type ProfileActionKeys =
   | "renameProfile"
   | "duplicateProfile"
   | "deleteProfile"
+  | "deleteProfiles"
   | "setActiveProfile"
   | "setProfileAlwaysEnabled"
   | "mergeProfiles";
@@ -110,6 +111,42 @@ export function createProfileActions(
       };
       set({ profiles, meta });
       void persistState({ profiles, meta });
+    },
+
+    deleteProfiles: (profileIds) => {
+      const ids = new Set(profileIds);
+      if (ids.size === 0) return 0;
+
+      const current = get().profiles;
+      let profiles = current.filter((profile) => !ids.has(profile.id));
+      const removed = current.length - profiles.length;
+      if (removed === 0) return 0;
+
+      let meta = get().meta;
+      if (profiles.length === 0) {
+        const fallback = createProfile("Profile 1");
+        profiles = [fallback];
+        meta = {
+          ...meta,
+          activeProfileId: fallback.id,
+          enabledProfileIds: [],
+        };
+      } else if (
+        !profiles.some((profile) => profile.id === meta.activeProfileId)
+      ) {
+        meta = { ...meta, activeProfileId: profiles[0]?.id ?? null };
+      }
+
+      meta = {
+        ...meta,
+        enabledProfileIds: normalizeEnabledProfileIds(
+          meta.enabledProfileIds,
+          profiles,
+        ),
+      };
+      set({ profiles, meta });
+      void persistState({ profiles, meta });
+      return removed;
     },
 
     setActiveProfile: (profileId) => {

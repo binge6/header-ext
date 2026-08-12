@@ -20,6 +20,7 @@ export interface ProfileActions {
   renameProfile: (profileId: string, name: string) => void;
   duplicateProfile: (profileId: string, name?: string) => string | null;
   deleteProfile: (profileId: string) => void;
+  deleteProfiles: (profileIds: string[]) => number;
   setActiveProfile: (profileId: string) => void;
   setProfileAlwaysEnabled: (profileId: string, enabled: boolean) => void;
 
