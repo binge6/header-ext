@@ -66,13 +66,20 @@ export class ErrorBoundary extends Component<Props, State> {
 
     const copy = resolveCopy();
     return (
-      <div className="he-error-boundary" role="alert">
-        <span className="he-error-boundary-icon">
-          <TriangleAlert aria-hidden="true" />
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-2.5 px-6 py-8 text-center"
+        role="alert"
+      >
+        <span className="inline-flex text-warning">
+          <TriangleAlert aria-hidden="true" className="h-7 w-7" />
         </span>
-        <div className="he-error-boundary-title">{copy.title}</div>
-        <p className="he-error-boundary-desc">{copy.description}</p>
-        <pre className="he-error-boundary-detail">
+        <div className="text-dialog-title font-bold tracking-tight">
+          {copy.title}
+        </div>
+        <p className="m-0 max-w-90 text-group-title leading-relaxed text-muted-foreground">
+          {copy.description}
+        </p>
+        <pre className="mt-0.5 mb-1 max-h-24 max-w-full overflow-auto rounded-sm border border-border bg-muted px-2.5 py-2 text-left text-micro leading-relaxed whitespace-pre-wrap text-muted-foreground break-words">
           {this.state.error.message}
         </pre>
         <Button size="sm" onClick={this.handleReload}>

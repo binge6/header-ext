@@ -120,9 +120,10 @@ ComponentName/
 
 **写样式的优先级（从上到下依次尝试，命中即停）**：
 
-1. **Tailwind v4 原子类**（首选）：flex / gap / 间距 / 对齐 / 颜色 token 等，直接写在 TSX 的 `className`。绝大多数样式都应止步于此。
-2. **`*.module.scss`**（其次）：当原子类表达不了或会导致 `className` 冗长难读时——例如复杂选择器（`&:hover`、`[data-state]`、`::before`）、伪元素装饰、多状态嵌套、局部关键帧动画——把这部分收进组件同级的 module scss，用 `import styles from "./index.module.scss"` + `cn(styles.xxx, "tw-原子类")` 组合。scoped class 不会污染全局。
-3. **共享 `he-*` 组件类 / 页面布局类**：仅当样式需要**跨组件复用**（primitive 外观）或属于**页面级布局骨架**时才落到全局 CSS（见下）。
+1. **Tailwind v4 原子类**（默认且首选）：布局、尺寸、间距、颜色、阴影、响应式和 Radix `data-*` 状态都直接写在 TSX。页面骨架与 primitive 基础外观也使用 Tailwind，不再为静态样式新建 CSS 类。
+2. **CVA**：同一组件存在 `variant` / `size` 等稳定变体时，用 `class-variance-authority` 集中定义，避免手写映射和分散条件类。
+3. **`tw-animate-css`**：Popover、Tooltip、Menu、Overlay 等进入/退出动画优先使用 `animate-in` / `fade-in` / `zoom-in-*` 等工具类，不重复定义关键帧。
+4. **`*.module.scss` / 页面 CSS**（例外）：仅用于 Tailwind 难以清晰表达的伪元素、复杂后代选择器、跨 primitive 上下文覆盖、第三方库主题和滚动阴影。使用前应能说明为什么不能放进 `className`。
 
 > 交互控件（按钮/输入/菜单/开关等）永远**优先复用 [src/shared/ui](./src/shared/ui) 的 primitive**，而不是手搓外观。
 
@@ -130,13 +131,14 @@ ComponentName/
 
 - Vite 原生支持（已装 `sass` 直接依赖），无需改 `wxt.config.ts`；`*.module.scss` 的 TS 类型由 `vite/client` 经 `wxt.d.ts` 提供，`pnpm compile` 直接认，**不用手写 `.d.ts`**。
 - 文件跟组件走：单文件组件用同名 `Foo.module.scss`，目录形态组件用 `index.module.scss`（见「组件目录分层」）。类名用 **camelCase**（`styles.ruleRow`），因为要在 JS 里以属性访问。
-- scss 里可用嵌套、`$变量`、`@mixin` 等 Sass 特性，但**颜色 / 间距仍走全局 CSS 变量**（`var(--foreground)`、`var(--primary)`…），不要在 scss 里另立一套色板，保持与 token 体系一致。
-- 别在 module scss 里重复实现 primitive 已有的外观；一次性布局能用原子类就别开 scss 文件。
+- scss 里可用嵌套、`$变量`、`@mixin` 等 Sass 特性，但颜色 / 间距仍走语义 token，不要另立色板。
+- 禁止在 module scss 里重复实现 primitive 基础外观；一次性布局、响应式和交互状态必须优先写 Tailwind。
 
-**全局 CSS（跨页复用 / 页面骨架）**：
+**全局 CSS**：
 
-- **设计 token + 跨业务共享类**：[src/shared/styles/app.css](./src/shared/styles/app.css) 是**唯一 token 入口**，两个 `main.tsx` 在最顶部 import。primitive 外观类归属 [src/shared/ui](./src/shared/ui) 对应模块的 scss，不要放回 app.css。
-- **页面布局类**：popup / options 各自使用 [PopupApp.css](./src/app/popup/PopupApp.css) 与 [OptionsApp.css](./src/app/options/OptionsApp.css)。只在单页出现的 sticky/grid 骨架放页面 CSS。
+- [src/shared/styles/app.css](./src/shared/styles/app.css) 只负责 Tailwind / `tw-animate-css` 导入、设计 token、主题变量、base reset 与 reduced-motion。
+- 页面布局写在 TSX；[PopupApp.css](./src/app/popup/PopupApp.css) 仅保留 Profile 状态伪元素和 Popup 上下文下的 Dialog/Checkbox 覆盖。Options 页面不再使用独立 CSS。
+- [ProfileEditor/index.module.scss](./src/app/popup/components/ProfileEditor/index.module.scss) 仅保留 Popup 紧凑密度上下文、装饰伪元素与滚动阴影。
 - **颜色 token**：shadcn 风格语义 token——`bg-background`、`bg-card`、`text-foreground`、`text-muted-foreground`、`border-border`、`text-primary`，以及状态色 `success` / `warning` / `info` / `purple` / `orange`。主题切换由 [use-theme-mode.ts](./src/application/hooks/use-theme-mode.ts) 同步到 `<html data-theme>`。
 - **类名拼接**：用 [src/shared/lib/cn.ts](./src/shared/lib/cn.ts) 的 `cn()`（`clsx` + `tailwind-merge`）。
 - **图标**：统一 `lucide-react`；无文字图标按钮必须提供 `aria-label`。

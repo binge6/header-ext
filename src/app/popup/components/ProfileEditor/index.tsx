@@ -164,15 +164,20 @@ export function ProfileEditor({
   const hasVariableContent = variables.length > 0;
 
   return (
-    <section className={cn("he-popup-editor-card", styles.editorScope)}>
-      <div className="he-popup-editor-head">
+    <section
+      className={cn(
+        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/85 bg-card shadow-card",
+        styles.editorScope,
+      )}
+    >
+      <div className="flex min-h-10 items-center justify-between gap-2.5 border-b border-border/70 bg-muted/35 px-2 py-1.5">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             <span
               className={cn(
-                "he-profile-status-dot",
-                globalPaused && "he-profile-status-dot-paused",
-                !activeStatus?.enabled && "he-profile-status-dot-off",
+                "h-1.5 w-1.5 shrink-0 rounded-full bg-success ring-2 ring-success-soft",
+                globalPaused && "bg-warning ring-warning-soft",
+                !activeStatus?.enabled && "bg-muted-foreground ring-muted",
               )}
             />
             <span className="truncate text-sm font-bold text-foreground">
@@ -261,7 +266,7 @@ export function ProfileEditor({
       </div>
 
       {riskyProfilesCount > 0 && (
-        <div className="he-popup-risk-line">
+        <div className="flex items-center gap-1.5 border-b border-warning/30 bg-warning-soft px-2.5 py-1.25 text-xs text-warning">
           <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />
           <span className="min-w-0 flex-1 truncate">
             {t("popup.riskProfiles", {
@@ -272,7 +277,7 @@ export function ProfileEditor({
         </div>
       )}
 
-      <div className="he-main-content relative flex-1">
+      <div className="relative flex max-h-112.5 min-h-0 flex-1 flex-col bg-background/90 p-0">
         <div
           className={cn(
             styles.scrollShadow,
@@ -282,7 +287,7 @@ export function ProfileEditor({
         />
         <Scroller
           ref={scrollAreaRef}
-          className="he-popup-editor-scroll"
+          className="h-full p-1.5"
           options={{ scrollbars: { autoHide: "scroll" } }}
           events={{ scroll: onScrollUpdate, updated: onScrollUpdate }}
         >

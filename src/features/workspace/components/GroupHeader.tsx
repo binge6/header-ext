@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/src/shared/ui";
+import { editorSectionTitleClassName } from "./editor-styles";
 
 interface Props {
   title: string;
@@ -11,7 +12,7 @@ interface Props {
 export function GroupHeader({ title, addLabel, onAdd }: Props) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="he-section-title">{title}</span>
+      <span className={editorSectionTitleClassName}>{title}</span>
       <Button variant="ghost" size="sm" onClick={onAdd}>
         <Plus aria-hidden="true" />
         {addLabel}

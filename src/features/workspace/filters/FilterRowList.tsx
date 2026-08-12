@@ -7,6 +7,17 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/src/shared/lib/cn";
 import { Button, Checkbox, Input, Tooltip } from "@/src/shared/ui";
 import { GroupHeader } from "../components/GroupHeader";
+import {
+  editorFieldClassName,
+  editorRuleRowClassName,
+  editorSectionClassName,
+  editorSectionCountClassName,
+  editorSectionHeaderClassName,
+  editorSectionIconClassName,
+  editorSectionIconVariants,
+  editorSectionTitleClassName,
+  mutedTextClassName,
+} from "../components/editor-styles";
 
 export interface FilterRowItem {
   id: string;
@@ -84,7 +95,7 @@ export function FilterRowList<T extends FilterRowItem>({
 
   const rows =
     filters.length === 0 ? (
-      <div className={cn("he-muted-text", isEditor ? "px-3 py-2" : "py-1")}>
+      <div className={cn(mutedTextClassName, isEditor ? "px-3 py-2" : "py-1")}>
         {t(`${i18nKey}.empty`)}
       </div>
     ) : (
@@ -92,8 +103,7 @@ export function FilterRowList<T extends FilterRowItem>({
         <div
           key={f.id}
           className={cn(
-            "flex items-center py-1",
-            isEditor ? "he-editor-rule-row gap-1.5" : "gap-1",
+            isEditor ? editorRuleRowClassName : "flex items-center gap-1 py-1",
             isEditor && !f.enabled && "opacity-70",
           )}
         >
@@ -105,7 +115,7 @@ export function FilterRowList<T extends FilterRowItem>({
             )}
           <Input
             placeholder={t(`${i18nKey}.placeholder`)}
-            className={cn("min-w-0 flex-1", isEditor && "he-editor-field")}
+            className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
             value={(f[valueField] as unknown as string) ?? ""}
             onChange={(event) =>
               onUpdate({ ...f, [valueField]: event.target.value } as T)
@@ -135,14 +145,23 @@ export function FilterRowList<T extends FilterRowItem>({
     if (filters.length === 0) return null;
 
     return (
-      <section className="he-editor-section">
-        <div className="he-editor-section-header flex items-center justify-between">
+      <section className={editorSectionClassName}>
+        <div className={editorSectionHeaderClassName}>
           <div className="flex items-center gap-1.5">
-            <span className="he-editor-section-icon he-editor-section-icon-filter">
+            <span
+              className={cn(
+                editorSectionIconClassName,
+                editorSectionIconVariants.filter,
+              )}
+            >
               <Filter aria-hidden="true" />
             </span>
-            <span className="he-section-title">{t(`${i18nKey}.title`)}</span>
-            <span className="he-editor-section-count">{filters.length}</span>
+            <span className={editorSectionTitleClassName}>
+              {t(`${i18nKey}.title`)}
+            </span>
+            <span className={editorSectionCountClassName}>
+              {filters.length}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Tooltip content={t(`${i18nKey}.addItem`)}>

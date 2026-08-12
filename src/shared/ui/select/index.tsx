@@ -7,7 +7,6 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import "./index.scss";
 import { Check, ChevronDown, ChevronsUpDown, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/src/shared/lib/cn";
@@ -144,14 +143,17 @@ export function SelectControl({
           aria-haspopup="listbox"
           disabled={disabled}
           data-state={open ? "open" : "closed"}
-          className={cn("he-select-trigger", className)}
+          className={cn(
+            "he-select-trigger inline-flex h-8.5 w-full min-w-0 cursor-pointer items-center justify-between gap-2 rounded-sm border border-input bg-card px-2.25 text-group-title text-foreground shadow-soft outline-none transition-colors hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-45 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 [&>svg]:text-muted-foreground",
+            className,
+          )}
           onKeyDown={handleTriggerKeyDown}
         >
-          <span className="he-select-value">
+          <span className="he-select-value min-w-0 flex-1 overflow-hidden text-left text-ellipsis whitespace-nowrap">
             {selectedOption ? (
               selectedOption.label
             ) : (
-              <span className="he-control-placeholder">{placeholder}</span>
+              <span className="text-muted-foreground/80">{placeholder}</span>
             )}
           </span>
           <ChevronDown aria-hidden="true" />
@@ -159,12 +161,12 @@ export function SelectControl({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="he-select-content"
+        className="min-w-select-content max-h-select-content overflow-hidden p-0"
         onKeyDown={handleContentKeyDown}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Scroller className="he-select-scroll" defer={false}>
-          <div id={listboxId} role="listbox" className="he-select-list">
+        <Scroller className="max-h-select-content" defer={false}>
+          <div id={listboxId} role="listbox" className="p-1.25">
             {options.map((option, index) => {
               const selected = option.value === value;
               const highlighted = index === activeIndex;
@@ -179,13 +181,15 @@ export function SelectControl({
                   aria-selected={selected}
                   data-state={selected ? "checked" : "unchecked"}
                   data-highlighted={highlighted ? "" : undefined}
-                  className="he-select-item"
+                  className="relative flex min-h-8 w-full cursor-pointer items-center justify-between gap-2.5 rounded-md border-0 bg-transparent px-2 py-1.5 text-left text-group-title text-inherit outline-none select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
                   onClick={() => selectValue(option.value)}
                   onFocus={() => setActiveIndex(index)}
                   onMouseMove={() => setActiveIndex(index)}
                 >
-                  <span className="he-select-item-label">{option.label}</span>
-                  <span className="he-select-item-indicator">
+                  <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {option.label}
+                  </span>
+                  <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:text-primary">
                     {selected && <Check aria-hidden="true" />}
                   </span>
                 </button>
@@ -258,21 +262,29 @@ export function MultiSelect({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn("he-multi-select-trigger", className)}
+          className={cn(
+            "he-multi-select-trigger flex min-h-8.5 w-full min-w-0 cursor-pointer items-center justify-between gap-2 rounded-sm border border-input bg-card px-2 py-1 text-left text-foreground shadow-soft outline-none transition-colors hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/25 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 [&>svg]:text-muted-foreground",
+            className,
+          )}
           aria-expanded={open}
         >
-          <span className="he-multi-select-value">
+          <span className="he-multi-select-value flex min-w-0 flex-1 flex-wrap items-center gap-1 text-xs">
             {value.length === 0 ? (
-              <span className="he-control-placeholder">{placeholder}</span>
+              <span className="text-muted-foreground/80">{placeholder}</span>
             ) : (
               <>
                 {value.slice(0, maxVisible).map((item) => (
-                  <span key={item} className="he-chip">
+                  <span
+                    key={item}
+                    className="he-chip inline-flex h-5.5 max-w-32.5 items-center overflow-hidden rounded-md bg-secondary px-1.5 text-ellipsis whitespace-nowrap text-secondary-foreground"
+                  >
                     {item}
                   </span>
                 ))}
                 {value.length > maxVisible && (
-                  <span className="he-chip">+{value.length - maxVisible}</span>
+                  <span className="he-chip inline-flex h-5.5 max-w-32.5 items-center overflow-hidden rounded-md bg-secondary px-1.5 text-ellipsis whitespace-nowrap text-secondary-foreground">
+                    +{value.length - maxVisible}
+                  </span>
                 )}
               </>
             )}
@@ -282,12 +294,13 @@ export function MultiSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="he-multi-select-content"
+        className="w-multi-select-content p-1.25"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <div className="he-command-search">
-          <Search aria-hidden="true" />
+        <div className="flex items-center gap-1.75 border-b border-border px-1.25 pt-0.75 pb-2 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:text-muted-foreground">
+          <Search aria-hidden="true" className="shrink-0" />
           <input
+            className="min-w-0 flex-1 border-0 bg-transparent text-xs text-foreground outline-none"
             value={query}
             placeholder={placeholder}
             onChange={(event) => setQuery(event.target.value)}
@@ -301,6 +314,7 @@ export function MultiSelect({
           {query && (
             <button
               type="button"
+              className="inline-flex cursor-pointer border-0 bg-transparent p-0 text-muted-foreground"
               aria-label={t("common.clear")}
               onClick={() => setQuery("")}
             >
@@ -308,15 +322,15 @@ export function MultiSelect({
             </button>
           )}
         </div>
-        <Scroller className="he-command-list" defer={false}>
-          <div className="he-command-list-content">
+        <Scroller className="max-h-command-list" defer={false}>
+          <div className="pt-1">
             {canCreate && (
               <button
                 type="button"
-                className="he-command-item"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-1.5 py-1.75 text-left text-foreground hover:bg-accent hover:text-accent-foreground"
                 onClick={createValue}
               >
-                <span className="he-command-check" />
+                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-input" />
                 <span>{query.trim()}</span>
               </button>
             )}
@@ -326,13 +340,14 @@ export function MultiSelect({
                 <button
                   key={option.value}
                   type="button"
-                  className="he-command-item"
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-1.5 py-1.75 text-left text-foreground hover:bg-accent hover:text-accent-foreground"
                   onClick={() => toggleValue(option.value)}
                 >
                   <span
                     className={cn(
-                      "he-command-check",
-                      selected && "he-command-check-selected",
+                      "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-input [&_svg]:h-3 [&_svg]:w-3",
+                      selected &&
+                        "border-primary bg-primary text-primary-foreground",
                     )}
                   >
                     {selected && <Check aria-hidden="true" />}
@@ -342,7 +357,9 @@ export function MultiSelect({
               );
             })}
             {!canCreate && visibleOptions.length === 0 && (
-              <div className="he-command-empty">{t("common.noResults")}</div>
+              <div className="px-2 py-4.5 text-center text-xs text-muted-foreground">
+                {t("common.noResults")}
+              </div>
             )}
           </div>
         </Scroller>

@@ -57,7 +57,9 @@ export function ProfilePanel() {
   return (
     <div className="flex h-full flex-col p-4">
       <div className="mb-3 px-1">
-        <div className="he-profile-list-kicker">{t("options.profiles")}</div>
+        <div className="text-xs font-bold tracking-kicker text-muted-foreground uppercase">
+          {t("options.profiles")}
+        </div>
         <div className="mt-1 text-xs leading-5 text-muted-foreground">
           {t("options.profilesHint")}
         </div>
@@ -69,7 +71,7 @@ export function ProfilePanel() {
       </Button>
 
       {profiles.length === 0 ? (
-        <div className="he-empty-state min-h-40 px-4 py-6 text-xs">
+        <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/70 px-4 py-6 text-center text-xs text-muted-foreground">
           {t("options.noProfiles")}
         </div>
       ) : (
@@ -81,15 +83,15 @@ export function ProfilePanel() {
                 <div
                   key={profile.id}
                   className={cn(
-                    "he-profile-list-item group",
+                    "group relative flex w-full items-center gap-0.5 rounded-xl border p-1 text-left transition-colors",
                     status.editing
-                      ? "he-profile-list-item-active"
-                      : "he-profile-list-item-idle",
+                      ? "border-primary/30 border-l-3 border-l-primary bg-accent/55 hover:bg-accent/70"
+                      : "border-transparent text-foreground hover:border-border hover:bg-muted/60 focus-within:border-border focus-within:bg-muted/60",
                   )}
                 >
                   <button
                     type="button"
-                    className="he-profile-list-select"
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-lg border-0 bg-transparent p-1.5 text-left text-inherit outline-none focus-visible:ring-3 focus-visible:ring-ring/25"
                     onClick={() => setActive(profile.id)}
                   >
                     <span
@@ -143,7 +145,12 @@ export function ProfilePanel() {
                     }
                   />
 
-                  <span className="he-profile-list-actions">
+                  <span
+                    className={cn(
+                      "pointer-events-none absolute inset-y-1 right-9.5 flex items-center gap-0.5 bg-linear-to-r from-transparent pl-6 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
+                      status.editing ? "to-accent" : "to-muted",
+                    )}
+                  >
                     <Tooltip content={t("options.copyProfile")}>
                       <Button
                         variant="ghost"

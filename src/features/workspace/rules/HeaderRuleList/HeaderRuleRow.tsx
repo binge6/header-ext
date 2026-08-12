@@ -17,6 +17,11 @@ import { AdvancedConditionsPanel } from "./AdvancedConditionsPanel";
 import { RuleActionControl } from "./RuleActionControl";
 import type { HeaderRuleMode } from "./types";
 import { hasAdvancedConditions } from "./utils";
+import {
+  editorFieldClassName,
+  editorRuleDragOverClassName,
+  editorRuleRowClassName,
+} from "../../components/editor-styles";
 
 interface HeaderRuleRowProps extends HeaderRuleMode {
   rule: HeaderRule;
@@ -57,7 +62,7 @@ export function HeaderRuleRow({
   const { t } = useTranslation();
   const condition = rule.condition ?? {};
   const filterActive = hasAdvancedConditions(rule, isRedirect);
-  const fieldClassName = cn("min-w-0 flex-1", isEditor && "he-editor-field");
+  const fieldClassName = cn("min-w-0 flex-1", isEditor && editorFieldClassName);
   const toggleLabel = rule.enabled
     ? t("rule.disableRule")
     : t("rule.enableRule");
@@ -76,10 +81,10 @@ export function HeaderRuleRow({
     <div
       className={cn(
         "flex items-center",
-        isEditor ? "he-editor-rule-row gap-1.5 py-1" : "gap-1 py-1",
+        isEditor ? editorRuleRowClassName : "gap-1 py-1",
         isEditor && !rule.enabled && "opacity-70",
         isDragging && "opacity-50",
-        isDragOver && "he-editor-rule-row-drag-over",
+        isDragOver && editorRuleDragOverClassName,
       )}
       onDragOver={(event) => onDragOver(event, rule.id)}
       onDrop={(event) => onDrop(event, rule.id)}
@@ -189,14 +194,15 @@ export function HeaderRuleRow({
             side="left"
             align="center"
             className={cn(
-              "he-advanced-popover-content p-0",
+              "w-83 max-w-popover-limit overflow-hidden p-0",
               advancedPopoverDensity === "compact" &&
-                "he-advanced-popover-content-compact",
+                "w-76 max-w-popover-limit-compact rounded-lg shadow-panel",
             )}
           >
             <AdvancedConditionsPanel
               rule={rule}
               isRedirect={isRedirect}
+              compact={advancedPopoverDensity === "compact"}
               onUpdate={onUpdate}
             />
           </PopoverContent>

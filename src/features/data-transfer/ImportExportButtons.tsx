@@ -9,10 +9,12 @@ import {
   Button,
   Checkbox,
   Dialog,
+  MenuButton,
   Popover,
   PopoverContent,
   PopoverTrigger,
   Scroller,
+  Textarea,
   Tooltip,
 } from "@/src/shared/ui";
 
@@ -190,9 +192,7 @@ export function ImportExportButtons({
   };
 
   const importBtn = menuItem ? (
-    <button
-      type="button"
-      className="he-menu-item"
+    <MenuButton
       onClick={(event) => {
         event.preventDefault();
         handleImportClick();
@@ -200,7 +200,7 @@ export function ImportExportButtons({
     >
       <Upload aria-hidden="true" />
       {resolvedImportLabel}
-    </button>
+    </MenuButton>
   ) : iconOnly ? (
     <Tooltip content={resolvedImportLabel}>
       <Button
@@ -220,9 +220,7 @@ export function ImportExportButtons({
   );
 
   const pasteBtn = menuItem ? (
-    <button
-      type="button"
-      className="he-menu-item"
+    <MenuButton
       onClick={(event) => {
         event.preventDefault();
         handlePasteClick();
@@ -230,7 +228,7 @@ export function ImportExportButtons({
     >
       <ClipboardPaste aria-hidden="true" />
       {t("options.pasteJson")}
-    </button>
+    </MenuButton>
   ) : iconOnly ? (
     <Tooltip content={t("options.pasteJson")}>
       <Button
@@ -251,14 +249,10 @@ export function ImportExportButtons({
 
   const exportTrigger = menuItem ? (
     <PopoverTrigger asChild>
-      <button
-        type="button"
-        className="he-menu-item"
-        disabled={profiles.length === 0}
-      >
+      <MenuButton disabled={profiles.length === 0}>
         <Download aria-hidden="true" />
         {t("options.export")}
-      </button>
+      </MenuButton>
     </PopoverTrigger>
   ) : iconOnly ? (
     <Tooltip content={t("options.export")} disabled={exportOpen}>
@@ -315,8 +309,8 @@ export function ImportExportButtons({
           </>
         }
       >
-        <textarea
-          className="he-input he-json-paste-textarea resize-y py-2 leading-5"
+        <Textarea
+          className="min-h-45 max-h-80"
           value={pasteText}
           autoFocus
           spellCheck={false}

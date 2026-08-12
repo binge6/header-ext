@@ -17,6 +17,7 @@ import {
   Spinner,
 } from "@/src/shared/ui/feedback";
 import { UIProvider } from "@/src/shared/ui/overlays";
+import { cn } from "@/src/shared/lib/cn";
 import { PopupHeader } from "./components/PopupHeader";
 import { ProfileContextMenuContent } from "./components/ProfileContextMenu";
 import { ProfileEditor } from "./components/ProfileEditor";
@@ -198,7 +199,7 @@ export function PopupApp() {
 
   return (
     <UIProvider delayDuration={250}>
-      <div className="he-popup-shell flex w-155 min-h-100 flex-col text-foreground">
+      <div className="he-popup-shell relative flex min-h-100 w-155 flex-col overflow-hidden bg-background text-foreground">
         <PopupHeader
           logoUrl={logoUrl}
           globalPaused={meta.globalPaused}
@@ -212,13 +213,14 @@ export function PopupApp() {
           onToggleTabLock={handleToggleTabLock}
         />
 
-        <main className="he-popup-body">
+        <main className="flex min-h-0 flex-1 bg-background p-1.5">
           <div
-            className={
+            className={cn(
+              "grid min-h-0 flex-1 gap-1.5",
               profileRailCollapsed
-                ? "he-popup-workspace he-popup-workspace-collapsed"
-                : "he-popup-workspace"
-            }
+                ? "grid-cols-popup-collapsed"
+                : "grid-cols-popup-expanded",
+            )}
           >
             <ProfileRail
               statuses={workspace.statuses}

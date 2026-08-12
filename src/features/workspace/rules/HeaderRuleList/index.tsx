@@ -5,6 +5,14 @@ import { useHistorySuggestions } from "@/src/application/hooks/use-rule-history"
 import { cn } from "@/src/shared/lib/cn";
 import { Button, Checkbox, Tooltip } from "@/src/shared/ui";
 import { GroupHeader } from "../../components/GroupHeader";
+import {
+  editorSectionClassName,
+  editorSectionCountClassName,
+  editorSectionHeaderClassName,
+  editorSectionIconClassName,
+  editorSectionIconVariants,
+  editorSectionTitleClassName,
+} from "../../components/editor-styles";
 import { HeaderRuleRow } from "./HeaderRuleRow";
 import type { HeaderRuleListProps } from "./types";
 import {
@@ -103,14 +111,14 @@ export function HeaderRuleList({
   };
 
   const sectionIconClassName = cn(
-    "he-editor-section-icon",
+    editorSectionIconClassName,
     isRedirect
-      ? "he-editor-section-icon-redirect"
+      ? editorSectionIconVariants.redirect
       : isCookie
-        ? "he-editor-section-icon-cookie"
+        ? editorSectionIconVariants.cookie
         : headerTarget === "request"
-          ? "he-editor-section-icon-request"
-          : "he-editor-section-icon-response",
+          ? editorSectionIconVariants.request
+          : editorSectionIconVariants.response,
   );
 
   const rows = rules.map((rule) => {
@@ -174,12 +182,14 @@ export function HeaderRuleList({
   if (rules.length === 0) return null;
 
   return (
-    <section className="he-editor-section">
-      <div className="he-editor-section-header flex items-center justify-between">
+    <section className={editorSectionClassName}>
+      <div className={editorSectionHeaderClassName}>
         <div className="flex items-center gap-1.5">
           <span className={sectionIconClassName}>{renderSectionIcon()}</span>
-          <span className="he-section-title">{t(groupTitleKey)}</span>
-          <span className="he-editor-section-count">{rules.length}</span>
+          <span className={editorSectionTitleClassName}>
+            {t(groupTitleKey)}
+          </span>
+          <span className={editorSectionCountClassName}>{rules.length}</span>
         </div>
         <div className="flex items-center gap-1">
           <Tooltip content={t(addLabelKey)}>

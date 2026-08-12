@@ -51,12 +51,22 @@ export function ProfileRail({
   return (
     <aside
       className={cn(
-        "he-popup-profile-sidebar",
-        collapsed && "he-popup-profile-sidebar-collapsed",
+        "flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/80 bg-card shadow-soft",
+        collapsed && "items-center",
       )}
     >
-      <div className="he-popup-sidebar-head">
-        <span className="he-profile-list-kicker he-popup-sidebar-title">
+      <div
+        className={cn(
+          "flex min-h-8.5 items-center justify-between gap-2 border-b border-border/70 bg-muted/25 py-1 pr-1.5 pl-2",
+          collapsed && "w-full justify-center p-1.25",
+        )}
+      >
+        <span
+          className={cn(
+            "min-w-0 text-xs font-bold tracking-kicker text-muted-foreground uppercase",
+            collapsed && "hidden",
+          )}
+        >
           {t("popup.enabledStack")}
         </span>
         <Tooltip
@@ -82,8 +92,13 @@ export function ProfileRail({
           </Button>
         </Tooltip>
       </div>
-      <Scroller className="he-popup-profile-list">
-        <div className="he-popup-profile-list-content">
+      <Scroller className="max-h-popup-profile-list min-h-0 flex-1 p-1.25">
+        <div
+          className={cn(
+            "flex flex-col gap-0.75",
+            collapsed && "w-full items-center",
+          )}
+        >
           {statuses.map((status) => (
             <ProfileRailItem
               key={status.profile.id}
@@ -102,7 +117,7 @@ export function ProfileRail({
           ))}
         </div>
       </Scroller>
-      <div className="he-popup-sidebar-footer">
+      <div className="border-t border-border p-1.75">
         {collapsed ? (
           <Tooltip content={t("options.newProfile")} side="right">
             <Button
@@ -158,11 +173,11 @@ function ProfileRailItem({
 
     return (
       <DropdownMenu open={contextOpen} onOpenChange={onContextOpenChange}>
-        <div className="he-popup-profile-menu-anchor">
+        <div className="relative flex w-7.75 justify-center">
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="he-popup-context-trigger"
+              className="pointer-events-none absolute inset-0 h-full w-full overflow-hidden border-0 p-0 opacity-0"
               aria-hidden="true"
               tabIndex={-1}
             />
@@ -171,8 +186,9 @@ function ProfileRailItem({
             <button
               type="button"
               className={cn(
-                "he-popup-profile-pill",
-                status.editing && "he-popup-profile-pill-editing",
+                "relative inline-flex h-7.75 w-7.75 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-secondary text-micro font-extrabold text-secondary-foreground transition-colors outline-none hover:border-border hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/25",
+                status.editing &&
+                  "border-primary/35 bg-primary text-primary-foreground shadow-soft",
                 status.alwaysEnabled && "he-popup-profile-pill-enabled",
                 status.stats.hasGlobalRisk && "he-popup-profile-pill-risk",
               )}
@@ -196,20 +212,21 @@ function ProfileRailItem({
 
   return (
     <DropdownMenu open={contextOpen} onOpenChange={onContextOpenChange}>
-      <div className="he-popup-profile-menu-anchor">
+      <div className="relative w-full">
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="he-popup-context-trigger"
+            className="pointer-events-none absolute inset-0 h-full w-full overflow-hidden border-0 p-0 opacity-0"
             aria-hidden="true"
             tabIndex={-1}
           />
         </DropdownMenuTrigger>
         <div
           className={cn(
-            "he-popup-profile-item",
-            status.editing && "he-popup-profile-item-editing",
-            status.pausedByGlobal && "he-popup-profile-item-paused",
+            "flex min-h-10 items-center gap-1.5 rounded-md border border-border/50 bg-card/70 px-1.5 py-1 transition-colors hover:border-primary/15 hover:bg-card hover:shadow-soft",
+            status.editing &&
+              "border-primary/30 border-l-3 border-l-primary bg-card shadow-soft",
+            status.pausedByGlobal && "opacity-75",
           )}
           onContextMenu={(event) => {
             event.preventDefault();
@@ -218,11 +235,16 @@ function ProfileRailItem({
         >
           <button
             type="button"
-            className="he-popup-profile-select"
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.75 border-0 bg-transparent p-0 text-left text-inherit outline-none focus-visible:ring-3 focus-visible:ring-ring/25"
             aria-current={status.editing ? "page" : undefined}
             onClick={onSelect}
           >
-            <span className="he-popup-profile-mark">
+            <span
+              className={cn(
+                "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-secondary text-micro font-extrabold text-secondary-foreground",
+                status.editing && "bg-primary text-primary-foreground",
+              )}
+            >
               {getProfileBadgeText(status.profile.name)}
             </span>
             <span className="min-w-0 flex-1">

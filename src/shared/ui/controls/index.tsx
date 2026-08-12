@@ -9,27 +9,50 @@ import {
   type InputHTMLAttributes,
   type KeyboardEvent,
   type ReactNode,
+  type TextareaHTMLAttributes,
 } from "react";
-import "./index.scss";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/src/shared/lib/cn";
 import { Scroller } from "../scroll";
 import { Popover, PopoverAnchor, PopoverContent } from "../overlays";
 
-type ButtonVariant =
-  | "default"
-  | "secondary"
-  | "outline"
-  | "ghost"
-  | "destructive";
-type ButtonSize = "default" | "sm" | "icon" | "icon-sm";
+const buttonVariants = cva(
+  "he-button inline-flex min-w-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-transparent font-semibold leading-none transition-colors outline-none active:translate-y-px disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 focus-visible:ring-3 focus-visible:ring-ring/25 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary !text-primary-foreground shadow-soft hover:bg-primary-hover",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        outline:
+          "border-border bg-card text-foreground shadow-soft hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
+        ghost:
+          "bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        destructive:
+          "bg-destructive !text-destructive-foreground hover:bg-destructive-hover",
+      },
+      size: {
+        default: "h-9 gap-2 px-3.5 text-group-title",
+        sm: "h-8 gap-1.5 rounded-sm px-2.5 text-xs",
+        icon: "h-9 w-9 p-0",
+        "icon-sm": "h-7.5 w-7.5 p-0",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-}
+interface ButtonProps
+  extends
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -45,12 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       type={type}
-      className={cn(
-        "he-button",
-        `he-button-${variant}`,
-        `he-button-${size}`,
-        className,
-      )}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   ),
@@ -64,11 +82,29 @@ export const Input = forwardRef<
   <input
     ref={ref}
     type={type}
-    className={cn("he-input", className)}
+    className={cn(
+      "he-input h-8.5 w-full min-w-0 rounded-sm border border-input bg-card px-2.5 text-group-title leading-8.5 text-foreground shadow-soft outline-none transition-colors placeholder:text-muted-foreground/80 hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/25 [&::-webkit-calendar-picker-indicator]:hidden",
+      className,
+    )}
     {...props}
   />
 ));
 Input.displayName = "Input";
+
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn(
+      "he-textarea min-h-32 w-full min-w-0 resize-y rounded-sm border border-input bg-card px-2.5 py-2 text-group-title leading-5 text-foreground shadow-soft outline-none transition-colors placeholder:text-muted-foreground/80 hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/25",
+      className,
+    )}
+    {...props}
+  />
+));
+Textarea.displayName = "Textarea";
 
 interface AutoCompleteInputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -170,18 +206,18 @@ export const AutoCompleteInput = forwardRef<
       </PopoverAnchor>
       <PopoverContent
         align="start"
-        className="he-autocomplete-content"
+        className="w-autocomplete min-w-autocomplete-min max-w-autocomplete-max overflow-hidden p-0.75"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Scroller className="he-autocomplete-scroll" defer={false}>
-          <div className="he-autocomplete-list">
+        <Scroller className="max-h-autocomplete-height" defer={false}>
+          <div>
             {suggestions.map((option, index) => (
               <button
                 key={option}
                 type="button"
                 className={cn(
-                  "he-autocomplete-item",
-                  index === activeIndex && "he-autocomplete-item-active",
+                  "block min-h-6.5 w-full cursor-pointer overflow-hidden rounded-sm border-0 bg-transparent px-1.75 py-1 text-left text-xs leading-snug font-semibold text-ellipsis whitespace-nowrap text-popover-foreground",
+                  index === activeIndex && "bg-accent text-accent-foreground",
                 )}
                 onMouseDown={(event) => {
                   event.preventDefault();
@@ -219,10 +255,13 @@ export function Switch({
       checked={checked}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={cn("he-switch", className)}
+      className={cn(
+        "he-switch relative inline-flex h-4.75 w-8.5 shrink-0 cursor-pointer items-center rounded-full border-0 bg-muted-foreground/35 p-0.5 outline-none transition-colors data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-3 focus-visible:ring-ring/25",
+        className,
+      )}
       onCheckedChange={onCheckedChange}
     >
-      <SwitchPrimitive.Thumb className="he-switch-thumb" />
+      <SwitchPrimitive.Thumb className="block h-3.75 w-3.75 translate-x-0 rounded-full bg-white shadow-soft transition-transform data-[state=checked]:translate-x-3.75" />
     </SwitchPrimitive.Root>
   );
 }
@@ -257,7 +296,10 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         checked={checked}
         disabled={disabled}
         aria-label={ariaLabel}
-        className={cn("he-checkbox", !label && className)}
+        className={cn(
+          "he-checkbox inline-flex h-4.25 w-4.25 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-input bg-card text-primary-foreground outline-none data-[checkbox-state=checked]:border-primary data-[checkbox-state=checked]:bg-primary data-[checkbox-state=indeterminate]:border-primary data-[checkbox-state=indeterminate]:bg-primary disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-3 focus-visible:ring-ring/25 [&_svg]:h-3.25 [&_svg]:w-3.25 [&_svg]:stroke-2.5",
+          !label && className,
+        )}
         onCheckedChange={(next) => onCheckedChange(next === true)}
         {...props}
         data-checkbox-state={
@@ -277,7 +319,12 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
     if (!label) return control;
 
     return (
-      <label className={cn("he-checkbox-label", className)}>
+      <label
+        className={cn(
+          "he-checkbox-label flex cursor-pointer items-center gap-2 text-group-title text-foreground",
+          className,
+        )}
+      >
         {control}
         <span>{label}</span>
       </label>

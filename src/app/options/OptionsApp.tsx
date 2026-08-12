@@ -32,7 +32,7 @@ import {
   Spinner,
   UIProvider,
 } from "@/src/shared/ui";
-import "./OptionsApp.css";
+import { cn } from "@/src/shared/lib/cn";
 
 const logoUrl = new URL("../../../assets/logo.svg", import.meta.url).href;
 
@@ -48,6 +48,10 @@ export function OptionsApp() {
     [meta, profiles],
   );
   const { hydrate } = useProfileActions();
+  const inspectorPanelClassName =
+    "rounded-lg border border-border bg-card p-3.5 shadow-soft";
+  const inspectorRowClassName =
+    "flex min-h-8.5 items-center gap-2 rounded-md border border-border bg-muted/35 px-2.5 py-2 text-xs leading-snug text-foreground [&_svg]:h-3.75 [&_svg]:w-3.75 [&_svg]:shrink-0";
 
   useEffect(() => {
     void (async () => {
@@ -69,8 +73,8 @@ export function OptionsApp() {
 
   return (
     <UIProvider delayDuration={300}>
-      <div className="he-options-shell min-h-screen bg-background">
-        <header className="he-options-header">
+      <div className="flex h-screen min-w-210 flex-col overflow-hidden bg-background">
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-6 border-b border-border/90 bg-card/90 px-7 backdrop-blur-xl max-lg:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <img
               src={logoUrl}
@@ -96,51 +100,69 @@ export function OptionsApp() {
           </div>
         </header>
 
-        <div className="he-options-layout">
-          <aside className="he-options-sidebar">
+        <div className="mx-auto flex min-h-0 w-full max-w-360 flex-1">
+          <aside className="min-h-0 w-70 shrink-0 border-r border-border/90 bg-card/70 max-lg:w-62">
             <ProfilePanel />
           </aside>
-          <main className="he-options-main">
+          <main className="min-w-0 flex-1">
             <Scroller className="h-full">
-              <div className="he-options-main-content">
+              <div className="px-7 pt-7 pb-16 max-lg:px-6 max-lg:pb-12">
                 <RuleTable />
               </div>
             </Scroller>
           </main>
-          <aside className="he-options-inspector">
+          <aside className="min-h-0 w-70 shrink-0 border-l border-border/90 bg-card/55 max-lg:hidden">
             <Scroller className="h-full px-4 py-6">
-              <div className="he-inspector-panel">
-                <div className="he-profile-list-kicker">
+              <div className={inspectorPanelClassName}>
+                <div className="text-xs font-bold tracking-kicker text-muted-foreground uppercase">
                   {t("options.liveStack")}
                 </div>
                 <div className="mt-1 text-xs leading-5 text-muted-foreground">
                   {t("options.liveStackHint")}
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="he-options-mini-stat">
-                    <span>{workspace.enabledProfiles.length}</span>
-                    <small>{t("popup.enabledProfiles")}</small>
+                  <div className="min-w-0 rounded-md border border-border bg-card/70 px-2.5 py-2.25">
+                    <span className="block text-lg leading-none font-extrabold text-foreground">
+                      {workspace.enabledProfiles.length}
+                    </span>
+                    <small className="mt-1.25 block text-micro leading-tight text-muted-foreground">
+                      {t("popup.enabledProfiles")}
+                    </small>
                   </div>
-                  <div className="he-options-mini-stat">
-                    <span>{workspace.enabledRuleCount}</span>
-                    <small>{t("popup.enabledRules")}</small>
+                  <div className="min-w-0 rounded-md border border-border bg-card/70 px-2.5 py-2.25">
+                    <span className="block text-lg leading-none font-extrabold text-foreground">
+                      {workspace.enabledRuleCount}
+                    </span>
+                    <small className="mt-1.25 block text-micro leading-tight text-muted-foreground">
+                      {t("popup.enabledRules")}
+                    </small>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-col gap-2">
                   {meta.globalPaused && (
-                    <div className="he-inspector-alert he-inspector-alert-warning">
+                    <div
+                      className={cn(
+                        inspectorRowClassName,
+                        "border-warning/35 bg-warning-soft text-warning",
+                      )}
+                    >
                       <Pause aria-hidden="true" />
                       <span>{t("popup.globalPaused")}</span>
                     </div>
                   )}
                   {!workspace.enabledProfiles.length && (
-                    <div className="he-inspector-alert">
+                    <div className={inspectorRowClassName}>
                       <AlertTriangle aria-hidden="true" />
                       <span>{t("options.noEnabledProfiles")}</span>
                     </div>
                   )}
                   {workspace.riskyProfiles.length > 0 && (
-                    <div className="he-inspector-alert he-inspector-alert-warning">
+                    <div
+                      className={cn(
+                        inspectorRowClassName,
+                        "border-warning/35 bg-warning-soft text-warning",
+                      )}
+                    >
                       <AlertTriangle aria-hidden="true" />
                       <span>
                         {t("options.riskyProfileCount", {
@@ -150,7 +172,12 @@ export function OptionsApp() {
                     </div>
                   )}
                   {workspace.conflictGroups.length > 0 && (
-                    <div className="he-inspector-alert he-inspector-alert-warning">
+                    <div
+                      className={cn(
+                        inspectorRowClassName,
+                        "border-warning/35 bg-warning-soft text-warning",
+                      )}
+                    >
                       <Workflow aria-hidden="true" />
                       <span>
                         {t("options.conflictCount", {
@@ -162,15 +189,18 @@ export function OptionsApp() {
                 </div>
               </div>
 
-              <div className="he-inspector-panel">
-                <div className="he-profile-list-kicker">
+              <div className={cn(inspectorPanelClassName, "mt-3")}>
+                <div className="text-xs font-bold tracking-kicker text-muted-foreground uppercase">
                   {t("options.enabledProfiles")}
                 </div>
                 <div className="mt-3 flex flex-col gap-2">
                   {workspace.statuses
                     .filter((status) => status.enabled)
                     .map((status) => (
-                      <div key={status.profile.id} className="he-inspector-row">
+                      <div
+                        key={status.profile.id}
+                        className={inspectorRowClassName}
+                      >
                         <CheckCircle2
                           aria-hidden="true"
                           className="h-4 w-4 shrink-0 text-success"
@@ -188,19 +218,19 @@ export function OptionsApp() {
                       </div>
                     ))}
                   {!workspace.enabledProfiles.length && (
-                    <div className="he-inspector-empty">
+                    <div className="rounded-md border border-dashed border-border px-3.5 py-3.5 text-center text-xs text-muted-foreground">
                       {t("options.noEnabledProfiles")}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="he-inspector-panel">
-                <div className="he-profile-list-kicker">
+              <div className={cn(inspectorPanelClassName, "mt-3")}>
+                <div className="text-xs font-bold tracking-kicker text-muted-foreground uppercase">
                   {t("options.qualitySignals")}
                 </div>
                 <div className="mt-3 flex flex-col gap-2">
-                  <div className="he-inspector-row">
+                  <div className={inspectorRowClassName}>
                     <SlidersHorizontal
                       aria-hidden="true"
                       className="h-4 w-4 shrink-0 text-primary"
@@ -215,7 +245,7 @@ export function OptionsApp() {
                       )}
                     </Badge>
                   </div>
-                  <div className="he-inspector-row">
+                  <div className={inspectorRowClassName}>
                     <AlertTriangle
                       aria-hidden="true"
                       className="h-4 w-4 shrink-0 text-warning"

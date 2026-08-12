@@ -2,8 +2,6 @@ import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/application/profile-store";
 import { getProfileStats } from "@/src/domain";
-import { cn } from "@/src/shared/lib/cn";
-import styles from "./index.module.scss";
 
 interface Props {
   /** compact: 紧凑单行模式（用于 popup 底部空间受限场景） */
@@ -30,10 +28,7 @@ export function NoFilterBanner({ compact }: Props) {
   if (compact) {
     return (
       <div
-        className={cn(
-          "flex items-center gap-1.5 rounded-lg bg-warning-soft px-2.5 py-1.5 text-warning",
-          styles.warningCompact,
-        )}
+        className="flex items-center gap-1.25 rounded-md bg-warning-soft px-2 py-1 text-warning"
         title={fullText}
       >
         <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
@@ -45,12 +40,7 @@ export function NoFilterBanner({ compact }: Props) {
   }
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-3 rounded-xl bg-info-soft px-4 py-3",
-        styles.infoBanner,
-      )}
-    >
+    <div className="flex items-start gap-3 rounded-xl border border-info/25 bg-info-soft px-4 py-3">
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-card text-info">
         <AlertTriangle aria-hidden="true" className="h-4 w-4" />
       </div>

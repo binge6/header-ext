@@ -4,6 +4,17 @@ import type { ProfileVariable } from "@/src/domain";
 import { cn } from "@/src/shared/lib/cn";
 import { Button, Checkbox, Input, Tooltip } from "@/src/shared/ui";
 import { GroupHeader } from "../components/GroupHeader";
+import {
+  editorFieldClassName,
+  editorRuleRowClassName,
+  editorSectionClassName,
+  editorSectionCountClassName,
+  editorSectionHeaderClassName,
+  editorSectionIconClassName,
+  editorSectionIconVariants,
+  editorSectionTitleClassName,
+  mutedTextClassName,
+} from "../components/editor-styles";
 
 interface Props {
   variables: ProfileVariable[];
@@ -72,7 +83,7 @@ export function VariableList({
 
   const rows =
     variables.length === 0 ? (
-      <div className={cn("he-muted-text", isEditor ? "px-3 py-2" : "py-1")}>
+      <div className={cn(mutedTextClassName, isEditor ? "px-3 py-2" : "py-1")}>
         {t("variables.empty", { syntax: "{{name}}" })}
       </div>
     ) : (
@@ -80,8 +91,7 @@ export function VariableList({
         <div
           key={variable.id}
           className={cn(
-            "flex items-center py-1",
-            isEditor ? "he-editor-rule-row gap-1.5" : "gap-1",
+            isEditor ? editorRuleRowClassName : "flex items-center gap-1 py-1",
             isEditor && !variable.enabled && "opacity-70",
           )}
         >
@@ -95,7 +105,7 @@ export function VariableList({
             )}
           <Input
             placeholder={t("variables.namePlaceholder")}
-            className={cn("min-w-0 flex-1", isEditor && "he-editor-field")}
+            className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
             value={variable.name}
             onChange={(event) =>
               onUpdate({ ...variable, name: event.target.value })
@@ -103,7 +113,7 @@ export function VariableList({
           />
           <Input
             placeholder={t("variables.valuePlaceholder")}
-            className={cn("min-w-0 flex-1", isEditor && "he-editor-field")}
+            className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
             value={variable.value}
             onChange={(event) =>
               onUpdate({ ...variable, value: event.target.value })
@@ -135,14 +145,23 @@ export function VariableList({
     if (!variables.length && !showEmpty) return null;
 
     return (
-      <section className="he-editor-section">
-        <div className="he-editor-section-header flex items-center justify-between">
+      <section className={editorSectionClassName}>
+        <div className={editorSectionHeaderClassName}>
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="he-editor-section-icon he-editor-section-icon-variable">
+            <span
+              className={cn(
+                editorSectionIconClassName,
+                editorSectionIconVariants.variable,
+              )}
+            >
               <Braces aria-hidden="true" />
             </span>
-            <span className="he-section-title">{t("variables.title")}</span>
-            <span className="he-editor-section-count">{variables.length}</span>
+            <span className={editorSectionTitleClassName}>
+              {t("variables.title")}
+            </span>
+            <span className={editorSectionCountClassName}>
+              {variables.length}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Tooltip content={t("variables.addItem")}>
@@ -173,7 +192,7 @@ export function VariableList({
         addLabel={t("variables.addItem")}
         onAdd={onAdd}
       />
-      <div className="he-muted-text mb-1">
+      <div className={cn(mutedTextClassName, "mb-1")}>
         {t("variables.hint", { syntax: "{{name}}" })}
       </div>
       {rows}

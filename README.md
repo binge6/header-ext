@@ -30,6 +30,7 @@ If you cannot access Chrome Web Store, Microsoft Edge Add-ons, or Firefox Add-on
 - [WXT](https://wxt.dev/) + React 19 + TypeScript
 - Radix UI primitives + shadcn/ui-style local components
 - Tailwind CSS v4 + Lucide icons
+- CVA component variants + `tw-animate-css`
 - Zustand for state management
 - `declarativeNetRequest` + Service Worker (no content script)
 

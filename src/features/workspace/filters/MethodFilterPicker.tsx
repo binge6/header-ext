@@ -3,6 +3,16 @@ import { Filter } from "lucide-react";
 import type { MethodFilter } from "@/src/domain";
 import { SUPPORTED_REQUEST_METHODS } from "@/src/domain";
 import { Button, MultiSelect } from "@/src/shared/ui";
+import { cn } from "@/src/shared/lib/cn";
+import {
+  editorSectionClassName,
+  editorSectionCountClassName,
+  editorSectionHeaderClassName,
+  editorSectionIconClassName,
+  editorSectionIconVariants,
+  editorSectionTitleClassName,
+  mutedTextClassName,
+} from "../components/editor-styles";
 
 interface Props {
   filters: MethodFilter[];
@@ -45,7 +55,7 @@ export function MethodFilterPicker({
         }
       />
       <div className="flex items-center justify-between gap-3">
-        <span className="he-muted-text">
+        <span className={mutedTextClassName}>
           {value.length === 0
             ? t("methodFilters.empty")
             : t("methodFilters.hint")}
@@ -67,14 +77,21 @@ export function MethodFilterPicker({
     if (filters.length === 0) return null;
 
     return (
-      <section className="he-editor-section">
-        <div className="he-editor-section-header flex items-center justify-between">
+      <section className={editorSectionClassName}>
+        <div className={editorSectionHeaderClassName}>
           <div className="flex items-center gap-1.5">
-            <span className="he-editor-section-icon he-editor-section-icon-filter">
+            <span
+              className={cn(
+                editorSectionIconClassName,
+                editorSectionIconVariants.filter,
+              )}
+            >
               <Filter aria-hidden="true" />
             </span>
-            <span className="he-section-title">{t("methodFilters.title")}</span>
-            <span className="he-editor-section-count">{value.length}</span>
+            <span className={editorSectionTitleClassName}>
+              {t("methodFilters.title")}
+            </span>
+            <span className={editorSectionCountClassName}>{value.length}</span>
           </div>
         </div>
         <div className="flex flex-col gap-1.5 p-3">{content}</div>
@@ -84,7 +101,9 @@ export function MethodFilterPicker({
 
   return (
     <div>
-      <div className="he-section-title mb-1.5">{t("methodFilters.title")}</div>
+      <div className={cn(editorSectionTitleClassName, "mb-1.5")}>
+        {t("methodFilters.title")}
+      </div>
       {content}
     </div>
   );

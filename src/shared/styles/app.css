@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @theme inline {
   --color-background: var(--background);
@@ -8,6 +9,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -16,6 +18,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -36,10 +39,56 @@
   --radius-xl: calc(var(--radius) + 4px);
   --text-micro: 11px;
   --text-group-title: 13px;
+  --text-dialog-title: 15px;
+  --tracking-kicker: 0.14em;
   --spacing-select: 132px;
+  --spacing-dialog-limit: calc(100vw - 28px);
+  --spacing-autocomplete: min(
+    var(--radix-popover-trigger-width),
+    calc(100vw - 16px)
+  );
+  --spacing-autocomplete-min: min(180px, calc(100vw - 16px));
+  --spacing-autocomplete-max: min(
+    280px,
+    calc(100vw - 16px),
+    var(--radix-popover-content-available-width)
+  );
+  --spacing-autocomplete-height: min(
+    184px,
+    calc(100vh - 16px),
+    var(--radix-popover-content-available-height)
+  );
+  --spacing-tooltip-limit: min(300px, calc(100vw - 16px));
+  --spacing-menu-height: min(
+    360px,
+    var(--radix-dropdown-menu-content-available-height)
+  );
+  --spacing-select-content: var(--radix-popover-trigger-width);
+  --spacing-select-content-height: min(
+    320px,
+    var(--radix-popover-content-available-height)
+  );
+  --spacing-multi-select-content: max(
+    var(--radix-popover-trigger-width),
+    220px
+  );
+  --spacing-command-list: 230px;
+  --spacing-popup-profile-list: min(408px, calc(100vh - 132px));
+  --spacing-popover-limit: calc(100vw - 24px);
+  --spacing-popover-limit-compact: calc(100vw - 18px);
+  --spacing-advanced-popover: min(
+    388px,
+    var(--radix-popover-content-available-height)
+  );
+  --spacing-advanced-popover-compact: min(
+    360px,
+    var(--radix-popover-content-available-height)
+  );
   --shadow-soft: var(--app-shadow-soft);
   --shadow-card: var(--app-shadow-card);
   --shadow-panel: var(--app-shadow-panel);
+  --grid-template-columns-popup-expanded: 176px minmax(0, 1fr);
+  --grid-template-columns-popup-collapsed: 46px minmax(0, 1fr);
 }
 
 :root {
@@ -177,441 +226,6 @@
     border-radius: 999px;
     background: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
     background-clip: padding-box;
-  }
-}
-
-@layer components {
-  .he-profile-list-kicker {
-    color: var(--muted-foreground);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .he-profile-list-item {
-    position: relative;
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 2px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-xl);
-    padding: 4px;
-    text-align: left;
-    transition:
-      color 140ms ease,
-      border-color 140ms ease,
-      background-color 140ms ease,
-      box-shadow 140ms ease;
-  }
-
-  .he-profile-list-select {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    align-items: center;
-    gap: 10px;
-    border: 0;
-    border-radius: 8px;
-    padding: 6px;
-    background: transparent;
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .he-profile-list-select:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent);
-  }
-
-  .he-profile-list-item-idle {
-    color: var(--foreground);
-  }
-
-  .he-profile-list-item-idle:hover,
-  .he-profile-list-item-idle:focus-within {
-    border-color: var(--border);
-    background: color-mix(in oklab, var(--muted) 60%, var(--card));
-  }
-
-  .he-profile-list-item-active {
-    color: var(--foreground);
-    border-color: color-mix(in oklab, var(--primary) 30%, var(--border));
-    background: color-mix(in oklab, var(--accent) 55%, var(--card));
-    box-shadow: inset 3px 0 0
-      color-mix(in oklab, var(--primary) 78%, transparent);
-  }
-
-  .he-profile-list-item-active:hover,
-  .he-profile-list-item-active:focus-within {
-    background: color-mix(in oklab, var(--accent) 68%, var(--card));
-  }
-
-  .he-profile-list-actions {
-    position: absolute;
-    inset-block: 4px;
-    right: 38px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding-left: 24px;
-    opacity: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in oklab, var(--muted) 60%, var(--card)) 24px
-    );
-    transition: opacity 140ms ease;
-  }
-
-  .he-profile-list-item-active .he-profile-list-actions {
-    background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in oklab, var(--accent) 68%, var(--card)) 24px
-    );
-  }
-
-  .he-profile-list-item:hover .he-profile-list-actions,
-  .he-profile-list-item:focus-within .he-profile-list-actions {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .he-warning-text {
-    color: var(--warning);
-  }
-
-  .he-editor-section {
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--card);
-    box-shadow: var(--app-shadow-soft);
-  }
-
-  .he-editor-section-header {
-    display: flex;
-    min-height: 48px;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: color-mix(in oklab, var(--muted) 42%, var(--card));
-  }
-
-  .he-editor-section-icon {
-    display: inline-flex;
-    width: 27px;
-    height: 27px;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-  }
-
-  .he-editor-section-icon svg {
-    width: 15px;
-    height: 15px;
-  }
-
-  .he-editor-section-icon-request {
-    color: var(--info);
-    background: var(--info-soft);
-  }
-
-  .he-editor-section-icon-response {
-    color: var(--purple);
-    background: var(--purple-soft);
-  }
-
-  .he-editor-section-icon-cookie {
-    color: var(--orange);
-    background: var(--orange-soft);
-  }
-
-  .he-editor-section-icon-redirect {
-    color: var(--success);
-    background: var(--success-soft);
-  }
-
-  .he-editor-section-icon-filter {
-    color: var(--primary);
-    background: color-mix(in oklab, var(--primary) 12%, transparent);
-  }
-
-  .he-editor-section-icon-variable {
-    color: var(--purple);
-    background: var(--purple-soft);
-  }
-
-  .he-editor-section-count {
-    display: inline-flex;
-    min-width: 20px;
-    height: 20px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    padding: 0 6px;
-    background: var(--secondary);
-    color: var(--muted-foreground);
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .he-editor-rule-row {
-    display: flex;
-    min-height: 52px;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    transition: background-color 120ms ease;
-  }
-
-  .he-editor-rule-row + .he-editor-rule-row {
-    border-top: 1px solid var(--border);
-  }
-
-  .he-editor-rule-row:hover {
-    background: color-mix(in oklab, var(--accent) 42%, transparent);
-  }
-
-  .he-editor-rule-row-drag-over {
-    background: color-mix(in oklab, var(--primary) 9%, transparent);
-    box-shadow: inset 0 2px 0 var(--primary);
-  }
-
-  .he-editor-field {
-    background: color-mix(in oklab, var(--background) 66%, var(--card));
-  }
-
-  .he-options-editor .he-editor-section-header {
-    min-height: 54px;
-    padding: 12px 16px;
-  }
-
-  .he-options-editor .he-editor-rule-row {
-    min-height: 62px;
-    padding: 11px 16px;
-  }
-
-  .he-section-title {
-    color: var(--foreground);
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .he-muted-text {
-    color: var(--muted-foreground);
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .he-advanced-popover-content {
-    width: 332px;
-    max-width: min(332px, calc(100vw - 24px));
-    overflow: hidden;
-  }
-
-  .he-advanced-popover-panel {
-    display: flex;
-    max-height: min(388px, var(--radix-popover-content-available-height));
-    flex-direction: column;
-  }
-
-  .he-advanced-popover-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
-    padding: 12px 14px 10px;
-    background: color-mix(in oklab, var(--muted) 30%, var(--card));
-  }
-
-  .he-advanced-popover-icon {
-    display: inline-flex;
-    width: 30px;
-    height: 30px;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9px;
-    background: color-mix(in oklab, var(--primary) 11%, transparent);
-    color: var(--primary);
-  }
-
-  .he-advanced-popover-title {
-    color: var(--foreground);
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.3;
-  }
-
-  .he-advanced-popover-desc {
-    margin-top: 2px;
-    color: var(--muted-foreground);
-    font-size: 12px;
-    line-height: 1.35;
-  }
-
-  .he-advanced-popover-body {
-    min-height: 0;
-    flex: 1;
-  }
-
-  .he-advanced-popover-body-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 14px 14px;
-  }
-
-  .he-advanced-popover-field {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .he-advanced-popover-label {
-    color: var(--foreground);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.3;
-  }
-
-  .he-advanced-popover-content .he-input,
-  .he-advanced-popover-content .he-select-trigger {
-    height: 32px;
-    font-size: 12px;
-    line-height: 32px;
-  }
-
-  .he-advanced-popover-content .he-multi-select-trigger {
-    min-height: 32px;
-    padding: 3px 8px;
-    font-size: 12px;
-  }
-
-  .he-advanced-popover-content .he-multi-select-value {
-    flex-wrap: nowrap;
-    overflow: hidden;
-  }
-
-  .he-advanced-popover-content .he-chip {
-    max-width: 118px;
-    height: 20px;
-    border-radius: 5px;
-  }
-
-  .he-advanced-popover-checkbox {
-    margin-top: 2px;
-  }
-
-  .he-advanced-popover-content-compact {
-    width: 304px;
-    max-width: min(304px, calc(100vw - 18px));
-    border-radius: 8px;
-    box-shadow:
-      0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
-      0 10px 26px color-mix(in oklab, var(--foreground) 10%, transparent);
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-panel {
-    max-height: min(360px, var(--radix-popover-content-available-height));
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-header {
-    gap: 8px;
-    padding: 9px 11px 8px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-icon svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-title {
-    font-size: 12px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-desc {
-    margin-top: 1px;
-    font-size: 11px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-body-content {
-    gap: 10px;
-    padding: 10px 11px 11px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-field {
-    gap: 5px;
-  }
-
-  .he-advanced-popover-content-compact .he-advanced-popover-label {
-    font-size: 11px;
-  }
-
-  .he-advanced-popover-content-compact .he-input,
-  .he-advanced-popover-content-compact .he-select-trigger {
-    height: 26px;
-    padding-right: 7px;
-    padding-left: 7px;
-    font-size: 12px;
-    line-height: 26px;
-  }
-
-  .he-advanced-popover-content-compact .he-multi-select-trigger {
-    min-height: 26px;
-    padding: 1px 7px;
-    font-size: 12px;
-  }
-
-  .he-advanced-popover-content-compact .he-multi-select-trigger > svg {
-    width: 13px;
-    height: 13px;
-  }
-
-  .he-advanced-popover-content-compact .he-chip {
-    max-width: 96px;
-    height: 18px;
-    padding: 0 5px;
-  }
-
-  .he-advanced-popover-content-compact .he-checkbox-label {
-    gap: 6px;
-    font-size: 12px;
-  }
-
-  .he-advanced-popover-content-compact .he-checkbox {
-    width: 16px;
-    height: 16px;
-    border-radius: 5px;
-  }
-
-  .he-empty-state {
-    display: flex;
-    min-height: 220px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-xl);
-    background: color-mix(in oklab, var(--card) 72%, transparent);
-    padding: 32px;
-    color: var(--muted-foreground);
-    text-align: center;
   }
 }
 

@@ -30,6 +30,12 @@ import {
 import { NoFilterBanner } from "../filters/NoFilterBanner";
 import { ProfileVariableList } from "../variables/ProfileVariableList";
 import { ProfileHeaderRuleList } from "./ProfileHeaderRuleList";
+import {
+  editorSectionIconClassName,
+  editorSectionIconVariants,
+  editorSectionTitleClassName,
+} from "../components/editor-styles";
+import { cn } from "@/src/shared/lib/cn";
 
 function ruleKind(r: HeaderRule): RuleKind {
   return r.kind ?? "header";
@@ -56,7 +62,7 @@ export function RuleTable() {
 
   if (!profile) {
     return (
-      <div className="he-empty-state">
+      <div className="flex min-h-55 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/70 p-8 text-center text-muted-foreground">
         <Layers3 aria-hidden="true" className="h-9 w-9 text-muted-foreground" />
         <div className="text-sm font-semibold text-foreground">
           {t("options.noProfiles")}
@@ -146,8 +152,8 @@ export function RuleTable() {
   };
 
   return (
-    <div className="he-options-editor flex w-full flex-col gap-5">
-      <section className="he-workbench-hero">
+    <div className="mx-auto flex w-full max-w-225 flex-col gap-5">
+      <section className="flex items-start justify-between gap-4.5 rounded-lg border border-border bg-card p-4.5 shadow-soft">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h1 className="m-0 truncate text-2xl font-bold text-foreground">
@@ -183,14 +189,21 @@ export function RuleTable() {
 
       <NoFilterBanner />
 
-      <section className="he-workbench-section">
-        <div className="he-workbench-section-head">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
+        <div className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-muted/35 px-4 py-3.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="he-editor-section-icon he-editor-section-icon-filter">
+            <span
+              className={cn(
+                editorSectionIconClassName,
+                editorSectionIconVariants.filter,
+              )}
+            >
               <Filter aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <div className="he-section-title">{t("scope.title")}</div>
+              <div className={editorSectionTitleClassName}>
+                {t("scope.title")}
+              </div>
               <div className="truncate text-xs text-muted-foreground">
                 {t("scope.layeringHint")}
               </div>
@@ -208,12 +221,12 @@ export function RuleTable() {
             }
           />
         </div>
-        <div className="he-workbench-scope-summary">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2.75 text-group-title leading-5 text-muted-foreground">
           <Route aria-hidden="true" className="h-4 w-4" />
           <span>{formatScopeSummary(scopeParts)}</span>
         </div>
         {hasScopeContent ? (
-          <div className="flex flex-col gap-3">
+          <div className="m-3.5 flex flex-col gap-3">
             <ProfileTabFilterList
               profileId={profile.id}
               variant="editor"
@@ -245,7 +258,7 @@ export function RuleTable() {
             />
           </div>
         ) : (
-          <div className="he-workbench-empty-inline">
+          <div className="m-3.5 flex min-h-21 items-center justify-center rounded-md border border-dashed border-border bg-muted/40 text-center text-group-title text-muted-foreground">
             {t("scope.emptyHint")}
           </div>
         )}
@@ -258,14 +271,21 @@ export function RuleTable() {
         variables={variables}
       />
 
-      <section className="he-workbench-section">
-        <div className="he-workbench-section-head">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
+        <div className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-muted/35 px-4 py-3.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="he-editor-section-icon he-editor-section-icon-request">
+            <span
+              className={cn(
+                editorSectionIconClassName,
+                editorSectionIconVariants.request,
+              )}
+            >
               <Layers3 aria-hidden="true" />
             </span>
             <div>
-              <div className="he-section-title">{t("options.rules")}</div>
+              <div className={editorSectionTitleClassName}>
+                {t("options.rules")}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {t("options.editorHint")}
               </div>
@@ -284,7 +304,7 @@ export function RuleTable() {
         </div>
 
         {!hasRuleContent ? (
-          <div className="he-empty-state">
+          <div className="m-3.5 flex min-h-55 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/70 p-8 text-center text-muted-foreground">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
               <Layers3 aria-hidden="true" className="h-7 w-7" />
             </div>
@@ -308,7 +328,7 @@ export function RuleTable() {
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="m-3.5 flex flex-col gap-3">
             <ProfileHeaderRuleList
               profileId={profile.id}
               variant="editor"

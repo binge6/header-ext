@@ -8,6 +8,9 @@ export default defineConfig({
   manifestVersion: 3,
   vite: () => ({
     plugins: [tailwindcss()],
+    build: {
+      modulePreload: false,
+    },
   }),
   manifest: ({ browser }) => {
     const isFirefox = browser === "firefox";

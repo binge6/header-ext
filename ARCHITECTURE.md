@@ -76,7 +76,7 @@ src/
 
   shared/
     ui/                       # Business-agnostic UI primitives
-    styles/                   # Design tokens and shared global styles
+    styles/                   # Tailwind entry, design tokens, theme and base reset
     lib/                      # Generic helpers such as cn()
 ```
 
@@ -95,6 +95,11 @@ import { Button } from "@/src/shared/ui";
 Deep imports are acceptable inside the same feature or when selecting a
 specific shared primitive bundle such as `@/src/shared/ui/controls`. App code
 must not import another app's private modules.
+
+UI styling is Tailwind-first. Component variants use CVA, and standard
+enter/exit animations use `tw-animate-css`. CSS/SCSS files are reserved for
+tokens, resets, third-party themes, pseudo-elements, and complex contextual
+selectors that cannot be expressed clearly with utilities.
 
 ## Data Flow
 

@@ -80,9 +80,13 @@ export function PopupHeader({
   };
 
   return (
-    <header className="he-popup-topbar">
+    <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border/70 bg-card px-2.5 py-1.75">
       <div className="flex min-w-0 items-center gap-2.5">
-        <img className="he-popup-logo" src={logoUrl} alt="Header Ext" />
+        <img
+          className="h-7.5 w-7.5 shrink-0 rounded-lg shadow-soft"
+          src={logoUrl}
+          alt="Header Ext"
+        />
         <div className="min-w-0">
           <div className="truncate text-group-title font-bold text-foreground">
             {t("app.name")}
@@ -97,7 +101,7 @@ export function PopupHeader({
           </div>
         </div>
       </div>
-      <div className="he-popup-top-actions">
+      <div className="inline-flex items-center gap-px text-muted-foreground">
         <Tooltip
           side="bottom"
           content={globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")}
@@ -105,7 +109,7 @@ export function PopupHeader({
           <Button
             variant={globalPaused ? "secondary" : "ghost"}
             size="icon-sm"
-            className={cn(globalPaused && "he-warning-text")}
+            className={cn(globalPaused && "text-warning")}
             aria-label={
               globalPaused ? t("popup.resumeAll") : t("popup.pauseAll")
             }
