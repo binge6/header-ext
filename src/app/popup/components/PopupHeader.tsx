@@ -1,5 +1,6 @@
 import { useRef, type ChangeEvent } from "react";
 import {
+  BookOpenText,
   Lock,
   MoreHorizontal,
   Pause,
@@ -12,8 +13,16 @@ import { toast } from "sonner";
 import { useProfileActions } from "@/src/application/profile-store";
 import { parseImport } from "@/src/domain";
 import { ImportExportButtons } from "@/src/features/data-transfer";
-import { LanguageSwitcher, ThemeSwitcher } from "@/src/features/preferences";
-import { detectCapabilities, openOptionsPage } from "@/src/platform/browser";
+import {
+  LanguageSwitcher,
+  MANUAL_URL,
+  ThemeSwitcher,
+} from "@/src/features/preferences";
+import {
+  detectCapabilities,
+  openExternalPage,
+  openOptionsPage,
+} from "@/src/platform/browser";
 import { readFileAsText } from "@/src/platform/files";
 import { cn } from "@/src/shared/lib/cn";
 import { Button } from "@/src/shared/ui/controls";
@@ -157,6 +166,10 @@ export function PopupHeader({
             <DropdownMenuItem onClick={() => void openOptionsPage()}>
               <Settings2 aria-hidden="true" />
               {t("popup.openOptions")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void openExternalPage(MANUAL_URL)}>
+              <BookOpenText aria-hidden="true" />
+              {t("popup.openManual")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <ImportExportButtons menuItem onImportRequest={handleImportClick} />

@@ -67,6 +67,10 @@ export async function openOptionsPage(): Promise<void> {
   await browser.runtime.openOptionsPage();
 }
 
+export async function openExternalPage(url: string): Promise<void> {
+  await browser.tabs.create({ url });
+}
+
 export interface ActiveTab {
   id: number | null;
   url: string;

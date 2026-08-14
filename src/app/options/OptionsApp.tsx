@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import {
   AlertTriangle,
+  BookOpenText,
   CheckCircle2,
   Pause,
   SlidersHorizontal,
@@ -15,9 +16,11 @@ import {
 } from "@/src/application";
 import { buildWorkspaceStatus } from "@/src/domain";
 import { ImportExportButtons } from "@/src/features/data-transfer";
+import { openExternalPage } from "@/src/platform/browser";
 import {
   GlobalPauseControl,
   LanguageSwitcher,
+  MANUAL_URL,
   ThemeSwitcher,
 } from "@/src/features/preferences";
 import {
@@ -28,6 +31,7 @@ import {
 import {
   AppToaster,
   Badge,
+  Button,
   Scroller,
   Spinner,
   UIProvider,
@@ -93,6 +97,15 @@ export function OptionsApp() {
           <div className="flex items-center gap-2">
             <TemplateMenu profileId={activeProfileId} />
             <ImportExportButtons />
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t("popup.openManual")}
+              onClick={() => void openExternalPage(MANUAL_URL)}
+            >
+              <BookOpenText aria-hidden="true" />
+              {t("popup.openManual")}
+            </Button>
             <GlobalPauseControl />
             <div className="mx-1 h-6 w-px bg-border" />
             <LanguageSwitcher variant="icon" />
