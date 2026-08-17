@@ -1,5 +1,7 @@
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { useProfileActions } from "@/src/application/profile-store";
+import { useProfileStore } from "@/src/application/profile-store";
 import type {
   DomainFilter,
   ExcludeUrlFilter,
@@ -9,6 +11,20 @@ import type {
 import { FilterRowList } from "./FilterRowList";
 import { MethodFilterPicker } from "./MethodFilterPicker";
 import { TabFilterList } from "./TabFilterList";
+import {
+  getProfileFilterErrorState,
+  type ProfileFilterErrorPrefix,
+} from "./profile-filter-errors";
+
+function useProfileFilterErrors(
+  profileId: string,
+  prefix: ProfileFilterErrorPrefix,
+  filters?: UrlFilter[],
+) {
+  const { t } = useTranslation();
+  const errors = useProfileStore((state) => state.dnrErrors[profileId]);
+  return getProfileFilterErrorState(errors, prefix, t, filters);
+}
 
 type ProfileTabFilterListProps = Omit<
   ComponentProps<typeof TabFilterList>,
@@ -25,10 +41,12 @@ export function ProfileTabFilterList({
 }: ProfileTabFilterListProps) {
   const { addTabFilter, updateTabFilter, deleteTabFilter, toggleTabFilter } =
     useProfileActions();
+  const errors = useProfileFilterErrors(profileId, "__tab_filter__");
 
   return (
     <TabFilterList
       {...props}
+      {...errors}
       onAdd={() => addTabFilter(profileId, initialUrlFilter)}
       onUpdate={(filter) => updateTabFilter(profileId, filter)}
       onDelete={(filterId) => deleteTabFilter(profileId, filterId)}
@@ -56,9 +74,11 @@ export function ProfileDomainFilterList({
     deleteDomainFilter,
     toggleDomainFilter,
   } = useProfileActions();
+  const errors = useProfileFilterErrors(profileId, "__domain_filter__");
 
   return (
     <FilterRowList<DomainFilter>
+      {...errors}
       variant={variant}
       filters={filters}
       valueField="domain"
@@ -86,9 +106,11 @@ export function ProfileUrlFilterList({
 }: ProfileUrlFilterListProps) {
   const { addUrlFilter, updateUrlFilter, deleteUrlFilter, toggleUrlFilter } =
     useProfileActions();
+  const errors = useProfileFilterErrors(profileId, "__url_filter__", filters);
 
   return (
     <FilterRowList<UrlFilter>
+      {...errors}
       variant={variant}
       filters={filters}
       valueField="regex"
@@ -120,9 +142,11 @@ export function ProfileExcludeUrlFilterList({
     deleteExcludeUrlFilter,
     toggleExcludeUrlFilter,
   } = useProfileActions();
+  const errors = useProfileFilterErrors(profileId, "__exclude_url_filter__");
 
   return (
     <FilterRowList<ExcludeUrlFilter>
+      {...errors}
       variant={variant}
       filters={filters}
       valueField="url"

@@ -2,7 +2,7 @@
 // 多条 OR 关系；启用任一项 = 仅匹配 Tab 生效。
 // 没有任何启用项时规则作用于全部 Tab。
 
-import { Filter, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Filter, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TabFilter } from "@/src/domain";
 import { cn } from "@/src/shared/lib/cn";
@@ -26,6 +26,8 @@ interface Props {
   onUpdate: (filter: TabFilter) => void;
   onDelete: (filterId: string) => void;
   onToggle: (filterId: string) => void;
+  errorMessages?: Record<string, string>;
+  alertMessages?: string[];
   variant?: "compact" | "editor";
 }
 
@@ -35,6 +37,8 @@ export function TabFilterList({
   onUpdate,
   onDelete,
   onToggle,
+  errorMessages,
+  alertMessages,
   variant = "compact",
 }: Props) {
   const { t } = useTranslation();
@@ -89,39 +93,55 @@ export function TabFilterList({
         {t("tabFilters.empty")}
       </div>
     ) : (
-      filters.map((f) => (
-        <div
-          key={f.id}
-          className={cn(
-            isEditor ? editorRuleRowClassName : "flex items-center gap-1 py-1",
-            isEditor && !f.enabled && "opacity-70",
-          )}
-        >
-          <Input
-            placeholder={t("tabFilters.urlPlaceholder")}
-            className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
-            value={f.urlFilter}
-            onChange={(event) =>
-              onUpdate({ ...f, urlFilter: event.target.value })
-            }
-          />
-          <Tooltip content={t("tabFilters.deleteItem")}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("tabFilters.deleteItem")}
-              onClick={() => onDelete(f.id)}
-            >
-              <Trash2 aria-hidden="true" />
-            </Button>
-          </Tooltip>
-          {renderToggle(
-            f.enabled,
-            f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
-            () => onToggle(f.id),
-          )}
-        </div>
-      ))
+      filters.map((f) => {
+        const errorMessage = errorMessages?.[f.id];
+        return (
+          <div
+            key={f.id}
+            className={cn(
+              isEditor
+                ? editorRuleRowClassName
+                : "flex items-center gap-1 py-1",
+              isEditor && !f.enabled && "opacity-70",
+            )}
+          >
+            <Input
+              placeholder={t("tabFilters.urlPlaceholder")}
+              className={cn("min-w-0 flex-1", isEditor && editorFieldClassName)}
+              value={f.urlFilter}
+              onChange={(event) =>
+                onUpdate({ ...f, urlFilter: event.target.value })
+              }
+            />
+            {errorMessage && (
+              <Tooltip content={errorMessage}>
+                <span
+                  className="inline-flex h-7 w-7 items-center justify-center text-warning"
+                  role="img"
+                  aria-label={errorMessage}
+                >
+                  <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+                </span>
+              </Tooltip>
+            )}
+            <Tooltip content={t("tabFilters.deleteItem")}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("tabFilters.deleteItem")}
+                onClick={() => onDelete(f.id)}
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+            </Tooltip>
+            {renderToggle(
+              f.enabled,
+              f.enabled ? t("filters.disableItem") : t("filters.enableItem"),
+              () => onToggle(f.id),
+            )}
+          </div>
+        );
+      })
     );
 
   if (isEditor) {
@@ -160,6 +180,15 @@ export function TabFilterList({
             {renderGroupToggle()}
           </div>
         </div>
+        {!!alertMessages?.length && (
+          <div className="flex items-start gap-2 border-b border-warning/30 bg-warning-soft px-3 py-2 text-xs leading-4.5 text-warning">
+            <AlertTriangle
+              aria-hidden="true"
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
+            <span>{alertMessages.join(" · ")}</span>
+          </div>
+        )}
         <div className="flex flex-col">{rows}</div>
       </section>
     );

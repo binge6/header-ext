@@ -1,5 +1,6 @@
 import type { AppState, Profile } from "@/src/domain/models";
 import { getEnabledProfileIds } from "@/src/domain/profile-status";
+import { isEqual } from "es-toolkit/predicate";
 import {
   loadDnrErrors,
   loadDnrRegistrations,
@@ -23,7 +24,7 @@ import {
   type UsedRuleIds,
 } from "./registry";
 
-const COMPILER_VERSION = 1;
+const COMPILER_VERSION = 2;
 
 function profileFingerprint(
   profile: Profile,
@@ -123,32 +124,39 @@ async function doApply(state: AppState, force: boolean): Promise<void> {
     desiredProfileIds,
     existingRuleSets,
   );
+  const registrationReconciled = !isEqual(
+    storedRegistrations,
+    registrationRecord,
+  );
   const errorRecord: DnrErrorRecord = Object.fromEntries(
     Object.entries(storedErrors).filter(([profileId]) =>
       desiredProfileIds.has(profileId),
     ),
   );
   const usedIds = createUsedRuleIds(existingRuleSets);
-  await saveDnrRegistrations(registrationRecord);
-
-  for (const profile of desiredProfiles) {
+  const profilesToUpdate = desiredProfiles.filter((profile) => {
     const fingerprint = profileFingerprint(profile, state.meta.lockedTabId);
     const previousRegistration = registrationRecord[profile.id];
-    if (
+    return !(
       previousRegistration?.fingerprint === fingerprint &&
       previousRegistration.complete &&
       !errorRecord[profile.id]?.length
-    ) {
-      continue;
-    }
+    );
+  });
 
+  for (const profile of profilesToUpdate) {
+    const previousRegistration = registrationRecord[profile.id];
     const previousRegistrations = getRegistrationList(previousRegistration);
     await removeRegistrations(previousRegistrations);
     releaseRegistrationIds(previousRegistrations, usedIds);
     delete registrationRecord[profile.id];
     delete errorRecord[profile.id];
+  }
+  if (profilesToUpdate.length || registrationReconciled) {
     await saveDnrRegistrations(registrationRecord);
+  }
 
+  for (const profile of profilesToUpdate) {
     const result = await registerProfile(
       profile,
       state.meta.lockedTabId,
@@ -156,8 +164,10 @@ async function doApply(state: AppState, force: boolean): Promise<void> {
     );
     registrationRecord[profile.id] = result.registration;
     if (result.errors.length) errorRecord[profile.id] = result.errors;
-    await saveDnrRegistrations(registrationRecord);
   }
 
+  if (profilesToUpdate.length) {
+    await saveDnrRegistrations(registrationRecord);
+  }
   await saveDnrErrors(errorRecord);
 }

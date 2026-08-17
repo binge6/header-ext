@@ -313,7 +313,7 @@
       "redirectDestinationRequired": "Redirect 目标 URL 不能为空",
       "invalidRuleRegex": "规则正则表达式无效",
       "redirectRegexConditionRequired": "正则重定向需要提供 URL 正则匹配条件",
-      "invalidProfileRegex": "Profile URL 过滤正则表达式无效",
+      "invalidProfileRegex": "Profile URL 正则过滤无效，该过滤条件将被忽略；规则会按其他条件生效，没有其他条件时将全局生效",
       "profileRegexConflict": "规则自身已使用正则匹配，Profile 级 URL 正则未生效",
       "registrationFailed": "浏览器拒绝注册此规则",
       "legacy": "规则处理失败",

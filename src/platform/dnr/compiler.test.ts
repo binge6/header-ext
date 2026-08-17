@@ -85,4 +85,55 @@ describe("compileRules", () => {
       },
     ]);
   });
+
+  it("compiles without the profile URL filter when its regex is invalid", () => {
+    const rules = [createRule("rule-1", "X-First")];
+    const profile = {
+      ...createProfile(rules),
+      urlFilters: [{ id: "url-1", enabled: true, regex: "(" }],
+    };
+
+    const result = compileRules(rules, { profile });
+
+    expect(result.errors).toContainEqual({
+      ruleId: "__url_filter__:url-1",
+      code: "invalidProfileRegex",
+    });
+    expect(result.rules).toEqual([
+      expect.objectContaining({
+        condition: expect.objectContaining({ urlFilter: "*" }),
+      }),
+    ]);
+    expect(result.entries).toEqual([
+      {
+        sourceRuleId: "rule-1",
+        rules: [
+          expect.objectContaining({
+            condition: expect.objectContaining({ urlFilter: "*" }),
+          }),
+        ],
+      },
+    ]);
+  });
+
+  it("keeps valid profile URL regexes when another URL regex is invalid", () => {
+    const rules = [createRule("rule-1", "X-First")];
+    const profile = {
+      ...createProfile(rules),
+      urlFilters: [
+        { id: "invalid", enabled: true, regex: "(" },
+        { id: "valid", enabled: true, regex: "^https://example\\.com/" },
+      ],
+    };
+
+    const result = compileRules(rules, { profile });
+
+    expect(result.errors).toContainEqual({
+      ruleId: "__url_filter__:invalid",
+      code: "invalidProfileRegex",
+    });
+    expect(result.rules[0]?.condition.regexFilter).toBe(
+      "^https://example\\.com/",
+    );
+  });
 });

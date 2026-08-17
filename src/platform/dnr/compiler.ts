@@ -30,7 +30,7 @@ export function compileRules(
     variables,
     errors,
   );
-  if (profileConditions.hasVariableError) {
+  if (profileConditions.hasFatalError) {
     return { rules: [], entries: [], errors };
   }
 

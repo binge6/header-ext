@@ -172,7 +172,7 @@ describe("applyState reliability", () => {
     const state = createState();
     const rule = createRule(7, "X-Valid");
     const fingerprint = JSON.stringify({
-      compilerVersion: 1,
+      compilerVersion: 2,
       lockedTabId: null,
       rules: state.profiles[0]?.rules,
       tabFilters: [],
@@ -276,5 +276,150 @@ describe("applyState reliability", () => {
       removeRuleIds: [7],
     });
     expect(getStoredValue("dnr:registrations:v1")).toEqual({});
+  });
+
+  it("persists registration mappings at most twice for multiple changed profiles", async () => {
+    const registrationSnapshots: unknown[] = [];
+    mocks.storageSet.mockImplementation(async (key: string, value: unknown) => {
+      if (key === "dnr:registrations:v1") {
+        registrationSnapshots.push(structuredClone(value));
+      }
+    });
+    const state = createState();
+    const secondProfile = {
+      ...createProfile(),
+      id: "profile-2",
+      name: "Profile 2",
+      rules: [
+        {
+          ...createProfile().rules[0]!,
+          id: "profile-2-rule",
+          name: "X-Profile-2",
+        },
+      ],
+    };
+    state.profiles.push(secondProfile);
+    state.meta.enabledProfileIds = ["profile-2"];
+    mocks.compileRules.mockImplementation(
+      (_rules: unknown, context: { profile?: Profile }) => {
+        const sourceRuleId = context.profile?.rules[0]?.id ?? "unknown";
+        const rule = createRule(1, context.profile?.name ?? "X-Test");
+        return {
+          rules: [rule],
+          entries: [{ sourceRuleId, rules: [rule] }],
+          errors: [],
+        };
+      },
+    );
+    mocks.updateDynamicRules.mockResolvedValue(undefined);
+
+    await applyState(state);
+
+    const registrationWrites = mocks.storageSet.mock.calls.filter(
+      ([key]) => key === "dnr:registrations:v1",
+    );
+    expect(registrationWrites).toHaveLength(2);
+    expect(registrationSnapshots[0]).toEqual({});
+    expect(registrationSnapshots[1]).toEqual({
+      "profile-1": expect.objectContaining({ complete: true }),
+      "profile-2": expect.objectContaining({ complete: true }),
+    });
+  });
+
+  it("does not persist unchanged registration mappings", async () => {
+    const state = createState();
+    const rule = createRule(7, "X-Valid");
+    const fingerprint = JSON.stringify({
+      compilerVersion: 2,
+      lockedTabId: null,
+      rules: state.profiles[0]?.rules,
+      tabFilters: [],
+      domainFilters: [],
+      urlFilters: [],
+      excludeUrlFilters: [],
+      methodFilters: [],
+      variables: [],
+    });
+    mocks.getDynamicRules.mockResolvedValue([rule]);
+    mocks.storageGet.mockImplementation(async (key: string) => {
+      if (key === "dnr:registrations:v1") {
+        return {
+          "profile-1": {
+            complete: true,
+            fingerprint,
+            rules: {
+              "valid-rule": [{ ruleId: 7, scope: "dynamic" }],
+            },
+          },
+        };
+      }
+      if (key === "dnr:errors:v1") return {};
+      return undefined;
+    });
+
+    await applyState(state);
+
+    expect(
+      mocks.storageSet.mock.calls.filter(
+        ([key]) => key === "dnr:registrations:v1",
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("recompiles registrations created by an older compiler version", async () => {
+    const state = createState();
+    const oldFingerprint = JSON.stringify({
+      compilerVersion: 1,
+      lockedTabId: null,
+      rules: state.profiles[0]?.rules,
+      tabFilters: [],
+      domainFilters: [],
+      urlFilters: [],
+      excludeUrlFilters: [],
+      methodFilters: [],
+      variables: [],
+    });
+    const oldRule = createRule(7, "X-Old");
+    const newRule = createRule(1, "X-New");
+    mocks.getDynamicRules.mockResolvedValue([oldRule]);
+    mocks.storageGet.mockImplementation(async (key: string) => {
+      if (key === "dnr:registrations:v1") {
+        return {
+          "profile-1": {
+            complete: true,
+            fingerprint: oldFingerprint,
+            rules: {
+              "valid-rule": [{ ruleId: 7, scope: "dynamic" }],
+            },
+          },
+        };
+      }
+      if (key === "dnr:errors:v1") {
+        return {
+          "profile-1": [
+            {
+              sourceRuleId: "__url_filter__",
+              stage: "compile",
+              code: "invalidProfileRegex",
+            },
+          ],
+        };
+      }
+      return undefined;
+    });
+    mocks.compileRules.mockReturnValue({
+      rules: [newRule],
+      entries: [{ sourceRuleId: "valid-rule", rules: [newRule] }],
+      errors: [],
+    });
+    mocks.updateDynamicRules.mockResolvedValue(undefined);
+
+    await applyState(state);
+
+    expect(mocks.compileRules).toHaveBeenCalledOnce();
+    expect(mocks.updateDynamicRules).toHaveBeenCalledWith({
+      removeRuleIds: [7],
+    });
+    expect(getStoredValue("dnr:errors:v1")).toEqual({});
   });
 });

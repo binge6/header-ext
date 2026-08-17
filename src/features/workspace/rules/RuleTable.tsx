@@ -9,7 +9,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/application/profile-store";
 import { getProfileStats, getScopeParts, type HeaderRule } from "@/src/domain";
-import type { DnrRuleError } from "@/src/platform/dnr";
 import { Badge, Button } from "@/src/shared/ui";
 import {
   ProfileFilterMenu,
@@ -25,7 +24,6 @@ import {
 import { NoFilterBanner } from "../filters/NoFilterBanner";
 import { ProfileVariableList } from "../variables/ProfileVariableList";
 import { ProfileHeaderRuleList } from "./ProfileHeaderRuleList";
-import { formatDnrError } from "./format-dnr-error";
 import { formatScopeSummary } from "../lib/format-scope-summary";
 import { getProfileEditorState } from "../lib/profile-editor-state";
 import {
@@ -34,8 +32,6 @@ import {
   editorSectionTitleClassName,
 } from "../components/editor-styles";
 import { cn } from "@/src/shared/lib/cn";
-
-const EMPTY_DNR_ERRORS: DnrRuleError[] = [];
 
 function hasRuleAdvancedConditions(rule: HeaderRule): boolean {
   const condition = rule.condition ?? {};
@@ -53,10 +49,6 @@ export function RuleTable() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const activeId = useProfileStore((s) => s.meta.activeProfileId);
-  const storedDnrErrors = useProfileStore((s) =>
-    activeId ? s.dnrErrors[activeId] : undefined,
-  );
-  const dnrErrors = storedDnrErrors ?? EMPTY_DNR_ERRORS;
 
   const profile = profiles.find((p) => p.id === activeId);
 
@@ -93,9 +85,6 @@ export function RuleTable() {
     methodFilters,
   } = filterGroups;
   const stats = getProfileStats(profile);
-  const profileErrors = dnrErrors.filter((error) =>
-    error.sourceRuleId.startsWith("__"),
-  );
   const scopeParts = getScopeParts(profile);
   const advancedRuleCount = profile.rules.filter(
     hasRuleAdvancedConditions,
@@ -149,22 +138,6 @@ export function RuleTable() {
       </section>
 
       <NoFilterBanner />
-
-      {profileErrors.length > 0 && (
-        <section className="rounded-lg border border-warning/35 bg-warning-soft px-4 py-3 text-xs leading-5 text-warning">
-          <div className="flex items-center gap-2 font-bold">
-            <ShieldAlert aria-hidden="true" className="h-4 w-4" />
-            {t("rule.profileRegistrationError")}
-          </div>
-          <ul className="mt-1.5 list-disc pl-5">
-            {profileErrors.map((error, index) => (
-              <li key={`${error.sourceRuleId}:${index}`}>
-                {formatDnrError(error, t)}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
         <div className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-muted/35 px-4 py-3.5">

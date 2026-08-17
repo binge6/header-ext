@@ -313,7 +313,7 @@
       "redirectDestinationRequired": "Redirect destination URL is required",
       "invalidRuleRegex": "The rule regular expression is invalid",
       "redirectRegexConditionRequired": "Regex redirects require a regular-expression URL condition",
-      "invalidProfileRegex": "The profile URL filter regular expression is invalid",
+      "invalidProfileRegex": "The profile URL regex filter is invalid. This filter is ignored, so rules use the remaining conditions and apply globally when no other condition exists",
       "profileRegexConflict": "This rule already uses a regular expression, so the profile-level URL regex was not applied",
       "registrationFailed": "The browser rejected this rule",
       "legacy": "Rule processing failed",
