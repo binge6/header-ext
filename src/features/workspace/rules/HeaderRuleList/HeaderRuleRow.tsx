@@ -1,5 +1,5 @@
 import type { DragEvent } from "react";
-import { Filter, GripVertical, Trash2 } from "lucide-react";
+import { AlertTriangle, Filter, GripVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { HeaderRule } from "@/src/domain";
 import {
@@ -25,6 +25,7 @@ import {
 
 interface HeaderRuleRowProps extends HeaderRuleMode {
   rule: HeaderRule;
+  errorMessage?: string;
   canDrag: boolean;
   isDragging: boolean;
   isDragOver: boolean;
@@ -41,6 +42,7 @@ interface HeaderRuleRowProps extends HeaderRuleMode {
 
 export function HeaderRuleRow({
   rule,
+  errorMessage,
   isCookie,
   isRedirect,
   isEditor,
@@ -174,6 +176,17 @@ export function HeaderRuleRow({
       )}
 
       <div className="flex items-center">
+        {errorMessage && (
+          <Tooltip content={errorMessage}>
+            <span
+              className="inline-flex h-7 w-7 items-center justify-center text-warning"
+              role="img"
+              aria-label={t("rule.registrationError")}
+            >
+              <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+            </span>
+          </Tooltip>
+        )}
         <Popover>
           <Tooltip content={t("rule.advancedConditions")}>
             <PopoverTrigger asChild>

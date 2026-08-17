@@ -1,12 +1,18 @@
 import type { Profile } from "@/src/domain/models";
+import type { DnrErrorData } from "../errors";
 
-export interface CompileError {
+export interface CompileError extends DnrErrorData {
   ruleId: string;
-  message: string;
+}
+
+export interface CompiledRuleEntry {
+  sourceRuleId: string;
+  rules: import("@/src/platform/browser/api").DnrRule[];
 }
 
 export interface CompileResult {
   rules: import("@/src/platform/browser/api").DnrRule[];
+  entries: CompiledRuleEntry[];
   errors: CompileError[];
 }
 

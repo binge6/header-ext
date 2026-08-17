@@ -8,6 +8,7 @@ export interface HeaderRuleListProps {
   // kind === "header" 时显式指定分组方向，避免 rules 为空时 fallback 错误
   target?: "request" | "response";
   rules: HeaderRule[];
+  errorMessages?: Record<string, string>;
   onAdd: () => void;
   onUpdate: (rule: HeaderRule) => void;
   onDelete: (ruleId: string) => void;

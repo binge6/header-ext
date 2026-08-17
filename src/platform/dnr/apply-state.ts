@@ -1,113 +1,163 @@
-// RuleRegistry：把当前 active profile 与始终启用 profile 编译并注册到 DNR
-// 含 tabIds 的规则只能注册到 session rules（Chrome MV3 限制），
-// 其他规则继续注册到 dynamic rules
-
-import type { AppState } from "@/src/domain/models";
+import type { AppState, Profile } from "@/src/domain/models";
 import { getEnabledProfileIds } from "@/src/domain/profile-status";
-import { dnr, type DnrRule } from "@/src/platform/browser/api";
-import { compileRules, clearIdMap } from "./compiler";
+import {
+  loadDnrErrors,
+  loadDnrRegistrations,
+  saveDnrErrors,
+  saveDnrRegistrations,
+  type DnrErrorRecord,
+  type DnrProfileRegistration,
+  type DnrRuleError,
+  type DnrRuleRegistration,
+} from "./state";
+import { clearIdMap, compileRules } from "./compiler";
+import {
+  clearAllRules,
+  createUsedRuleIds,
+  getRegistrationList,
+  loadRuleSets,
+  reconcileRegistrations,
+  removeRegistrations,
+  registerSourceRule,
+  releaseRegistrationIds,
+  type UsedRuleIds,
+} from "./registry";
 
-function partitionByTabIds(rules: DnrRule[]): {
-  session: DnrRule[];
-  dynamic: DnrRule[];
-} {
-  const session: DnrRule[] = [];
-  const dynamic: DnrRule[] = [];
-  for (const r of rules) {
-    if (r.condition.tabIds?.length || r.condition.excludedTabIds?.length) {
-      session.push(r);
-    } else {
-      dynamic.push(r);
+const COMPILER_VERSION = 1;
+
+function profileFingerprint(
+  profile: Profile,
+  lockedTabId: number | null,
+): string {
+  return JSON.stringify({
+    compilerVersion: COMPILER_VERSION,
+    lockedTabId,
+    rules: profile.rules,
+    tabFilters: profile.tabFilters ?? [],
+    domainFilters: profile.domainFilters ?? [],
+    urlFilters: profile.urlFilters ?? [],
+    excludeUrlFilters: profile.excludeUrlFilters ?? [],
+    methodFilters: profile.methodFilters ?? [],
+    variables: profile.variables ?? [],
+  });
+}
+
+async function registerProfile(
+  profile: Profile,
+  lockedTabId: number | null,
+  usedIds: UsedRuleIds,
+): Promise<{
+  registration: DnrProfileRegistration;
+  errors: DnrRuleError[];
+}> {
+  clearIdMap();
+  const compiled = compileRules(profile.rules, { lockedTabId, profile });
+  const errors: DnrRuleError[] = compiled.errors.map((error) => ({
+    sourceRuleId: error.ruleId,
+    stage: "compile",
+    code: error.code,
+    params: error.params,
+    detail: error.detail,
+  }));
+  const rules: Record<string, DnrRuleRegistration[]> = {};
+
+  for (const entry of compiled.entries) {
+    const result = await registerSourceRule(
+      entry.sourceRuleId,
+      entry.rules,
+      usedIds,
+    );
+    if (result.registrations.length) {
+      rules[entry.sourceRuleId] = result.registrations;
     }
+    errors.push(...result.errors);
   }
-  return { session, dynamic };
+
+  return {
+    registration: {
+      complete: errors.length === 0,
+      fingerprint: profileFingerprint(profile, lockedTabId),
+      rules,
+    },
+    errors,
+  };
 }
 
-// 给一组规则按位置重新分配从 1 开始的连续 ID，
-// 避免 partition 后组内 / 跨组 ID 冲突
-function reassignIds(rules: DnrRule[]): DnrRule[] {
-  return rules.map((r, idx) => ({ ...r, id: idx + 1 }));
-}
-
-async function clearAll(): Promise<void> {
-  const [existingDynamic, existingSession] = await Promise.all([
-    dnr.getDynamicRules(),
-    dnr.getSessionRules(),
-  ]);
-  if (existingDynamic.length) {
-    await dnr.updateDynamicRules({
-      removeRuleIds: existingDynamic.map((r) => r.id),
-    });
-  }
-  if (existingSession.length) {
-    await dnr.updateSessionRules({
-      removeRuleIds: existingSession.map((r) => r.id),
-    });
-  }
-}
-
-// applyState 串行化队列：保证多次调用不交错执行 DNR 更新
 let applyQueue: Promise<void> = Promise.resolve();
 
 export async function applyState(state: AppState): Promise<void> {
-  // 串行化：background 的 init / onInstalled / storage.onChanged 可能并发触发
-  // applyState，而每次调用是 read-existing → remove → add 的非原子序列。
-  // 若交错执行，后一次会基于陈旧快照计算 removeRuleIds，且 addRules 都从 id=1
-  // 重新编号，导致 "Rule with ID already exists" 整批被拒或下发过期规则。
-  // 用 Promise 链把每次调用排队，保证前一次完全结束后再开始下一次。
-  const run = applyQueue.then(() => doApply(state));
-  // 吞掉本次错误以免阻断队列；调用方（background）自行 catch 记录日志
+  const run = applyQueue.then(() => doApply(state, false));
   applyQueue = run.catch(() => {});
   return run;
 }
 
-async function doApply(state: AppState): Promise<void> {
+export async function reinitializeRules(state: AppState): Promise<void> {
+  const run = applyQueue.then(() => doApply(state, true));
+  applyQueue = run.catch(() => {});
+  return run;
+}
+
+async function doApply(state: AppState, force: boolean): Promise<void> {
   const enabledProfileIds = getEnabledProfileIds(state.meta, state.profiles);
+  const desiredProfiles = state.profiles.filter((profile) =>
+    enabledProfileIds.includes(profile.id),
+  );
+  const desiredProfileIds = new Set(
+    desiredProfiles.map((profile) => profile.id),
+  );
 
-  // 暂停或无开启 profile：仅清空两类规则
-  if (state.meta.globalPaused || !enabledProfileIds.length) {
-    await clearAll();
-    clearIdMap();
-    return;
+  if (force || state.meta.globalPaused || !desiredProfiles.length) {
+    await clearAllRules();
+    await Promise.all([saveDnrRegistrations({}), saveDnrErrors({})]);
+    if (state.meta.globalPaused || !desiredProfiles.length) return;
   }
 
-  // 重新生成 DNR id，避免与已有 id 冲突
-  clearIdMap();
-  const rules: DnrRule[] = [];
-  const errors: Array<{ ruleId: string; message: string }> = [];
+  const [existingRuleSets, storedRegistrations, storedErrors] =
+    await Promise.all([
+      loadRuleSets(),
+      loadDnrRegistrations(),
+      loadDnrErrors(),
+    ]);
+  const registrationRecord = await reconcileRegistrations(
+    storedRegistrations,
+    desiredProfileIds,
+    existingRuleSets,
+  );
+  const errorRecord: DnrErrorRecord = Object.fromEntries(
+    Object.entries(storedErrors).filter(([profileId]) =>
+      desiredProfileIds.has(profileId),
+    ),
+  );
+  const usedIds = createUsedRuleIds(existingRuleSets);
+  await saveDnrRegistrations(registrationRecord);
 
-  for (const profileId of enabledProfileIds) {
-    const profile = state.profiles.find((p) => p.id === profileId);
-    if (!profile) continue;
-    const compiled = compileRules(profile.rules, {
-      lockedTabId: state.meta.lockedTabId,
+  for (const profile of desiredProfiles) {
+    const fingerprint = profileFingerprint(profile, state.meta.lockedTabId);
+    const previousRegistration = registrationRecord[profile.id];
+    if (
+      previousRegistration?.fingerprint === fingerprint &&
+      previousRegistration.complete &&
+      !errorRecord[profile.id]?.length
+    ) {
+      continue;
+    }
+
+    const previousRegistrations = getRegistrationList(previousRegistration);
+    await removeRegistrations(previousRegistrations);
+    releaseRegistrationIds(previousRegistrations, usedIds);
+    delete registrationRecord[profile.id];
+    delete errorRecord[profile.id];
+    await saveDnrRegistrations(registrationRecord);
+
+    const result = await registerProfile(
       profile,
-    });
-    rules.push(...compiled.rules);
-    errors.push(
-      ...compiled.errors.map((error) => ({
-        ...error,
-        ruleId: `${profile.name}/${error.ruleId}`,
-      })),
+      state.meta.lockedTabId,
+      usedIds,
     );
+    registrationRecord[profile.id] = result.registration;
+    if (result.errors.length) errorRecord[profile.id] = result.errors;
+    await saveDnrRegistrations(registrationRecord);
   }
 
-  if (errors.length) {
-    console.warn("[header-ext] compile errors:", errors);
-  }
-
-  const [existingDynamic, existingSession] = await Promise.all([
-    dnr.getDynamicRules(),
-    dnr.getSessionRules(),
-  ]);
-  const { dynamic, session } = partitionByTabIds(rules);
-
-  await dnr.updateDynamicRules({
-    removeRuleIds: existingDynamic.map((r) => r.id),
-    addRules: reassignIds(dynamic),
-  });
-  await dnr.updateSessionRules({
-    removeRuleIds: existingSession.map((r) => r.id),
-    addRules: reassignIds(session),
-  });
+  await saveDnrErrors(errorRecord);
 }

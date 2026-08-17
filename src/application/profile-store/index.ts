@@ -4,6 +4,7 @@ import type { ProfileActions, ProfileStore } from "./types";
 
 export const useProfileStore = create<ProfileStore>((set, get) => ({
   profiles: [],
+  dnrErrors: {},
   meta: {
     activeProfileId: null,
     enabledProfileIds: [],

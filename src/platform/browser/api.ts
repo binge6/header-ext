@@ -92,6 +92,18 @@ export function onExtensionInstalled(handler: () => void): () => void {
   return () => browser.runtime.onInstalled.removeListener(handler);
 }
 
+export async function sendRuntimeMessage(message: unknown): Promise<unknown> {
+  return browser.runtime.sendMessage(message);
+}
+
+export function onRuntimeMessage(
+  handler: (message: unknown) => Promise<unknown> | undefined,
+): () => void {
+  const listener = (message: unknown) => handler(message);
+  browser.runtime.onMessage.addListener(listener);
+  return () => browser.runtime.onMessage.removeListener(listener);
+}
+
 // 扩展图标角标：展示当前生效的规则数等提示信息
 export interface BadgeStatus {
   // 角标文案，空串代表清空

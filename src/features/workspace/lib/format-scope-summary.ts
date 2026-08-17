@@ -1,8 +1,9 @@
+import type { TFunction } from "i18next";
 import type { ScopeParts } from "@/src/domain";
 
 export function formatScopeSummary(
   scopeParts: ScopeParts,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string {
   const parts: string[] = [];
   if (scopeParts.domains.length) {

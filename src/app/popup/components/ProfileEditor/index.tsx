@@ -7,16 +7,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  type DomainFilter,
-  type ExcludeUrlFilter,
-  type HeaderRule,
-  type Profile,
-  type ProfileStatus,
-  type RuleKind,
-  type TabFilter,
-  type UrlFilter,
-} from "@/src/domain";
+import { type Profile, type ProfileStatus } from "@/src/domain";
 import {
   AddProfileButton,
   ProfileAlwaysEnableButton,
@@ -31,6 +22,7 @@ import {
   ProfileAddVariableButton,
   ProfileVariableList,
   TemplateMenu,
+  getProfileEditorState,
 } from "@/src/features/workspace";
 import {
   DropdownMenu,
@@ -43,22 +35,6 @@ import { Scroller } from "@/src/shared/ui/scroll";
 import { cn } from "@/src/shared/lib/cn";
 import type { OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
 import styles from "./index.module.scss";
-
-interface RuleGroups {
-  requestRules: HeaderRule[];
-  responseRules: HeaderRule[];
-  cookieRequestRules: HeaderRule[];
-  cookieResponseRules: HeaderRule[];
-  redirectRules: HeaderRule[];
-}
-
-interface FilterGroups {
-  tabFilters: TabFilter[];
-  domainFilters: DomainFilter[];
-  urlFilters: UrlFilter[];
-  excludeUrlFilters: ExcludeUrlFilter[];
-  methodFilters: Profile["methodFilters"];
-}
 
 interface Props {
   active: Profile | undefined;
@@ -76,10 +52,6 @@ interface Props {
   currentTabRegex: string;
   onProfileMenuVisibleChange: (open: boolean) => void;
   onScrollUpdate: () => void;
-}
-
-function ruleKind(rule: HeaderRule): RuleKind {
-  return rule.kind ?? "header";
 }
 
 export function ProfileEditor({
@@ -123,45 +95,14 @@ export function ProfileEditor({
     );
   }
 
-  const rules = active.rules;
-  const ruleGroups: RuleGroups = {
-    requestRules: rules.filter(
-      (rule) => ruleKind(rule) === "header" && rule.target === "request",
-    ),
-    responseRules: rules.filter(
-      (rule) => ruleKind(rule) === "header" && rule.target === "response",
-    ),
-    cookieRequestRules: rules.filter(
-      (rule) => ruleKind(rule) === "cookie-request-append",
-    ),
-    cookieResponseRules: rules.filter(
-      (rule) => ruleKind(rule) === "cookie-response-append",
-    ),
-    redirectRules: rules.filter((rule) => ruleKind(rule) === "redirect"),
-  };
-  const filterGroups: FilterGroups = {
-    tabFilters: active.tabFilters ?? [],
-    domainFilters: active.domainFilters ?? [],
-    urlFilters: active.urlFilters ?? [],
-    excludeUrlFilters: active.excludeUrlFilters ?? [],
-    methodFilters: active.methodFilters ?? [],
-  };
-  const variables = active.variables ?? [];
-  const hasRuleContent =
-    ruleGroups.requestRules.length +
-      ruleGroups.responseRules.length +
-      ruleGroups.cookieRequestRules.length +
-      ruleGroups.cookieResponseRules.length +
-      ruleGroups.redirectRules.length >
-    0;
-  const hasFilterContent =
-    filterGroups.tabFilters.length +
-      filterGroups.domainFilters.length +
-      filterGroups.urlFilters.length +
-      filterGroups.excludeUrlFilters.length +
-      (filterGroups.methodFilters ?? []).length >
-    0;
-  const hasVariableContent = variables.length > 0;
+  const {
+    ruleGroups,
+    filterGroups,
+    variables,
+    hasRuleContent,
+    hasFilterContent,
+    hasVariableContent,
+  } = getProfileEditorState(active);
 
   return (
     <section
@@ -210,7 +151,7 @@ export function ProfileEditor({
           />
           <ProfileFilterMenu
             profileId={active.id}
-            methodFilters={filterGroups.methodFilters ?? []}
+            methodFilters={filterGroups.methodFilters}
             initialTabUrlFilter={currentTabUrlPattern}
             initialDomain={currentTabDomain}
             initialUrlRegex={currentTabRegex}
@@ -410,7 +351,7 @@ export function ProfileEditor({
                 <ProfileMethodFilterPicker
                   profileId={active.id}
                   variant="editor"
-                  filters={filterGroups.methodFilters ?? []}
+                  filters={filterGroups.methodFilters}
                 />
               </>
             )}

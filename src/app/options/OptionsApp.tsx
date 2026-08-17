@@ -24,6 +24,7 @@ import {
   ThemeSwitcher,
 } from "@/src/features/preferences";
 import {
+  DnrRecoveryControl,
   ProfilePanel,
   RuleTable,
   TemplateMenu,
@@ -107,6 +108,7 @@ export function OptionsApp() {
               {t("popup.openManual")}
             </Button>
             <GlobalPauseControl />
+            <DnrRecoveryControl />
             <div className="mx-1 h-6 w-px bg-border" />
             <LanguageSwitcher variant="icon" />
             <ThemeSwitcher variant="icon" />

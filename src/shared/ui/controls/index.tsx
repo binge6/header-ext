@@ -182,7 +182,8 @@ export const AutoCompleteInput = forwardRef<
     }
     if (showSuggestions && event.key === "Enter") {
       event.preventDefault();
-      commitValue(suggestions[activeIndex] ?? suggestions[0]);
+      const suggestion = suggestions[activeIndex] ?? suggestions[0];
+      if (suggestion) commitValue(suggestion);
       return;
     }
     if (event.key === "Escape") {

@@ -1,4 +1,8 @@
-import { applyState } from "@/src/platform/dnr";
+import {
+  applyState,
+  onDnrReinitializeRequest,
+  reinitializeRules,
+} from "@/src/platform/dnr";
 import { onExtensionInstalled, setActionBadge } from "@/src/platform/browser";
 import { loadState, subscribeState } from "@/src/platform/storage";
 import { getBadgeSummary } from "@/src/domain";
@@ -38,6 +42,12 @@ export default defineBackground(() => {
     void syncBadge(next).catch((err) => {
       console.error("[header-ext] syncBadge failed", err);
     });
+  });
+
+  onDnrReinitializeRequest(async () => {
+    const state = await loadState();
+    await reinitializeRules(state);
+    await syncBadge(state);
   });
 
   // 安装时确保初始化

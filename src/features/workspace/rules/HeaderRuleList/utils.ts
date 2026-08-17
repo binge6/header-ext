@@ -43,6 +43,7 @@ export function buildReorderedRuleIds(
 
   const next = [...ruleIds];
   const [moved] = next.splice(fromIndex, 1);
+  if (!moved) return ruleIds;
   next.splice(toIndex, 0, moved);
   return next;
 }

@@ -18,12 +18,7 @@ export default defineConfig({
       name: "__MSG_extName__",
       description: "__MSG_extDesc__",
       default_locale: "en",
-      permissions: [
-        "declarativeNetRequest",
-        "declarativeNetRequestFeedback",
-        "storage",
-        "tabs",
-      ],
+      permissions: ["declarativeNetRequest", "storage", "tabs"],
       host_permissions: ["<all_urls>"],
       // 注：popup 的 default_title / options 的 open_in_tab 由各自 entrypoint
       // 的 HTML <meta name="manifest.*"> 声明，写在这里会被 WXT 覆盖。

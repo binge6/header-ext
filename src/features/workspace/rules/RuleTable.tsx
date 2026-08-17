@@ -8,13 +8,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useProfileStore } from "@/src/application/profile-store";
-import {
-  getProfileStats,
-  getScopeParts,
-  type HeaderRule,
-  type RuleKind,
-  type ScopeParts,
-} from "@/src/domain";
+import { getProfileStats, getScopeParts, type HeaderRule } from "@/src/domain";
+import type { DnrRuleError } from "@/src/platform/dnr";
 import { Badge, Button } from "@/src/shared/ui";
 import {
   ProfileFilterMenu,
@@ -30,6 +25,9 @@ import {
 import { NoFilterBanner } from "../filters/NoFilterBanner";
 import { ProfileVariableList } from "../variables/ProfileVariableList";
 import { ProfileHeaderRuleList } from "./ProfileHeaderRuleList";
+import { formatDnrError } from "./format-dnr-error";
+import { formatScopeSummary } from "../lib/format-scope-summary";
+import { getProfileEditorState } from "../lib/profile-editor-state";
 import {
   editorSectionIconClassName,
   editorSectionIconVariants,
@@ -37,9 +35,7 @@ import {
 } from "../components/editor-styles";
 import { cn } from "@/src/shared/lib/cn";
 
-function ruleKind(r: HeaderRule): RuleKind {
-  return r.kind ?? "header";
-}
+const EMPTY_DNR_ERRORS: DnrRuleError[] = [];
 
 function hasRuleAdvancedConditions(rule: HeaderRule): boolean {
   const condition = rule.condition ?? {};
@@ -57,6 +53,10 @@ export function RuleTable() {
   const { t } = useTranslation();
   const profiles = useProfileStore((s) => s.profiles);
   const activeId = useProfileStore((s) => s.meta.activeProfileId);
+  const storedDnrErrors = useProfileStore((s) =>
+    activeId ? s.dnrErrors[activeId] : undefined,
+  );
+  const dnrErrors = storedDnrErrors ?? EMPTY_DNR_ERRORS;
 
   const profile = profiles.find((p) => p.id === activeId);
 
@@ -71,44 +71,35 @@ export function RuleTable() {
     );
   }
 
-  const requestRules = profile.rules.filter(
-    (r) => ruleKind(r) === "header" && r.target === "request",
-  );
-  const responseRules = profile.rules.filter(
-    (r) => ruleKind(r) === "header" && r.target === "response",
-  );
-  const cookieRequestRules = profile.rules.filter(
-    (r) => ruleKind(r) === "cookie-request-append",
-  );
-  const cookieResponseRules = profile.rules.filter(
-    (r) => ruleKind(r) === "cookie-response-append",
-  );
-  const redirectRules = profile.rules.filter((r) => ruleKind(r) === "redirect");
-  const tabFilters = profile.tabFilters ?? [];
-  const domainFilters = profile.domainFilters ?? [];
-  const urlFilters = profile.urlFilters ?? [];
-  const excludeUrlFilters = profile.excludeUrlFilters ?? [];
-  const methodFilters = profile.methodFilters ?? [];
-  const variables = profile.variables ?? [];
+  const {
+    ruleGroups,
+    filterGroups,
+    variables,
+    hasRuleContent,
+    hasFilterContent,
+  } = getProfileEditorState(profile);
+  const {
+    requestRules,
+    responseRules,
+    cookieRequestRules,
+    cookieResponseRules,
+    redirectRules,
+  } = ruleGroups;
+  const {
+    tabFilters,
+    domainFilters,
+    urlFilters,
+    excludeUrlFilters,
+    methodFilters,
+  } = filterGroups;
   const stats = getProfileStats(profile);
+  const profileErrors = dnrErrors.filter((error) =>
+    error.sourceRuleId.startsWith("__"),
+  );
   const scopeParts = getScopeParts(profile);
   const advancedRuleCount = profile.rules.filter(
     hasRuleAdvancedConditions,
   ).length;
-  const hasRuleContent =
-    requestRules.length +
-      responseRules.length +
-      cookieRequestRules.length +
-      cookieResponseRules.length +
-      redirectRules.length >
-    0;
-  const hasScopeContent =
-    tabFilters.length +
-      domainFilters.length +
-      urlFilters.length +
-      excludeUrlFilters.length +
-      methodFilters.length >
-    0;
 
   const actionBar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -120,36 +111,6 @@ export function RuleTable() {
       />
     </div>
   );
-
-  const formatScopeSummary = (parts: ScopeParts): string => {
-    const scope: string[] = [];
-    if (parts.domains.length) {
-      scope.push(
-        t("scope.domainSummary", {
-          domains: parts.domains.slice(0, 2).join(", "),
-          count: parts.domains.length,
-        }),
-      );
-    }
-    if (parts.methods.length) {
-      scope.push(
-        t("scope.methodSummary", {
-          methods: parts.methods.slice(0, 3).join(", "),
-          count: parts.methods.length,
-        }),
-      );
-    }
-    if (parts.tabCount) {
-      scope.push(t("scope.tabSummary", { count: parts.tabCount }));
-    }
-    if (parts.urlRegexCount) {
-      scope.push(t("scope.urlSummary", { count: parts.urlRegexCount }));
-    }
-    if (parts.excludeCount) {
-      scope.push(t("scope.excludeSummary", { count: parts.excludeCount }));
-    }
-    return scope.length ? scope.join(" · ") : t("scope.allRequests");
-  };
 
   return (
     <div className="mx-auto flex w-full max-w-225 flex-col gap-5">
@@ -181,13 +142,29 @@ export function RuleTable() {
             )}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            {formatScopeSummary(scopeParts)}
+            {formatScopeSummary(scopeParts, t)}
           </p>
         </div>
         {actionBar}
       </section>
 
       <NoFilterBanner />
+
+      {profileErrors.length > 0 && (
+        <section className="rounded-lg border border-warning/35 bg-warning-soft px-4 py-3 text-xs leading-5 text-warning">
+          <div className="flex items-center gap-2 font-bold">
+            <ShieldAlert aria-hidden="true" className="h-4 w-4" />
+            {t("rule.profileRegistrationError")}
+          </div>
+          <ul className="mt-1.5 list-disc pl-5">
+            {profileErrors.map((error, index) => (
+              <li key={`${error.sourceRuleId}:${index}`}>
+                {formatDnrError(error, t)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
         <div className="flex min-h-16 items-center justify-between gap-4 border-b border-border bg-muted/35 px-4 py-3.5">
@@ -223,9 +200,9 @@ export function RuleTable() {
         </div>
         <div className="flex items-center gap-2 border-b border-border px-4 py-2.75 text-group-title leading-5 text-muted-foreground">
           <Route aria-hidden="true" className="h-4 w-4" />
-          <span>{formatScopeSummary(scopeParts)}</span>
+          <span>{formatScopeSummary(scopeParts, t)}</span>
         </div>
-        {hasScopeContent ? (
+        {hasFilterContent ? (
           <div className="m-3.5 flex flex-col gap-3">
             <ProfileTabFilterList
               profileId={profile.id}

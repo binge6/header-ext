@@ -1,6 +1,6 @@
-import { Braces, Info, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Braces, Info, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ProfileVariable } from "@/src/domain";
+import { getOverriddenVariableIds, type ProfileVariable } from "@/src/domain";
 import { cn } from "@/src/shared/lib/cn";
 import { Button, Checkbox, Input, Tooltip } from "@/src/shared/ui";
 import { GroupHeader } from "../components/GroupHeader";
@@ -47,6 +47,7 @@ export function VariableList({
     groupEnabled && !groupPartiallyEnabled
       ? t("variables.disableGroup")
       : t("variables.enableGroup");
+  const overriddenVariableIds = getOverriddenVariableIds(variables);
 
   const handleToggleGroup = (enabled: boolean) => {
     variables.forEach((variable) => {
@@ -111,6 +112,17 @@ export function VariableList({
               onUpdate({ ...variable, value: event.target.value })
             }
           />
+          {overriddenVariableIds.has(variable.id) && (
+            <Tooltip content={t("variables.overridden")}>
+              <span
+                className="inline-flex h-7 w-7 items-center justify-center text-warning"
+                role="img"
+                aria-label={t("variables.overridden")}
+              >
+                <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+              </span>
+            </Tooltip>
+          )}
           <Tooltip content={t("variables.deleteItem")}>
             <Button
               variant="ghost"

@@ -21,10 +21,11 @@ pnpm compile         # 仅类型检查（tsc --noEmit）——改完代码务必
 pnpm lint            # Oxlint 静态检查
 pnpm format          # Oxfmt 全仓格式化
 pnpm check           # Oxfmt check + Oxlint + TypeScript
+pnpm test            # Vitest 单元测试
 pnpm zip / zip:firefox
 ```
 
-改动后的最低验证标准：`pnpm check` 通过 + `pnpm build` 通过。涉及 Firefox 行为时补跑 `pnpm build:firefox`。
+改动后的最低验证标准：`pnpm check` 通过 + `pnpm test` 通过 + `pnpm build` 通过。涉及 Firefox 行为时补跑 `pnpm build:firefox`。
 
 ## 架构与数据流
 
@@ -59,7 +60,8 @@ UI 编辑 → Zustand store → persist() 写 storage.local
 
 - [src/application/profile-store](./src/application/profile-store)：唯一 store。所有 mutation 都走 `actions`，每次改动都 `set()` 后持久化。远端回写时用 `isApplyingRemote` 避免回环；组件用 `useProfileActions()` 获取稳定 actions 引用。
 - **多 profile 模型（重要）**：`meta.activeProfileId` 只是「UI 当前编辑/展示」的那个；真正下发的是 `meta.enabledProfileIds`——所有被启用的 profile 会**同时**编译进 DNR。`meta.globalPaused` 是总开关，为真时清空全部规则。
-- [src/platform/dnr](./src/platform/dnr)：`applyState()` 与 DNR 编译器；处理 Cookie/Header、正则重定向、Profile 条件合并与 session/dynamic rules。
+- [src/platform/dnr](./src/platform/dnr)：DNR 能力边界。`compiler/` 负责纯编译，`registry.ts` 负责 ID/动态与 session 规则更新及对账，`state.ts` 负责注册映射与错误记录，`messages.ts` 负责重建协议，`apply-state.ts` 只负责编排与串行队列。
+- DNR 按 Profile 指纹增量更新，每条源规则独立注册，避免一条非法规则阻断整批更新；background 启动时会清理孤儿规则并重建缺失注册。
 - [src/domain/profile-status.ts](./src/domain/profile-status.ts)：纯派生层，计算统计、风险、作用域与冲突分组。
 - [src/domain/models.ts](./src/domain/models.ts)：公共领域模型。加字段时必须兼容老数据：缺 `kind` 视为 `"header"`，缺 `theme` 视为 `"system"`，缺 `enabledProfileIds` 回退 `[activeProfileId]`，可选数组统一 `?? []`。
 - [src/platform/storage](./src/platform/storage)：状态仓储与兼容归一化。
@@ -95,6 +97,9 @@ assets/logo.svg
 3. **页面组合**：[src/app](./src/app)。只放 Popup/Options 的页面编排和页面私有组件，不沉淀跨页面业务组件。
 
 复用优先，但复用不等于上移到全局目录：优先放在所属 feature 的 `components/`；只有无业务语义时才进入 `shared/`。
+
+`src/shared/ui/overlays/index.tsx` 只做 public API 汇总；Tooltip、Menu、Popover
+分别放在同目录的职责文件中。新增 overlay primitive 时不要继续堆回 barrel。
 
 ## 组件目录分层（约定）
 
@@ -157,7 +162,7 @@ ComponentName/
 ## 跨端与权限注意
 
 - `browser` / `chrome` 全局仅允许出现在 [src/platform/browser](./src/platform/browser)。其他层通过平台层 public API 访问 Tabs、Runtime、storage 与 DNR；Oxlint 会阻止越界。
-- manifest 权限：`declarativeNetRequest` / `declarativeNetRequestFeedback` / `storage` / `tabs` + `host_permissions: ["<all_urls>"]`。
+- manifest 权限：`declarativeNetRequest` / `storage` / `tabs` + `host_permissions: ["<all_urls>"]`。
 - Firefox MV3 特有配置在 `wxt.config.ts` 的 `browser_specific_settings.gecko`（含 `strict_min_version: "128.0"` 与 `data_collection_permissions: { required: ["none"] }`，AMO 要求）。改 manifest/权限时注意两端差异。
 - 隐私红线：只用本地 `storage.local`，不得向任何远端发送用户数据；导入解析走 [src/domain/transfer.ts](./src/domain/transfer.ts)，文件 IO 走 [src/platform/files](./src/platform/files)，schema 为 `header-ext.v1`。
 

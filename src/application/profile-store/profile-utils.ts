@@ -1,4 +1,6 @@
 import { nanoid } from "nanoid";
+import { uniq } from "es-toolkit/array";
+import { cloneDeep } from "es-toolkit/object";
 import type { HeaderRule, Profile } from "@/src/domain";
 
 export function normalizeEnabledProfileIds(
@@ -7,7 +9,7 @@ export function normalizeEnabledProfileIds(
 ): string[] {
   const validIds = new Set(profiles.map((profile) => profile.id));
   const source = Array.isArray(ids) ? ids : [];
-  return Array.from(new Set(source.filter((id) => validIds.has(id))));
+  return uniq(source.filter((id) => validIds.has(id)));
 }
 
 export function uniqueProfileName(
@@ -34,66 +36,25 @@ export function nextDefaultProfileName(profiles: Profile[]): string {
   return `Profile ${suffix}`;
 }
 
-function cloneItems<T extends { id: string }>(items: T[]): T[] {
-  return items.map((item) => ({ ...item, id: nanoid() }));
-}
-
-function cloneRuleCondition(
-  condition: HeaderRule["condition"],
-): HeaderRule["condition"] {
-  return {
-    ...condition,
-    ...(condition.includedDomains && {
-      includedDomains: [...condition.includedDomains],
-    }),
-    ...(condition.excludedDomains && {
-      excludedDomains: [...condition.excludedDomains],
-    }),
-    ...(condition.resourceTypes && {
-      resourceTypes: [...condition.resourceTypes],
-    }),
-    ...(condition.requestMethods && {
-      requestMethods: [...condition.requestMethods],
-    }),
-  };
+function regenerateItemIds(items: Array<{ id: string }> | undefined): void {
+  for (const item of items ?? []) item.id = nanoid();
 }
 
 export function cloneProfile(source: Profile, name: string): Profile {
   const now = Date.now();
-  const profile: Profile = {
-    ...source,
-    id: nanoid(),
-    name,
-    rules: source.rules.map((rule) => ({
-      ...rule,
-      id: nanoid(),
-      condition: cloneRuleCondition(rule.condition),
-    })),
-    createdAt: now,
-    updatedAt: now,
-  };
+  const profile = cloneDeep(source);
+  profile.id = nanoid();
+  profile.name = name;
+  profile.createdAt = now;
+  profile.updatedAt = now;
 
-  if (source.tabFilters) profile.tabFilters = cloneItems(source.tabFilters);
-  else delete profile.tabFilters;
-  if (source.domainFilters) {
-    profile.domainFilters = cloneItems(source.domainFilters);
-  } else {
-    delete profile.domainFilters;
-  }
-  if (source.urlFilters) profile.urlFilters = cloneItems(source.urlFilters);
-  else delete profile.urlFilters;
-  if (source.excludeUrlFilters) {
-    profile.excludeUrlFilters = cloneItems(source.excludeUrlFilters);
-  } else {
-    delete profile.excludeUrlFilters;
-  }
-  if (source.methodFilters) {
-    profile.methodFilters = cloneItems(source.methodFilters);
-  } else {
-    delete profile.methodFilters;
-  }
-  if (source.variables) profile.variables = cloneItems(source.variables);
-  else delete profile.variables;
+  regenerateItemIds(profile.rules);
+  regenerateItemIds(profile.tabFilters);
+  regenerateItemIds(profile.domainFilters);
+  regenerateItemIds(profile.urlFilters);
+  regenerateItemIds(profile.excludeUrlFilters);
+  regenerateItemIds(profile.methodFilters);
+  regenerateItemIds(profile.variables);
 
   return profile;
 }
@@ -116,7 +77,9 @@ export function reorderRulesByIds(
   }
 
   let cursor = 0;
-  return rules.map((rule) =>
-    idSet.has(rule.id) ? orderedRules[cursor++] : rule,
-  );
+  return rules.map((rule) => {
+    if (!idSet.has(rule.id)) return rule;
+    const orderedRule = orderedRules[cursor++];
+    return orderedRule ?? rule;
+  });
 }

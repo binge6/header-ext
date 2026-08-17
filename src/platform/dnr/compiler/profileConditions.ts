@@ -3,7 +3,7 @@ import { SUPPORTED_REQUEST_METHODS } from "@/src/domain/models";
 import type { DnrRule } from "@/src/platform/browser/api";
 import type { CompileError } from "./types";
 import { cleanDomains, intersectDomainScopes } from "./utils";
-import { formatMissingVariables, resolveVariables } from "./variables";
+import { resolveVariables } from "./variables";
 
 const SUPPORTED_METHOD_SET = new Set<string>(SUPPORTED_REQUEST_METHODS);
 
@@ -33,7 +33,8 @@ export function compileProfileConditions(
     hasVariableError = true;
     errors.push({
       ruleId: "__tab_filter__",
-      message: formatMissingVariables(Array.from(tabFilterMissing)),
+      code: "missingVariables",
+      params: { names: Array.from(tabFilterMissing).join(", ") },
     });
   }
 
@@ -56,7 +57,8 @@ export function compileProfileConditions(
     hasVariableError = true;
     errors.push({
       ruleId: "__domain_filter__",
-      message: formatMissingVariables(Array.from(allowedDomainMissing)),
+      code: "missingVariables",
+      params: { names: Array.from(allowedDomainMissing).join(", ") },
     });
   }
 
@@ -78,7 +80,8 @@ export function compileProfileConditions(
     hasVariableError = true;
     errors.push({
       ruleId: "__exclude_url_filter__",
-      message: formatMissingVariables(Array.from(excludedUrlMissing)),
+      code: "missingVariables",
+      params: { names: Array.from(excludedUrlMissing).join(", ") },
     });
   }
 
@@ -94,7 +97,8 @@ export function compileProfileConditions(
     hasVariableError = true;
     errors.push({
       ruleId: "__url_filter__",
-      message: formatMissingVariables(Array.from(urlRegexMissing)),
+      code: "missingVariables",
+      params: { names: Array.from(urlRegexMissing).join(", ") },
     });
   }
 
@@ -104,12 +108,12 @@ export function compileProfileConditions(
       enabledRegexes.forEach((regex) => new RegExp(regex));
       mergedRegex =
         enabledRegexes.length === 1
-          ? enabledRegexes[0]
+          ? (enabledRegexes[0] ?? null)
           : enabledRegexes.map((regex) => `(?:${regex})`).join("|");
     } catch {
       errors.push({
         ruleId: "__url_filter__",
-        message: "URL 过滤正则表达式无效",
+        code: "invalidProfileRegex",
       });
     }
   }
@@ -156,7 +160,7 @@ export function applyProfileConditions(
     if (rule.condition.regexFilter) {
       errors.push({
         ruleId: sourceRuleId,
-        message: "规则自身已使用正则匹配，Profile 级 URL 正则过滤未对其生效",
+        code: "profileRegexConflict",
       });
     } else {
       const { urlFilter: _urlFilter, ...condition } = rule.condition;

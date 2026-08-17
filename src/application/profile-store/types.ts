@@ -12,9 +12,11 @@ import type {
   TabFilter,
   UrlFilter,
 } from "@/src/domain";
+import type { DnrErrorRecord } from "@/src/platform/dnr";
 
 export interface ProfileActions {
   hydrate: () => Promise<void>;
+  reinitializeRules: () => Promise<void>;
 
   addProfile: (name?: string) => string;
   renameProfile: (profileId: string, name: string) => void;
@@ -75,6 +77,7 @@ export interface ProfileActions {
 }
 
 export interface ProfileStore extends AppState {
+  dnrErrors: DnrErrorRecord;
   hydrated: boolean;
   actions: ProfileActions;
 }

@@ -1,34 +1,41 @@
 // 公共领域类型定义
 
-export type HeaderAction = "set" | "append" | "remove";
-export type Target = "request" | "response";
+export const HEADER_ACTIONS = ["set", "append", "remove"] as const;
+export type HeaderAction = (typeof HEADER_ACTIONS)[number];
+
+export const TARGETS = ["request", "response"] as const;
+export type Target = (typeof TARGETS)[number];
 
 // 规则类型：header = 普通头部修改；cookie-* = Cookie 便捷模式
 // redirect = URL 重定向 / 重写（DNR redirect action）
 // cookie 模式下：name = cookie 名，value = cookie 值；编译器自动合成 Cookie / Set-Cookie 头
-export type RuleKind =
-  | "header"
-  | "cookie-request-append"
-  | "cookie-response-append"
-  | "redirect";
+export const RULE_KINDS = [
+  "header",
+  "cookie-request-append",
+  "cookie-response-append",
+  "redirect",
+] as const;
+export type RuleKind = (typeof RULE_KINDS)[number];
 
 // DNR ResourceType（避免直接依赖 chrome 命名空间，便于跨端）
-export type ResourceType =
-  | "main_frame"
-  | "sub_frame"
-  | "stylesheet"
-  | "script"
-  | "image"
-  | "font"
-  | "object"
-  | "xmlhttprequest"
-  | "ping"
-  | "csp_report"
-  | "media"
-  | "websocket"
-  | "webtransport"
-  | "webbundle"
-  | "other";
+export const RESOURCE_TYPES = [
+  "main_frame",
+  "sub_frame",
+  "stylesheet",
+  "script",
+  "image",
+  "font",
+  "object",
+  "xmlhttprequest",
+  "ping",
+  "csp_report",
+  "media",
+  "websocket",
+  "webtransport",
+  "webbundle",
+  "other",
+] as const;
+export type ResourceType = (typeof RESOURCE_TYPES)[number];
 
 export interface RuleCondition {
   // include 模式：urlFilter 是 DNR pattern；当 useRegex 为 true 时按正则解释

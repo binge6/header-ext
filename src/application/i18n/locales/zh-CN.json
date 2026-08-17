@@ -131,7 +131,10 @@
     "advancedConditions": "高级条件",
     "noEnabledProfiles": "当前没有任何生效 Profile",
     "riskyProfileCount": "{{count}} 个生效 Profile 作用于全部请求",
-    "conflictCount": "{{count}} 组潜在冲突"
+    "conflictCount": "{{count}} 组潜在冲突",
+    "reinitializeRules": "重新初始化规则",
+    "reinitializeRulesSuccess": "规则已重新初始化",
+    "reinitializeRulesFailed": "重新初始化规则失败：{{message}}"
   },
   "rule": {
     "target": "类型",
@@ -176,6 +179,8 @@
     "requestMethodsPlaceholder": "默认全部（GET / POST / ...）",
     "advancedConditions": "高级条件",
     "advancedConditionsDesc": "限定这条规则匹配的请求范围",
+    "registrationError": "规则注册失败",
+    "profileRegistrationError": "Profile 条件无法应用",
     "targetOption": {
       "request": "请求头",
       "response": "响应头"
@@ -257,6 +262,7 @@
     "valuePlaceholder": "变量值",
     "empty": "未配置变量；规则字段可引用 {{syntax}}",
     "hint": "在 Header、Cookie、Redirect 和过滤字段中输入 {{syntax}}，下发 DNR 前会替换为变量值。",
+    "overridden": "当前变量已被后面启用的同名变量覆盖",
     "deleteItem": "删除变量"
   },
   "scope": {
@@ -297,6 +303,21 @@
   },
   "errors": {
     "headerNameRequired": "Header 名称不能为空",
-    "valueRequired": "set/append 操作必须填写值"
+    "valueRequired": "set/append 操作必须填写值",
+    "dnr": {
+      "missingVariables": "变量未定义：{{names}}",
+      "emptyRuleDraft": "Header 名称和值不能为空",
+      "headerNameRequired": "Header 名称不能为空",
+      "headerValueRequired": "Header 值不能为空",
+      "headerFieldsRequired": "Header 名称和值不能为空",
+      "redirectDestinationRequired": "Redirect 目标 URL 不能为空",
+      "invalidRuleRegex": "规则正则表达式无效",
+      "redirectRegexConditionRequired": "正则重定向需要提供 URL 正则匹配条件",
+      "invalidProfileRegex": "Profile URL 过滤正则表达式无效",
+      "profileRegexConflict": "规则自身已使用正则匹配，Profile 级 URL 正则未生效",
+      "registrationFailed": "浏览器拒绝注册此规则",
+      "legacy": "规则处理失败",
+      "withDetail": "{{message}}：{{detail}}"
+    }
   }
 }

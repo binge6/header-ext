@@ -12,6 +12,14 @@ import { cn } from "@/src/shared/lib/cn";
 export const HE_SCROLLBAR_THEME = "os-theme-he";
 
 const defaultOptions: PartialOptions = {
+  update: {
+    debounce: {
+      mutation: [0, 33],
+      resize: 0,
+      event: [33, 99],
+      env: [222, 666, true],
+    },
+  },
   scrollbars: {
     theme: HE_SCROLLBAR_THEME,
     autoHide: "leave",

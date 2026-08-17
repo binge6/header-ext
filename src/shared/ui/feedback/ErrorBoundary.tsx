@@ -42,13 +42,13 @@ interface State {
  * 包裹两个入口的 <App />，是所有「渲染期崩溃」类问题的最后防线。
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { error: null };
+  override state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error("[header-ext] render error boundary caught:", error, info);
   }
 
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
     location.reload();
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (!this.state.error) return this.props.children;
 
     const copy = resolveCopy();

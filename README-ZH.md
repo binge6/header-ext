@@ -55,6 +55,7 @@ pnpm compile         # 仅做类型检查
 pnpm lint            # Oxlint 静态检查
 pnpm format          # 使用 Oxfmt 格式化
 pnpm check           # 格式检查 + lint + 类型检查
+pnpm test            # Vitest 单元测试
 ```
 
 ## 项目结构

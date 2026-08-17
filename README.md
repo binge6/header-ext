@@ -55,6 +55,7 @@ pnpm compile         # Type check only
 pnpm lint            # Oxlint
 pnpm format          # Format with Oxfmt
 pnpm check           # Format check + lint + type check
+pnpm test            # Vitest unit tests
 ```
 
 ## Project Structure

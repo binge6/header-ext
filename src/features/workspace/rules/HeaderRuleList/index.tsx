@@ -28,6 +28,7 @@ export function HeaderRuleList({
   kind,
   target,
   rules,
+  errorMessages,
   onAdd,
   onUpdate,
   onDelete,
@@ -145,6 +146,7 @@ export function HeaderRuleList({
       <HeaderRuleRow
         key={rule.id}
         rule={rule}
+        errorMessage={errorMessages?.[rule.id]}
         isCookie={isCookie}
         isRedirect={isRedirect}
         isEditor={isEditor}

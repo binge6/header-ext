@@ -1,9 +1,9 @@
-export { applyState } from "./apply-state";
+export { applyState, reinitializeRules } from "./apply-state";
+export { onDnrReinitializeRequest, requestDnrReinitialize } from "./messages";
 export {
-  clearIdMap,
-  compileRules,
-  getDnrId,
-  type CompileContext,
-  type CompileError,
-  type CompileResult,
-} from "./compiler";
+  loadDnrErrors,
+  subscribeDnrErrors,
+  type DnrErrorRecord,
+  type DnrRuleError,
+} from "./state";
+export { type DnrErrorCode } from "./errors";

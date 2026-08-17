@@ -1,14 +1,11 @@
 import type { HeaderRule, ResourceType, TabFilter } from "@/src/domain/models";
 import { SUPPORTED_REQUEST_METHODS } from "@/src/domain/models";
 import type { DnrHeaderAction, DnrRule } from "@/src/platform/browser/api";
+import type { DnrErrorData } from "../errors";
 import { createDnrId, getDnrId } from "./idRegistry";
 import type { CompileContext } from "./types";
 import { cleanDomains } from "./utils";
-import {
-  formatMissingVariables,
-  resolveVariableList,
-  resolveVariables,
-} from "./variables";
+import { resolveVariableList, resolveVariables } from "./variables";
 
 const DNR_BASE_PRIORITY = 1;
 const SUPPORTED_METHOD_SET = new Set<string>(SUPPORTED_REQUEST_METHODS);
@@ -98,7 +95,7 @@ export function compileRule(
   rule: HeaderRule,
   context: CompileContext,
   variables: Map<string, string>,
-): { rule?: DnrRule; error?: string } {
+): { rule?: DnrRule; error?: DnrErrorData } {
   const kind = rule.kind ?? "header";
   const resolvedName =
     kind !== "redirect"
@@ -128,7 +125,14 @@ export function compileRule(
     ...resolvedExcludedDomains.missing,
   ];
   if (missingVariables.length) {
-    return { error: formatMissingVariables(missingVariables) };
+    return {
+      error: {
+        code: "missingVariables",
+        params: {
+          names: Array.from(new Set(missingVariables)).join(", "),
+        },
+      },
+    };
   }
 
   const resolvedRule: HeaderRule = {
@@ -144,11 +148,21 @@ export function compileRule(
   };
   const action = buildAction(resolvedRule);
   if (!action) {
+    const nameMissing = !resolvedRule.name?.trim();
+    const valueRequired = kind !== "header" || resolvedRule.action !== "remove";
+    const valueMissing = valueRequired && !resolvedRule.value;
     return {
       error:
         kind === "redirect"
-          ? "redirect 目标 URL 不能为空"
-          : "rule.name / value 不能为空",
+          ? { code: "redirectDestinationRequired" }
+          : {
+              code:
+                nameMissing && valueMissing
+                  ? "emptyRuleDraft"
+                  : nameMissing
+                    ? "headerNameRequired"
+                    : "headerValueRequired",
+            },
     };
   }
 
@@ -160,7 +174,7 @@ export function compileRule(
       try {
         new RegExp(sourceCondition.urlFilter);
       } catch {
-        return { error: "正则表达式无效" };
+        return { error: { code: "invalidRuleRegex" } };
       }
       condition.regexFilter = sourceCondition.urlFilter;
     } else {
@@ -204,7 +218,7 @@ export function compileRule(
     action.redirect?.regexSubstitution &&
     !condition.regexFilter
   ) {
-    return { error: "正则重定向需要提供正则匹配条件（URL 正则）" };
+    return { error: { code: "redirectRegexConditionRequired" } };
   }
 
   return {

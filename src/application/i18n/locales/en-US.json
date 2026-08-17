@@ -131,7 +131,10 @@
     "advancedConditions": "Advanced conditions",
     "noEnabledProfiles": "No active profile",
     "riskyProfileCount": "{{count}} active profile(s) apply to every request",
-    "conflictCount": "{{count}} potential conflict group(s)"
+    "conflictCount": "{{count}} potential conflict group(s)",
+    "reinitializeRules": "Reinitialize rules",
+    "reinitializeRulesSuccess": "Rules reinitialized",
+    "reinitializeRulesFailed": "Failed to reinitialize rules: {{message}}"
   },
   "rule": {
     "target": "Target",
@@ -176,6 +179,8 @@
     "requestMethodsPlaceholder": "All by default (GET / POST / ...)",
     "advancedConditions": "Advanced conditions",
     "advancedConditionsDesc": "Limit which requests this rule can match",
+    "registrationError": "Rule registration failed",
+    "profileRegistrationError": "Profile conditions could not be applied",
     "targetOption": {
       "request": "Request",
       "response": "Response"
@@ -257,6 +262,7 @@
     "valuePlaceholder": "Variable value",
     "empty": "No variables yet; rule fields can reference {{syntax}}",
     "hint": "Use {{syntax}} in header, cookie, redirect, and filter fields. It is replaced before DNR delivery.",
+    "overridden": "This variable is overridden by a later enabled variable with the same name",
     "deleteItem": "Delete variable"
   },
   "scope": {
@@ -297,6 +303,21 @@
   },
   "errors": {
     "headerNameRequired": "Header name is required",
-    "valueRequired": "Value is required for set/append"
+    "valueRequired": "Value is required for set/append",
+    "dnr": {
+      "missingVariables": "Undefined variables: {{names}}",
+      "emptyRuleDraft": "Header name and value are required",
+      "headerNameRequired": "Header name is required",
+      "headerValueRequired": "Header value is required",
+      "headerFieldsRequired": "Header name and value are required",
+      "redirectDestinationRequired": "Redirect destination URL is required",
+      "invalidRuleRegex": "The rule regular expression is invalid",
+      "redirectRegexConditionRequired": "Regex redirects require a regular-expression URL condition",
+      "invalidProfileRegex": "The profile URL filter regular expression is invalid",
+      "profileRegexConflict": "This rule already uses a regular expression, so the profile-level URL regex was not applied",
+      "registrationFailed": "The browser rejected this rule",
+      "legacy": "Rule processing failed",
+      "withDetail": "{{message}}: {{detail}}"
+    }
   }
 }

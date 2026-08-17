@@ -1,4 +1,5 @@
 import type { ProfileVariable } from "@/src/domain/models";
+import { getOverriddenVariableIds } from "@/src/domain/variables";
 
 const VARIABLE_TOKEN_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
 
@@ -11,9 +12,12 @@ export function buildVariableMap(
   variables: ProfileVariable[] | undefined,
 ): Map<string, string> {
   const map = new Map<string, string>();
+  const overriddenIds = getOverriddenVariableIds(variables);
   for (const variable of variables ?? []) {
     const name = variable.name.trim();
-    if (variable.enabled && name) map.set(name, variable.value);
+    if (variable.enabled && name && !overriddenIds.has(variable.id)) {
+      map.set(name, variable.value);
+    }
   }
   return map;
 }
@@ -54,8 +58,4 @@ export function resolveVariableList(
   });
 
   return { values: resolvedValues, missing: Array.from(missing) };
-}
-
-export function formatMissingVariables(names: string[]): string {
-  return `变量未定义：${Array.from(new Set(names)).join(", ")}`;
 }

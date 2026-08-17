@@ -71,7 +71,7 @@ src/
   platform/
     browser/                  # WebExtension API adapter and capabilities
     storage/                  # storage.local state repository
-    dnr/                      # DNR compilation and rule application
+    dnr/                      # DNR compiler, registry, persistence and recovery
     files/                    # Browser file download/read adapters
 
   shared/
@@ -109,13 +109,36 @@ feature UI
   → platform/storage
   → storage.local
        ├─→ popup/options store synchronization
-       └─→ background → platform/dnr → declarativeNetRequest
+       └─→ background → platform/dnr
+                         ├─→ incremental declarativeNetRequest updates
+                         └─→ registration/error records → popup/options
 ```
 
 `storage.local` remains the source of truth. `meta.activeProfileId` identifies
 the profile being edited, while `meta.enabledProfileIds` identifies every
 profile compiled into active DNR rules. `meta.globalPaused` clears all applied
 rules.
+
+The DNR platform persists a profile/source-rule-to-DNR registration map under
+`dnr:registrations:v1`. It fingerprints rule-relevant profile data so unchanged
+profiles are not recompiled or replaced. Each source rule is registered
+independently, allowing one invalid rule to fail without blocking other source
+rules. Registration and compilation errors are stored under `dnr:errors:v1`
+and synchronized back to popup/options. On service-worker startup, the
+registration map is reconciled against actual dynamic/session rules and
+orphaned rules are removed.
+
+`platform/dnr` keeps these responsibilities split:
+
+- `compiler.ts` and `compiler/`: pure model-to-DNR compilation.
+- `registry.ts`: DNR ID allocation, dynamic/session updates and reconciliation.
+- `state.ts`: persisted registration and error records.
+- `messages.ts`: the runtime protocol used to request a full rebuild.
+- `apply-state.ts`: orchestration and the serialized apply queue.
+
+Shared overlay primitives follow the same responsibility split:
+`shared/ui/overlays/index.tsx` is the public barrel, while menu, popover and
+tooltip behavior live in focused modules.
 
 ## Placement Guide
 
