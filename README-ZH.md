@@ -4,6 +4,8 @@
 
 一款用于修改 HTTP 请求/响应头、追加 Cookie、按规则重定向 URL 的浏览器扩展，支持 Chrome 与 Firefox（MV3）。
 
+完整的功能说明与操作示例见 [用户手册](./docs/user-manual.zh-CN.md)；英文版见 [User Manual](./docs/user-manual.en-US.md)。
+
 ## 安装
 
 - Chrome Web Store：<https://chromewebstore.google.com/detail/header-ext/fmeahkfblcdknabpmhlmbkconfcaoemi>

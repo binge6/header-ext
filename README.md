@@ -4,6 +4,8 @@ English | [简体中文](./README-ZH.md)
 
 A browser extension for modifying HTTP request/response headers, appending cookies, and redirecting URLs by rule. Supports Chrome and Firefox (MV3).
 
+Documentation: [User Manual](./docs/user-manual.en-US.md) | [简体中文用户手册](./docs/user-manual.zh-CN.md).
+
 ## Installation
 
 - Chrome Web Store: <https://chromewebstore.google.com/detail/header-ext/fmeahkfblcdknabpmhlmbkconfcaoemi>
